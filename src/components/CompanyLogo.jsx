@@ -1,13 +1,32 @@
 import React, { useState } from 'react';
 
-const BankLogo = ({ domain, name, size = 40, bg, icon, color }) => {
+const LOGO_DEV_PUBLIC_KEY = 'pk_GEGUfLZ8RieM9553Wee70A';
+
+const CompanyLogo = ({ domain, name, size = 40, bg, icon, color, style }) => {
   const [error, setError] = useState(false);
 
-  // Replace with your actual Logo.dev token
-  const token = 'pk_GEGUfLZ8RieM9553Wee70A';
+  // Guess domain from name for common French banks if domain is missing
+  const guessDomainFromName = (n) => {
+    if (!n) return null;
+    const lower = n.toLowerCase();
+    if (lower.includes('agricole')) return 'credit-agricole.fr';
+    if (lower.includes('postale') || lower.includes('postal')) return 'labanquepostale.fr';
+    if (lower.includes('bnp')) return 'mabanque.bnpparibas';
+    if (lower.includes('societe generale')) return 'societegenerale.fr';
+    if (lower.includes('mutuel')) return 'creditmutuel.fr';
+    if (lower.includes('caisse d\'epargne')) return 'caisse-epargne.fr';
+    if (lower.includes('bourso')) return 'boursorama.com';
+    if (lower.includes('revolut')) return 'revolut.com';
+    if (lower.includes('n26')) return 'n26.com';
+    if (lower.includes('fortuneo')) return 'fortuneo.fr';
+    if (lower.includes('hello bank')) return 'hellobank.fr';
+    return null;
+  };
 
-  const logoUrl = domain && !error
-    ? `https://img.logo.dev/${domain}?token=${token}`
+  const finalDomain = domain || guessDomainFromName(name);
+
+  const logoUrl = finalDomain && !error
+    ? `https://img.logo.dev/${finalDomain}?token=${LOGO_DEV_PUBLIC_KEY}`
     : null;
 
   const fallbackInitial = name ? name.charAt(0).toUpperCase() : '?';
@@ -22,23 +41,27 @@ const BankLogo = ({ domain, name, size = 40, bg, icon, color }) => {
       style={{
         width: size,
         height: size,
-        borderRadius: 12, // Increased for a more premium look
+        borderRadius: size > 32 ? 14 : 10,
         background: backgroundStyle,
         overflow: 'hidden',
         border: borderStyle,
-        position: 'relative'
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        ...style
       }}
     >
       {logoUrl ? (
         <img
           src={logoUrl}
-          alt={name}
+          alt={name || "Company Logo"}
           loading="lazy"
           style={{
             width: '100%',
             height: '100%',
             objectFit: 'contain',
-            padding: '4px'
+            padding: size > 32 ? '6px' : '4px'
           }}
           onError={() => setError(true)}
         />
@@ -70,8 +93,8 @@ const BankLogo = ({ domain, name, size = 40, bg, icon, color }) => {
                 fontSize: size * 0.25,
                 color: 'var(--color-text-tertiary)',
                 position: 'absolute',
-                bottom: 2,
-                right: 2
+                bottom: size > 32 ? 4 : 2,
+                right: size > 32 ? 4 : 2
               }}>account_balance</span>
             </>
           )}
@@ -81,4 +104,4 @@ const BankLogo = ({ domain, name, size = 40, bg, icon, color }) => {
   );
 };
 
-export default BankLogo;
+export default CompanyLogo;

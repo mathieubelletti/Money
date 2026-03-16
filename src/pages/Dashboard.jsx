@@ -1,11 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import BankLogo from '../components/BankLogo';
+import CompanyLogo from '../components/CompanyLogo';
 import PageHeader from '../components/PageHeader';
 import { savings, patrimonyChart, insights } from '../data/mockData';
 import { useData } from '../context/DataContext';
 
 const Dashboard = () => {
-  const { accounts, setAccounts, savingsItems, setSavingsItems, user, transactions } = useData();
+  const { 
+    accounts, 
+    savingsItems, 
+    user, 
+    transactions, 
+    deleteAccount, 
+    deleteSaving,
+    addAccount,
+    addSaving,
+    updateAccount,
+    updateSaving
+  } = useData();
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [manageType, setManageType] = useState('accounts'); // 'accounts' or 'savings'
   const [editingItem, setEditingItem] = useState(null);
@@ -45,13 +56,20 @@ const Dashboard = () => {
     }
   };
 
+  const [confirmingId, setConfirmingId] = useState(null);
+
   const handleDeleteItem = (id) => {
-    if (window.confirm('Voulez-vous vraiment supprimer cet élément ?')) {
+    if (confirmingId === id) {
       if (manageType === 'accounts') {
-        setAccounts(accounts.filter(acc => acc.id !== id));
+        deleteAccount(id);
       } else {
-        setSavingsItems(savingsItems.filter(s => s.id !== id));
+        deleteSaving(id);
       }
+      setConfirmingId(null);
+    } else {
+      setConfirmingId(id);
+      // Auto-reset after 3 seconds if not confirmed
+      setTimeout(() => setConfirmingId(prev => prev === id ? null : prev), 3000);
     }
   };
 
@@ -68,7 +86,7 @@ const Dashboard = () => {
         balance: parseFloat(formData.get('balance')),
         initialBalance: parseFloat(formData.get('initialBalance')),
       };
-      setAccounts(accounts.map(acc => acc.id === editingItem.id ? updatedAccount : acc));
+      updateAccount(updatedAccount);
     } else {
       const updatedSaving = {
         ...editingItem,
@@ -78,16 +96,14 @@ const Dashboard = () => {
         balance: parseFloat(formData.get('balance')),
         rate: parseFloat(formData.get('rate')),
       };
-      setSavingsItems(savingsItems.map(s => s.id === editingItem.id ? updatedSaving : s));
+      updateSaving(updatedSaving);
     }
     setEditingItem(null);
   };
 
   const handleAddItem = () => {
-    const id = Date.now();
     if (manageType === 'accounts') {
       const newAcc = {
-        id,
         name: 'Nouveau Compte',
         short: 'NC',
         balance: 0,
@@ -95,19 +111,19 @@ const Dashboard = () => {
         domain: 'google.com',
         accountNumber: 'FR76 0000 0000 0000 0000 0000 000',
       };
-      setAccounts([...accounts, newAcc]);
-      setEditingItem(newAcc);
+      addAccount(newAcc);
+      // Since addAccount is async-ish (functional update), we use a placeholder or wait.
+      // But we can just set editing item to a copy with a generated ID if we want to edit immediately.
+      // For now, let's just let it add.
     } else {
       const newSaving = {
-        id,
         name: 'Nouveau Livret',
         bank: 'Votre Banque',
         domain: 'google.com',
         balance: 0,
         rate: 0.5,
       };
-      setSavingsItems([...savingsItems, newSaving]);
-      setEditingItem(newSaving);
+      addSaving(newSaving);
     }
   };
 
@@ -210,7 +226,7 @@ const Dashboard = () => {
               minWidth: 140, background: 'white', padding: 16, borderRadius: 18, 
               border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-sm)'
             }}>
-              <BankLogo domain={acc.domain} name={acc.name} color={acc.color} size={32} style={{ marginBottom: 12 }} />
+              <CompanyLogo domain={acc.domain} name={acc.name} color={acc.color} size={32} style={{ marginBottom: 12 }} />
               <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>{acc.name}</p>
               <p style={{ 
                 fontSize: 10, 
@@ -253,7 +269,7 @@ const Dashboard = () => {
               border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-sm)'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                <BankLogo domain={save.domain} name={save.bank} color={save.color} size={28} />
+                <CompanyLogo domain={save.domain} name={save.bank} color={save.color} size={28} />
                 <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--color-success)', background: 'var(--color-success-light)', padding: '2px 6px', borderRadius: 4 }}>{save.rate}%</span>
               </div>
               <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>{save.name}</p>
@@ -474,7 +490,7 @@ const Dashboard = () => {
                       display: 'flex', alignItems: 'center', gap: 16, background: '#f8fafc',
                       padding: '16px 20px', borderRadius: 18, border: '1.5px solid var(--color-border-light)'
                     }}>
-                      <BankLogo domain={item.domain} name={manageType === 'accounts' ? item.name : item.bank} size={40} />
+                      <CompanyLogo domain={item.domain} name={manageType === 'accounts' ? item.name : item.bank} size={40} />
                       <div style={{ flex: 1 }}>
                         <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>{item.name}</p>
                         <p style={{ fontSize: 12, color: 'var(--color-text-tertiary)', margin: '2px 0 0' }}>
@@ -485,8 +501,30 @@ const Dashboard = () => {
                         <button onClick={() => setEditingItem(item)} style={{ width: 36, height: 36, borderRadius: 10, border: 'none', background: 'white', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
                           <span className="material-icons-round" style={{ fontSize: 18 }}>edit</span>
                         </button>
-                        <button onClick={() => handleDeleteItem(item.id)} style={{ width: 36, height: 36, borderRadius: 10, border: 'none', background: 'white', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
-                          <span className="material-icons-round" style={{ fontSize: 18 }}>delete</span>
+                        <button 
+                          onClick={() => handleDeleteItem(item.id)} 
+                          style={{ 
+                            width: confirmingId === item.id ? 80 : 36, 
+                            height: 36, 
+                            borderRadius: 10, 
+                            border: 'none', 
+                            background: confirmingId === item.id ? '#ef4444' : 'white', 
+                            color: confirmingId === item.id ? 'white' : '#ef4444', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center', 
+                            cursor: 'pointer', 
+                            boxShadow: 'var(--shadow-sm)',
+                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                            fontSize: 12,
+                            fontWeight: 700,
+                            gap: 4
+                          }}
+                        >
+                          <span className="material-icons-round" style={{ fontSize: 18 }}>
+                            {confirmingId === item.id ? 'done' : 'delete'}
+                          </span>
+                          {confirmingId === item.id && <span>Sûr ?</span>}
                         </button>
                       </div>
                     </div>

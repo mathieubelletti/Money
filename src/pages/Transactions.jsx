@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import BankLogo from '../components/BankLogo';
+import CompanyLogo from '../components/CompanyLogo';
 import PageHeader from '../components/PageHeader';
 import { formatAmount } from '../utils/helpers';
 import { useData } from '../context/DataContext';
@@ -207,7 +207,7 @@ const Transactions = () => {
                   borderBottom: index === group.items.length - 1 ? 'none' : '1px solid var(--color-border-light)'
                 }}>
                   <div style={{ marginRight: 16 }}>
-                    <BankLogo 
+                    <CompanyLogo 
                       domain={tx.domain} 
                       name={tx.name} 
                       size={44} 

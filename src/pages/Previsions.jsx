@@ -93,11 +93,11 @@ const Previsions = () => {
   
   // Add dynamic recurrence
   const addGlobalRecurrence = (section) => {
-    const newId = Date.now() + Math.random(); // Use better unique ID
-    setGlobalRecurrences(prev => ({
-      ...prev,
-      [section]: [...prev[section], { id: newId, label: '', amount: '', isLinked: true }]
-    }));
+    const newId = Date.now() + Math.random();
+    setGlobalRecurrences({
+      ...globalRecurrences,
+      [section]: [...globalRecurrences[section], { id: newId, label: '', amount: '', isLinked: true }]
+    });
   };
 
   // Totals & Cascading Rollover Calculation
