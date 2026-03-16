@@ -1,12 +1,26 @@
 import React, { useState } from 'react';
-import { transactions, txFilters } from '../data/mockData';
 import BankLogo from '../components/BankLogo';
+import PageHeader from '../components/PageHeader';
 import { formatAmount } from '../utils/helpers';
+import { useData } from '../context/DataContext';
 
 const Transactions = () => {
+  const { transactions: txData, setTransactions: setTxData, categories, globalRecurrences } = useData();
   const [activeFilter, setActiveFilter] = useState('Tous');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  
+  // Form State
+  const [newTx, setNewTx] = useState({
+    name: '',
+    category: 'Alimentation',
+    amount: '',
+    account: 'Compte Courant',
+    toAccount: 'Revolut', // For transfers
+    date: new Date().toISOString().split('T')[0],
+    type: 'Dépenses' // Revenus, Dépenses, Virement
+  });
 
-  const filteredGroups = transactions
+  const filteredGroups = txData
     .map(group => ({
       ...group,
       items: activeFilter === 'Tous'
@@ -15,33 +29,90 @@ const Transactions = () => {
     }))
     .filter(group => group.items.length > 0);
 
+  const handleAddTransaction = (e) => {
+    e.preventDefault();
+    if (!newTx.name || !newTx.amount) return;
+
+    const amountNum = parseFloat(newTx.amount.replace(',', '.'));
+    const isTransfer = newTx.type === 'Virement';
+    const isIncome = newTx.type === 'Revenus';
+    
+    // Final amount based on type
+    const finalAmount = isIncome ? Math.abs(amountNum) : -Math.abs(amountNum);
+
+    const txDate = new Date(newTx.date);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    let dateLabel = '';
+    if (txDate.toDateString() === today.toDateString()) dateLabel = "Aujourd'hui";
+    else if (txDate.toDateString() === yesterday.toDateString()) dateLabel = "Hier";
+    else {
+      dateLabel = txDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+    }
+
+    const createTxItem = (name, amount, acc, icon, cat) => ({
+      id: Math.random(), // Use random for multi-inserts
+      name: name,
+      category: cat || newTx.category,
+      categoryIcon: icon || (newTx.category === 'Alimentation' ? 'shopping_basket' : 
+                    newTx.category === 'Loisirs' ? 'movie' : 
+                    newTx.category === 'Revenus' ? 'attach_money' : 
+                    newTx.category === 'Logement' ? 'home' : 
+                    newTx.category === 'Transport' ? 'directions_transit' : 'category'),
+      amount: amount,
+      account: acc,
+      color: amount > 0 ? '#22c55e' : '#191C1F',
+      domain: '',
+      bg: amount > 0 ? 'rgba(34,197,94,0.10)' : 'rgba(25,28,31,0.05)'
+    });
+
+    const newItems = [];
+    if (isTransfer) {
+      // Create two entries for a transfer
+      newItems.push(createTxItem(`Virement vers ${newTx.toAccount}`, -Math.abs(amountNum), newTx.account, 'swap_horiz', 'Transferts'));
+      newItems.push(createTxItem(`Virement de ${newTx.account}`, Math.abs(amountNum), newTx.toAccount, 'swap_horiz', 'Transferts'));
+    } else {
+      newItems.push(createTxItem(newTx.name, finalAmount, newTx.account));
+    }
+
+    setTxData(prev => {
+      let updated = [...prev];
+      const existingGroupIndex = updated.findIndex(g => g.date === dateLabel);
+      
+      if (existingGroupIndex > -1) {
+        updated[existingGroupIndex] = {
+          ...updated[existingGroupIndex],
+          items: [...newItems, ...updated[existingGroupIndex].items]
+        };
+      } else {
+        updated.push({
+          id: Date.now(),
+          date: dateLabel,
+          dateOrder: -1,
+          items: newItems
+        });
+        updated.sort((a, b) => a.dateOrder - b.dateOrder);
+      }
+      return updated;
+    });
+
+    setIsAddModalOpen(false);
+    setNewTx({
+      name: '',
+      category: 'Alimentation',
+      amount: '',
+      account: 'Compte Courant',
+      toAccount: 'Revolut',
+      date: new Date().toISOString().split('T')[0],
+      type: 'Dépenses'
+    });
+  };
+
   return (
     <div className="screen animate-fade">
-      {/* Header */}
-      <header 
-        style={{ 
-          background: 'var(--color-bg)', 
-          padding: '16px 20px 12px', 
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}
-      >
-        <span className="material-icons-round" style={{ fontSize: 24, cursor: 'pointer' }}>menu</span>
-        <h2 style={{ fontSize: 18, fontWeight: 800 }}>Transactions</h2>
-        <div style={{ 
-          width: 40, 
-          height: 40, 
-          borderRadius: '50%', 
-          background: 'rgba(46, 204, 112, 0.12)', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          cursor: 'pointer'
-        }}>
-          <span className="material-icons-round" style={{ color: 'var(--color-primary)', fontSize: 22 }}>notifications</span>
-        </div>
-      </header>
+      <PageHeader title="Transactions" />
 
       {/* Search Bar */}
       <div style={{ padding: '0 16px 16px' }}>
@@ -83,40 +154,39 @@ const Transactions = () => {
           Tous les comptes
           <span className="material-icons-round" style={{ fontSize: 18 }}>expand_more</span>
         </button>
-        {txFilters.filter(f => f !== 'Tous').map(cat => (
+        {categories.map(cat => (
           <button
-            key={cat}
+            key={cat.id}
+            onClick={() => setActiveFilter(cat.name === activeFilter ? 'Tous' : cat.name)}
             className="flex items-center gap-2"
             style={{ 
               height: 44, 
               padding: '0 20px', 
               borderRadius: 22, 
-              background: 'white',
-              color: 'var(--color-text-primary)',
-              border: '1px solid var(--color-border-light)',
+              background: activeFilter === cat.name ? 'var(--color-primary)' : 'white',
+              color: activeFilter === cat.name ? 'white' : 'var(--color-text-primary)',
+              border: activeFilter === cat.name ? 'none' : '1px solid var(--color-border-light)',
               fontSize: 14,
               fontWeight: 600,
               whiteSpace: 'nowrap'
             }}
           >
             <span className="material-icons-round" style={{ fontSize: 18 }}>
-              {cat === 'Alimentation' ? 'restaurant' : 
-               cat === 'Loyer' ? 'home' : 
-               cat === 'Loisirs' ? 'sports_esports' : 'category'}
+              {cat.icon}
             </span>
-            {cat}
+            {cat.name}
           </button>
         ))}
       </div>
 
       {/* Transactions List */}
-      <div className="screen-content-centered" style={{ padding: '0 16px' }}>
-        {filteredGroups.map(group => (
-          <div key={group.id} className="animate-slide-up" style={{ marginBottom: 24 }}>
+      <div className="screen-content-centered" style={{ padding: '0 16px', minHeight: '300px', display: filteredGroups.length === 0 ? 'flex' : 'block', alignItems: 'center', justifyContent: 'center' }}>
+        {filteredGroups.length > 0 ? filteredGroups.map(group => (
+          <div key={group.id} className="animate-slide-up" style={{ marginBottom: 24, width: '100%' }}>
             <div className="tx-date-container" style={{ padding: '0 4px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span className="tx-date-label" style={{ fontSize: 12, fontWeight: 800, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.02em' }}>{group.date}</span>
               <span className="tx-date-value" style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-tertiary)', opacity: 0.6 }}>
-                {group.dateOrder === 0 ? '12 Oct. 2023' : group.dateOrder === 1 ? '11 Oct. 2023' : '14 mars 2024'}
+                {group.dateOrder === 0 ? 'Aujourd\'hui' : group.dateOrder === 1 ? 'Hier' : group.date}
               </span>
             </div>
             
@@ -167,7 +237,23 @@ const Transactions = () => {
               ))}
             </div>
           </div>
-        ))}
+        )) : (
+          <div style={{ textAlign: 'center', padding: '48px 24px' }}>
+            <div style={{ background: 'var(--color-bg)', width: 80, height: 80, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <span className="material-icons-round" style={{ fontSize: 40, color: 'var(--color-text-tertiary)', opacity: 0.5 }}>receipt_long</span>
+            </div>
+            <h3 style={{ fontSize: 18, fontWeight: 900, color: 'var(--color-text-primary)', margin: '0 0 12px' }}>Aucune transaction</h3>
+            <p style={{ fontSize: 14, color: 'var(--color-text-secondary)', fontWeight: 500, margin: 0, lineHeight: 1.5, maxWidth: 280, margin: '0 auto' }}>
+              Ajoutez votre première opération manuellement ou connectez un établissement bancaire.
+            </p>
+            <button 
+              onClick={() => setIsAddModalOpen(true)}
+              style={{ marginTop: 24, padding: '12px 24px', borderRadius: 16, border: 'none', background: 'var(--color-primary)', color: 'white', fontWeight: 800, fontSize: 14, cursor: 'pointer', boxShadow: '0 8px 16px rgba(24, 82, 74, 0.2)' }}
+            >
+              Ajouter une opération
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Floating Action Button */}
@@ -191,7 +277,7 @@ const Transactions = () => {
           background: 'var(--color-primary)',
           color: 'white',
           border: 'none',
-          boxShadow: '0 4px 12px rgba(46, 204, 112, 0.4)',
+          boxShadow: '0 4px 12px rgba(24, 82, 74, 0.4)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -199,12 +285,209 @@ const Transactions = () => {
           pointerEvents: 'auto',
           transition: 'transform 0.2s',
         }}
+        onClick={() => setIsAddModalOpen(true)}
         onPointerDown={(e) => e.currentTarget.style.transform = 'scale(0.9)'}
         onPointerUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
           <span className="material-icons-round" style={{ fontSize: 32 }}>add</span>
         </button>
       </div>
+
+      {/* Add Transaction Modal */}
+      {isAddModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.4)',
+          backdropFilter: 'blur(8px)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }} onClick={() => setIsAddModalOpen(false)}>
+          <div 
+            className="animate-slide-up"
+            style={{
+              width: '100%',
+              maxWidth: 500,
+              background: 'white',
+              borderRadius: 32,
+              padding: '32px',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <h3 style={{ fontSize: 20, fontWeight: 900, color: 'var(--color-text-primary)', margin: 0 }}>Nouvelle transaction</h3>
+              <button 
+                onClick={() => setIsAddModalOpen(false)}
+                style={{ background: 'var(--color-bg)', border: 'none', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              >
+                <span className="material-icons-round" style={{ fontSize: 20, color: 'var(--color-text-secondary)' }}>close</span>
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', background: 'var(--color-bg)', padding: 4, borderRadius: 14, marginBottom: 24 }}>
+              {['Dépenses', 'Revenus', 'Virement'].map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setNewTx({...newTx, type: t})}
+                  style={{
+                    flex: 1,
+                    height: 40,
+                    borderRadius: 10,
+                    border: 'none',
+                    fontSize: 14,
+                    fontWeight: 700,
+                    background: newTx.type === t ? 'white' : 'transparent',
+                    color: newTx.type === t ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                    boxShadow: newTx.type === t ? 'var(--shadow-sm)' : 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+
+            <form onSubmit={handleAddTransaction} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {newTx.type !== 'Virement' && (
+                <div>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: 'var(--color-text-tertiary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Libellé</label>
+                  <input 
+                    type="text" 
+                    value={newTx.name}
+                    onChange={e => setNewTx({...newTx, name: e.target.value})}
+                    placeholder="Ex: Restaurant Le Gourmet"
+                    required
+                    style={{ width: '100%', height: 56, borderRadius: 16, background: 'var(--color-bg)', border: '1px solid var(--color-border)', padding: '0 16px', fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)' }}
+                  />
+                </div>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: 'var(--color-text-tertiary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Montant</label>
+                  <input 
+                    type="text" 
+                    value={newTx.amount}
+                    onChange={e => setNewTx({...newTx, amount: e.target.value})}
+                    placeholder="0.00 €"
+                    required
+                    style={{ width: '100%', height: 56, borderRadius: 16, background: 'var(--color-bg)', border: '1px solid var(--color-border)', padding: '0 16px', fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: 'var(--color-text-tertiary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Date</label>
+                  <input 
+                    type="date" 
+                    value={newTx.date}
+                    onChange={e => setNewTx({...newTx, date: e.target.value})}
+                    style={{ width: '100%', height: 56, borderRadius: 16, background: 'var(--color-bg)', border: '1px solid var(--color-border)', padding: '0 16px', fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)' }}
+                  />
+                </div>
+              </div>
+
+              {newTx.type !== 'Virement' && (
+                <div>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: 'var(--color-text-tertiary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Catégorie</label>
+                  <select 
+                    value={newTx.category}
+                    onChange={e => setNewTx({...newTx, category: e.target.value})}
+                    style={{ width: '100%', height: 56, borderRadius: 16, background: 'var(--color-bg)', border: '1px solid var(--color-border)', padding: '0 16px', fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)', appearance: 'none' }}
+                  >
+                    <optgroup label="Revenus">
+                      {globalRecurrences.revenus.map(r => (
+                        <option key={r.id} value={r.label}>{r.label}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Dépenses Fixes">
+                      {globalRecurrences.fixes.map(r => (
+                        <option key={r.id} value={r.label}>{r.label}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Dépenses Variables">
+                      {globalRecurrences.variables.map(r => (
+                        <option key={r.id} value={r.label}>{r.label}</option>
+                      ))}
+                    </optgroup>
+                    <option value="Divers">Divers</option>
+                  </select>
+                </div>
+              )}
+
+              {newTx.type === 'Virement' ? (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: 'var(--color-text-tertiary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>De (émetteur)</label>
+                    <select 
+                      value={newTx.account}
+                      onChange={e => setNewTx({...newTx, account: e.target.value})}
+                      style={{ width: '100%', height: 56, borderRadius: 16, background: 'var(--color-bg)', border: '1px solid var(--color-border)', padding: '0 16px', fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)', appearance: 'none' }}
+                    >
+                      <option value="Compte Courant">Compte Courant</option>
+                      <option value="Carte Débit">Carte Débit</option>
+                      <option value="Revolut">Revolut</option>
+                      <option value="Épargne">Épargne</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: 'var(--color-text-tertiary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Vers (récepteur)</label>
+                    <select 
+                      value={newTx.toAccount}
+                      onChange={e => setNewTx({...newTx, toAccount: e.target.value})}
+                      style={{ width: '100%', height: 56, borderRadius: 16, background: 'var(--color-bg)', border: '1px solid var(--color-border)', padding: '0 16px', fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)', appearance: 'none' }}
+                    >
+                      <option value="Compte Courant">Compte Courant</option>
+                      <option value="Carte Débit">Carte Débit</option>
+                      <option value="Revolut">Revolut</option>
+                      <option value="Épargne">Épargne</option>
+                    </select>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: 'var(--color-text-tertiary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Compte</label>
+                  <select 
+                    value={newTx.account}
+                    onChange={e => setNewTx({...newTx, account: e.target.value})}
+                    style={{ width: '100%', height: 56, borderRadius: 16, background: 'var(--color-bg)', border: '1px solid var(--color-border)', padding: '0 16px', fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)', appearance: 'none' }}
+                  >
+                    <option value="Compte Courant">Compte Courant</option>
+                    <option value="Carte Débit">Carte Débit</option>
+                    <option value="Revolut">Revolut</option>
+                    <option value="Épargne">Épargne</option>
+                  </select>
+                </div>
+              )}
+
+              <button 
+                type="submit"
+                style={{ 
+                  marginTop: 12,
+                  height: 60, 
+                  borderRadius: 20, 
+                  background: 'var(--color-primary)', 
+                  color: 'white', 
+                  border: 'none', 
+                  fontSize: 16, 
+                  fontWeight: 900, 
+                  boxShadow: '0 6px 20px rgba(24, 82, 74, 0.3)',
+                  cursor: 'pointer'
+                }}
+              >
+                Ajouter la transaction
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -5,7 +5,7 @@ const BottomNav = ({ activeTab, setActiveTab }) => {
     { id: 'dashboard', label: 'Synthèse', icon: 'grid_view' },
     { id: 'transactions', label: 'Analyses', icon: 'pie_chart' },
     { id: 'budget', label: 'Budget', icon: 'account_balance_wallet' },
-    { id: 'previsions', label: 'Profil', icon: 'person' },
+    { id: 'previsions', label: 'Prévisions', icon: 'trending_up' },
   ];
 
   return (

@@ -1,14 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import BankLogo from '../components/BankLogo';
-import { user, accounts as initialAccounts, savings, patrimonyChart, insights } from '../data/mockData';
+import PageHeader from '../components/PageHeader';
+import { savings, patrimonyChart, insights } from '../data/mockData';
+import { useData } from '../context/DataContext';
 
 const Dashboard = () => {
-  const [accounts, setAccounts] = useState(initialAccounts);
-  const [savingsItems, setSavingsItems] = useState(savings);
+  const { accounts, setAccounts, savingsItems, setSavingsItems, user, transactions } = useData();
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [manageType, setManageType] = useState('accounts'); // 'accounts' or 'savings'
   const [editingItem, setEditingItem] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+
+  const totalBalance = (accounts || []).reduce((acc, curr) => acc + (curr?.balance || 0), 0);
+  
+  // Calculate monthly change if possible, else 0
+  const monthChange = 0; 
+  
+  // Calculate monthly totals from transactions safely
+  const monthlyRevenus = (transactions || []).reduce((acc, group) => {
+    return acc + (group?.items || []).reduce((s, tx) => tx.amount > 0 ? s + tx.amount : s, 0);
+  }, 0);
+  
+  const monthlyDepenses = (transactions || []).reduce((acc, group) => {
+    return acc + (group?.items || []).reduce((s, tx) => tx.amount < 0 ? s + Math.abs(tx.amount) : s, 0);
+  }, 0);
 
   useEffect(() => {
     const screenContainer = document.querySelector('.screen');
@@ -98,51 +113,18 @@ const Dashboard = () => {
 
   return (
     <div className="screen">
-      {/* Top Bar Navigation */}
-      <header style={{ 
-        position: 'sticky', 
-        top: 0, 
-        zIndex: 60, 
-        background: 'white', 
-        padding: '16px 24px',
-        borderBottom: '1px solid var(--color-border-light)',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
-      }}>
-        <div className="dashboard-max-width" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ 
-              width: 44, height: 44, borderRadius: '50%', background: '#f1f5f9', 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', 
-              fontWeight: 800, fontSize: 20, border: '2px solid white', boxShadow: 'var(--shadow-sm)'
-            }}>
-              {user.avatar}
-            </div>
-            <div>
-              <h2 style={{ fontSize: 18, fontWeight: 900, color: 'var(--color-text-primary)', margin: 0, letterSpacing: '-0.01em' }}>Tableau de bord</h2>
-              <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: '2px 0 0', fontWeight: 600 }}>Bonjour, {user.name}</p>
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button style={{ width: 40, height: 40, borderRadius: '50%', border: 'none', background: 'var(--color-primary-bg)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-              <span className="material-icons-round" style={{ fontSize: 20 }}>notifications</span>
-            </button>
-            <button style={{ width: 40, height: 40, borderRadius: '50%', border: 'none', background: 'var(--color-primary-bg)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-              <span className="material-icons-round" style={{ fontSize: 20 }}>settings</span>
-            </button>
-          </div>
-        </div>
-      </header>
+      <PageHeader title="Tableau de bord" />
 
       {/* Balance Card Section */}
       <section style={{ padding: '24px 24px 0' }} className="dashboard-max-width">
         <div style={{ 
-          background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)', 
+          background: 'linear-gradient(135deg, var(--color-primary-bg) 0%, #e2eeec 100%)', 
           padding: '24px', 
           borderRadius: 24, 
           border: '1px solid var(--color-border)',
           position: 'relative',
           overflow: 'hidden',
-          boxShadow: '0 10px 25px -5px rgba(46, 204, 112, 0.15)'
+          boxShadow: '0 10px 25px -5px rgba(24, 82, 74, 0.15)'
         }}>
           <div style={{ position: 'absolute', top: 20, right: 20, color: 'var(--color-primary)', opacity: 0.8 }}>
             <span className="material-icons-round" style={{ fontSize: 28 }}>account_balance_wallet</span>
@@ -150,14 +132,20 @@ const Dashboard = () => {
           <div style={{ position: 'relative', zIndex: 1 }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-secondary)', margin: 0 }}>Solde Total consolidé</p>
             <h1 style={{ fontSize: 36, fontWeight: 900, color: 'var(--color-text-primary)', margin: '12px 0', letterSpacing: '-0.02em' }}>
-              {user.totalBalance.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
+              {totalBalance.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
             </h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--color-success)', fontWeight: 800, fontSize: 13 }}>
-                <span className="material-icons-round" style={{ fontSize: 18 }}>trending_up</span>
-                <span>+3.2%</span>
-              </div>
-              <span style={{ color: 'var(--color-text-tertiary)', fontSize: 13, fontWeight: 600 }}>ce mois-ci</span>
+              {monthChange !== 0 ? (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: monthChange > 0 ? 'var(--color-success)' : 'var(--color-danger)', fontWeight: 800, fontSize: 13 }}>
+                    <span className="material-icons-round" style={{ fontSize: 18 }}>{monthChange > 0 ? 'trending_up' : 'trending_down'}</span>
+                    <span>{monthChange > 0 ? '+' : ''}{monthChange}%</span>
+                  </div>
+                  <span style={{ color: 'var(--color-text-tertiary)', fontSize: 13, fontWeight: 600 }}>ce mois-ci</span>
+                </>
+              ) : (
+                <span style={{ color: 'var(--color-text-tertiary)', fontSize: 12, fontWeight: 600, fontStyle: 'italic' }}>Données du mois en cours</span>
+              )}
             </div>
           </div>
         </div>
@@ -176,14 +164,14 @@ const Dashboard = () => {
             display: 'flex', alignItems: 'center', gap: 16
           }}>
             <div style={{ 
-              width: 48, height: 48, borderRadius: 16, background: 'var(--color-success-light)', 
-              color: 'var(--color-success)', display: 'flex', alignItems: 'center', justifyContent: 'center' 
+              width: 48, height: 48, borderRadius: 16, background: 'var(--color-primary-glass)', 
+              color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' 
             }}>
               <span className="material-icons-round">trending_up</span>
             </div>
             <div>
               <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-tertiary)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Revenus</p>
-              <p style={{ fontSize: 20, fontWeight: 900, color: 'var(--color-text-primary)', margin: '4px 0 0' }}>4 250,00 €</p>
+              <p style={{ fontSize: 20, fontWeight: 900, color: 'var(--color-text-primary)', margin: '4px 0 0' }}>{monthlyRevenus.toLocaleString('fr-FR')} €</p>
             </div>
           </div>
           
@@ -193,14 +181,14 @@ const Dashboard = () => {
             display: 'flex', alignItems: 'center', gap: 16
           }}>
             <div style={{ 
-              width: 48, height: 48, borderRadius: 16, background: 'rgba(239, 68, 68, 0.1)', 
-              color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center' 
+              width: 48, height: 48, borderRadius: 16, background: 'rgba(24, 82, 74, 0.05)', 
+              color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.8
             }}>
               <span className="material-icons-round">trending_down</span>
             </div>
             <div>
               <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-tertiary)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Dépenses</p>
-              <p style={{ fontSize: 20, fontWeight: 900, color: 'var(--color-text-primary)', margin: '4px 0 0' }}>2 840,30 €</p>
+              <p style={{ fontSize: 20, fontWeight: 900, color: 'var(--color-text-primary)', margin: '4px 0 0' }}>{monthlyDepenses.toLocaleString('fr-FR')} €</p>
             </div>
           </div>
         </div>
@@ -217,7 +205,7 @@ const Dashboard = () => {
           }}>Gérer</button>
         </div>
         <div className="tablet-grid" style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 12, margin: '0 -24px', paddingLeft: 24, paddingRight: 24 }}>
-          {accounts.map(acc => (
+          {accounts.length > 0 ? accounts.map(acc => (
             <div key={acc.id} style={{ 
               minWidth: 140, background: 'white', padding: 16, borderRadius: 18, 
               border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-sm)'
@@ -238,7 +226,13 @@ const Dashboard = () => {
               </p>
               <p style={{ fontSize: 14, fontWeight: 900, color: 'var(--color-text-primary)', marginTop: 12 }}>{acc.balance.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</p>
             </div>
-          ))}
+          )) : (
+            <div style={{ flex: 1, padding: '32px', background: 'white', borderRadius: 20, border: '2px dashed var(--color-border)', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
+              <span className="material-icons-round" style={{ fontSize: 32, marginBottom: 8, opacity: 0.5 }}>account_balance</span>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 700 }}>Aucun compte configuré</p>
+              <button onClick={() => { setManageType('accounts'); setIsManageModalOpen(true); handleAddItem(); }} style={{ marginTop: 12, background: 'var(--color-primary)', border: 'none', borderRadius: 8, padding: '6px 16px', color: 'white', fontWeight: 800, fontSize: 12, cursor: 'pointer' }}>Ajouter un compte</button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -253,7 +247,7 @@ const Dashboard = () => {
           }}>Gérer</button>
         </div>
         <div className="tablet-grid" style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 12, margin: '0 -24px', paddingLeft: 24, paddingRight: 24 }}>
-          {savingsItems.map(save => (
+          {savingsItems.length > 0 ? savingsItems.map(save => (
             <div key={save.id} style={{ 
               minWidth: 160, background: 'white', padding: 16, borderRadius: 18, 
               border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-sm)'
@@ -266,7 +260,11 @@ const Dashboard = () => {
               <p style={{ fontSize: 11, color: 'var(--color-text-tertiary)', fontWeight: 600, marginTop: 2 }}>{save.bank}</p>
               <p style={{ fontSize: 14, fontWeight: 900, color: 'var(--color-primary-dark)', marginTop: 12 }}>{save.balance.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</p>
             </div>
-          ))}
+          )) : (
+            <div style={{ flex: 1, padding: '24px', background: 'white', borderRadius: 20, border: '2px dashed var(--color-border)', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
+              <p style={{ margin: 0, fontSize: 12, fontWeight: 700 }}>Aucun contrat d'épargne</p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -289,34 +287,12 @@ const Dashboard = () => {
           
           <div style={{ height: 160, width: '100%', position: 'relative', marginTop: 12 }}>
             <svg viewBox="0 0 400 150" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
-              <defs>
-                <linearGradient id="chart-grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.2" />
-                  <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              {/* Path / Area */}
-              <path 
-                d="M 0 120 C 40 115, 80 135, 120 100 S 200 40, 240 70 S 320 20, 400 35 L 400 150 L 0 150 Z" 
-                fill="url(#chart-grad)"
-              />
-              {/* Main Line */}
-              <path 
-                d="M 0 120 C 40 115, 80 135, 120 100 S 200 40, 240 70 S 320 20, 400 35" 
-                fill="none" 
-                stroke="var(--color-primary)" 
-                strokeWidth="3" 
-                strokeLinecap="round"
-              />
-              {/* Points */}
-              <circle cx="120" cy="100" r="4" fill="var(--color-primary)" />
-              <circle cx="240" cy="70" r="4" fill="var(--color-primary)" />
-              <circle cx="400" cy="35" r="4" fill="var(--color-primary)" />
+              <text x="50%" y="50%" textAnchor="middle" fill="var(--color-text-tertiary)" fontSize="12" fontWeight="700">En attente de données historiques</text>
             </svg>
           </div>
           
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16, padding: '0 4px' }}>
-            {patrimonyChart.map(data => (
+            {(patrimonyChart || []).map(data => (
               <span key={data.month} style={{ fontSize: 10, fontWeight: 800, color: data.month === 'JUIN' ? 'var(--color-primary-dark)' : 'var(--color-text-tertiary)' }}>{data.month}</span>
             ))}
           </div>
@@ -330,7 +306,7 @@ const Dashboard = () => {
           <div style={{ flex: 1, height: 1.5, background: '#000000', opacity: 0.2 }}></div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {insights.map(insight => (
+          {(insights || []).map(insight => (
             <div key={insight.id} style={{ 
               display: 'flex', gap: 16, background: 'white', padding: 16, borderRadius: 18, 
               border: '1px solid var(--color-border-light)', alignItems: 'center'
@@ -488,7 +464,7 @@ const Dashboard = () => {
                   {/* Actions */}
                   <div style={{ display: 'flex', gap: 12, borderTop: '1px solid var(--color-border-light)', paddingTop: 20 }}>
                     <button type="button" onClick={() => setEditingItem(null)} style={{ flex: 1, padding: '14px', borderRadius: 14, border: 'none', background: '#f1f5f9', color: 'var(--color-text-secondary)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Annuler</button>
-                    <button type="submit" style={{ flex: 2, padding: '14px', borderRadius: 14, border: 'none', background: 'var(--color-primary)', color: 'white', fontSize: 14, fontWeight: 800, cursor: 'pointer', boxShadow: '0 8px 16px -4px rgba(46, 204, 112, 0.3)' }}>Enregistrer les modifications</button>
+                    <button type="submit" style={{ flex: 2, padding: '14px', borderRadius: 14, border: 'none', background: 'var(--color-primary)', color: 'white', fontSize: 14, fontWeight: 800, cursor: 'pointer', boxShadow: '0 8px 16px -4px rgba(24, 82, 74, 0.3)' }}>Enregistrer les modifications</button>
                   </div>
                 </form>
               ) : (
@@ -549,7 +525,7 @@ const Dashboard = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 8px 16px rgba(46, 204, 112, 0.3)',
+            boxShadow: '0 8px 16px rgba(24, 82, 74, 0.3)',
             cursor: 'pointer',
             zIndex: 100,
             transition: 'all 0.3s ease'

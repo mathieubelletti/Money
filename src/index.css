@@ -1,11 +1,11 @@
 /* === DESIGN SYSTEM - Dashboard Bancaire === */
 :root {
   /* Couleurs principales (Exact Stitch Tokens) */
-  --color-primary: #2ecc70;
-  --color-primary-dark: #27ae60;
-  --color-primary-light: #58d68d;
-  --color-primary-bg: #f0fdf4;
-  --color-primary-glass: rgba(46, 204, 112, 0.12);
+  --color-primary: #18524a;
+  --color-primary-dark: #0f3a34;
+  --color-primary-light: #2a7a70;
+  --color-primary-bg: #f0f6f5;
+  --color-primary-glass: rgba(24, 82, 74, 0.12);
 
   /* Couleurs sémantiques */
   --color-success: #22c55e;
@@ -741,10 +741,28 @@ body {
 
 .budget-objectif {
   margin: 0 var(--space-5) var(--space-5);
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
   color: white;
+  transition: all 0.5s ease;
+  border: 2px solid transparent;
+}
+
+.budget-objectif.purple {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.budget-objectif.finished {
+  border-color: #fbbf24;
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+  animation: pulse-gold 2s infinite;
+}
+
+@keyframes pulse-gold {
+  0% { box-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
+  50% { box-shadow: 0 0 25px rgba(251, 191, 36, 0.5); }
+  100% { box-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
 }
 
 .budget-objectif-title {
@@ -889,8 +907,8 @@ body {
 }
 
 .tag-excedent {
-  background: var(--color-success-light);
-  color: var(--color-success);
+  background: var(--color-primary-glass);
+  color: var(--color-primary);
 }
 
 .tag-deficit {
@@ -1126,4 +1144,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
