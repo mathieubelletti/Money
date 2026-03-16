@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2ecc70",
+                        "background-light": "#f8f8f6",
+                        "background-dark": "#211f11",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen font-display">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Header -->
+<header class="flex items-center bg-background-light dark:bg-background-dark p-4 sticky top-0 z-10 border-b border-primary/10">
+<div class="flex size-10 shrink-0 items-center overflow-hidden rounded-full border border-primary/20">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="User profile portrait in a circle" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDh68jVFNZLdVXBkMRS9AKm6hoRY5Tbaau2esB918qvkEaKp_CQSIJ8Arf3UP_mpPUWGdY-iksm1UqeJpEObpm5SEtiTMSnCNx1nwwBCdYRrP0ty8dFnMrK9bqT8auHcuylLMUi44EbkbhSuuWeTHtUm5wiXVWYUsJvDMdXP7PH4PG1O6336u8T-ktLcfWqPVm8DdqTEqN1TsTqIsvl-H5kZUZTcf7O_A0MXYMNnWZcrSTfzg9HJPmAapgaf_pj18pc0u8WzCw4nRg"/>
+</div>
+<div class="flex-1 px-3">
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight">Tableau de bord</h2>
+<p class="text-xs text-slate-500 dark:text-slate-400">Bonjour, Marc</p>
+</div>
+<div class="flex gap-2">
+<button class="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+<span class="material-symbols-outlined text-[24px]">notifications</span>
+</button>
+<button class="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+<span class="material-symbols-outlined text-[24px]">settings</span>
+</button>
+</div>
+</header>
+<main class="flex-1 pb-24">
+<!-- Balance Card -->
+<div class="p-4">
+<div class="flex flex-col gap-2 rounded-xl p-6 bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 shadow-sm">
+<div class="flex justify-between items-start">
+<p class="text-slate-600 dark:text-slate-300 text-sm font-medium">Solde Total consolidé</p>
+<span class="material-symbols-outlined text-primary">account_balance_wallet</span>
+</div>
+<div class="flex items-baseline gap-2">
+<p class="text-slate-900 dark:text-slate-100 tracking-tight text-3xl font-extrabold leading-tight">12 450,20 €</p>
+</div>
+<div class="flex items-center gap-1.5 mt-1">
+<div class="flex items-center text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full text-xs font-bold">
+<span class="material-symbols-outlined text-xs mr-0.5">trending_up</span>
+                            +3.2%
+                        </div>
+<p class="text-slate-500 text-xs italic">ce mois-ci</p>
+</div>
+</div>
+</div>
+<!-- Quick Actions -->
+<div class="px-4 py-2">
+<h3 class="text-slate-900 dark:text-slate-100 text-base font-bold mb-4 flex items-center gap-2">
+                    Accès rapides
+                </h3>
+<div class="grid grid-cols-4 gap-3">
+<div class="flex flex-col items-center gap-2">
+<button class="flex size-14 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined">send</span>
+</button>
+<span class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Virement</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<button class="flex size-14 items-center justify-center rounded-2xl bg-white dark:bg-slate-800 text-primary border border-primary/20 shadow-sm">
+<span class="material-symbols-outlined">add_card</span>
+</button>
+<span class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Ajouter</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<button class="flex size-14 items-center justify-center rounded-2xl bg-white dark:bg-slate-800 text-primary border border-primary/20 shadow-sm">
+<span class="material-symbols-outlined">analytics</span>
+</button>
+<span class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Stats</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<button class="flex size-14 items-center justify-center rounded-2xl bg-white dark:bg-slate-800 text-primary border border-primary/20 shadow-sm">
+<span class="material-symbols-outlined">receipt_long</span>
+</button>
+<span class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Factures</span>
+</div>
+</div>
+</div><!-- Connected Accounts Section -->
+<div class="px-4 py-2 mt-4">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-slate-900 dark:text-slate-100 text-base font-bold flex items-center gap-2">
+            Comptes connectés
+        </h3>
+<button class="text-primary text-xs font-semibold">Gérer</button>
+</div>
+<div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+<!-- Bank Card 1: BNP -->
+<div class="flex flex-col min-w-[120px] bg-white dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+<div class="flex size-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 mb-2">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<p class="text-slate-900 dark:text-slate-100 font-bold text-[11px] truncate">BNP Paribas</p>
+<p class="text-primary text-[9px] font-medium mt-1 italic">Il y a 2h</p>
+</div>
+<!-- Bank Card 2: SocGen -->
+<div class="flex flex-col min-w-[120px] bg-white dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+<div class="flex size-10 items-center justify-center rounded-lg bg-red-50 text-red-600 mb-2">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<p class="text-slate-900 dark:text-slate-100 font-bold text-[11px] truncate">Société Générale</p>
+<p class="text-primary text-[9px] font-medium mt-1 italic">Il y a 1h</p>
+</div>
+<!-- Bank Card 3: Revolut -->
+<div class="flex flex-col min-w-[120px] bg-white dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+<div class="flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-800 mb-2">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<p class="text-slate-900 dark:text-slate-100 font-bold text-[11px] truncate">Revolut</p>
+<p class="text-primary text-[9px] font-medium mt-1 italic">À l'instant</p>
+</div>
+<!-- Bank Card 4: Boursorama -->
+<div class="flex flex-col min-w-[120px] bg-white dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+<div class="flex size-10 items-center justify-center rounded-lg bg-pink-50 text-pink-600 mb-2">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<p class="text-slate-900 dark:text-slate-100 font-bold text-[11px] truncate">Boursorama</p>
+<p class="text-primary text-[9px] font-medium mt-1 italic">Il y a 4h</p>
+</div>
+</div>
+</div><!-- Savings Section -->
+<div class="px-4 py-2 mt-4">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-slate-900 dark:text-slate-100 text-base font-bold flex items-center gap-2">
+            Épargne
+        </h3>
+<button class="text-primary text-xs font-semibold">Gérer</button>
+</div>
+<div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+<!-- Savings Card 1: Livret A -->
+<div class="flex flex-col min-w-[140px] bg-white dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+<div class="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary mb-2">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<p class="text-slate-900 dark:text-slate-100 font-bold text-[11px] truncate">Livret A</p>
+<p class="text-slate-500 dark:text-slate-400 text-[10px] mt-1">Solde: <span class="text-primary font-bold">15 400,00 €</span></p>
+</div>
+<!-- Savings Card 2: LDDS -->
+<div class="flex flex-col min-w-[140px] bg-white dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+<div class="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary mb-2">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<p class="text-slate-900 dark:text-slate-100 font-bold text-[11px] truncate">LDDS</p>
+<p class="text-slate-500 dark:text-slate-400 text-[10px] mt-1">Solde: <span class="text-primary font-bold">5 200,00 €</span></p>
+</div>
+<!-- Savings Card 3: Assurance Vie -->
+<div class="flex flex-col min-w-[140px] bg-white dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+<div class="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary mb-2">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<p class="text-slate-900 dark:text-slate-100 font-bold text-[11px] truncate">Assurance Vie</p>
+<p class="text-slate-500 dark:text-slate-400 text-[10px] mt-1">Solde: <span class="text-primary font-bold">22 150,00 €</span></p>
+</div>
+</div>
+</div>
+<!-- Evolution Chart Section -->
+<div class="p-4 mt-4">
+<div class="bg-white dark:bg-slate-800/50 rounded-xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm">
+<div class="flex justify-between items-center mb-6">
+<div>
+<p class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight">Évolution du patrimoine</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm">6 derniers mois</p>
+</div>
+<div class="flex items-center gap-1 text-primary bg-primary/10 px-2 py-1 rounded text-xs font-bold">
+<span class="material-symbols-outlined text-sm">calendar_month</span>
+                            Juin
+                        </div>
+</div>
+<div class="relative h-[160px] w-full mt-4">
+<svg class="w-full h-full" fill="none" preserveaspectratio="none" viewbox="0 0 400 150" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<lineargradient id="chartGradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#2ecc70" stop-opacity="0.3"></stop><stop offset="100%" stop-color="#2ecc70" stop-opacity="0"></stop></lineargradient>
+</defs>
+<path d="M0 120 C 50 110, 80 140, 120 100 S 180 20, 240 60 S 320 10, 400 30 V 150 H 0 Z" fill="url(#chartGradient)"></path>
+<path d="M0 120 C 50 110, 80 140, 120 100 S 180 20, 240 60 S 320 10, 400 30" stroke="#2ecc70" stroke-linecap="round" stroke-width="3"></path>
+<!-- Data Points -->
+<circle cx="120" cy="100" fill="#2ecc70" r="4"></circle>
+<circle cx="240" cy="60" fill="#2ecc70" r="4"></circle>
+<circle cx="400" cy="30" fill="#2ecc70" r="4"></circle>
+</svg>
+</div>
+<div class="flex justify-between px-1 mt-4">
+<p class="text-slate-400 text-[11px] font-bold">JAN</p>
+<p class="text-slate-400 text-[11px] font-bold">FÉV</p>
+<p class="text-slate-400 text-[11px] font-bold">MAR</p>
+<p class="text-slate-400 text-[11px] font-bold text-primary">AVR</p>
+<p class="text-slate-400 text-[11px] font-bold">MAI</p>
+<p class="text-slate-400 text-[11px] font-bold">JUIN</p>
+</div>
+</div>
+</div>
+<!-- Insights Section -->
+<div class="p-4">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-slate-900 dark:text-slate-100 text-lg font-bold">Insights Financiers</h3>
+<button class="text-primary text-sm font-semibold">Voir tout</button>
+</div>
+<div class="space-y-3">
+<!-- Insight Card 1 -->
+<div class="flex gap-4 items-center bg-white dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+<div class="flex size-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 shrink-0">
+<span class="material-symbols-outlined">lightbulb</span>
+</div>
+<div class="flex-1">
+<p class="text-slate-900 dark:text-slate-100 font-bold text-sm">Conseil Épargne</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">Vous avez dépensé 15% de moins en loisirs ce mois-ci. Placez ce surplus sur votre Livret A.</p>
+</div>
+<span class="material-symbols-outlined text-slate-300">chevron_right</span>
+</div>
+<!-- Insight Card 2 -->
+<div class="flex gap-4 items-center bg-white dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+<div class="flex size-12 items-center justify-center rounded-full bg-orange-100 text-orange-600 shrink-0">
+<span class="material-symbols-outlined">warning</span>
+</div>
+<div class="flex-1">
+<p class="text-slate-900 dark:text-slate-100 font-bold text-sm">Alerte Frais</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">Vos abonnements ont augmenté de 12€. Vérifiez vos services inactifs.</p>
+</div>
+<span class="material-symbols-outlined text-slate-300">chevron_right</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 border-t border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-4 pb-6 pt-2 z-20">
+<div class="flex items-center justify-around max-w-md mx-auto">
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">dashboard</span>
+</div>
+<p class="text-[10px] font-bold">Synthèse</p>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">pie_chart</span>
+</div>
+<p class="text-[10px] font-medium">Analyses</p>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">savings</span>
+</div>
+<p class="text-[10px] font-medium">Budget</p>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">person</span>
+</div>
+<p class="text-[10px] font-medium">Profil</p>
+</a>
+</div>
+</nav>
+</div>
+</body></html>
