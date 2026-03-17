@@ -1,12 +1,20 @@
 import React from 'react';
 
-const BottomNav = ({ activeTab, setActiveTab }) => {
-  const items = [
+const BottomNav = ({ mode, activeTab, setActiveTab }) => {
+  const budgetItems = [
     { id: 'dashboard', label: 'Synthèse', icon: 'grid_view' },
     { id: 'transactions', label: 'Analyses', icon: 'pie_chart' },
     { id: 'budget', label: 'Budget', icon: 'account_balance_wallet' },
     { id: 'previsions', label: 'Prévisions', icon: 'trending_up' },
   ];
+
+  const hubItems = [
+    { id: 'accueil', label: 'Accueil', icon: 'home' },
+    { id: 'favoris', label: 'Favoris', icon: 'star_outline' },
+    { id: 'profil', label: 'Profil', icon: 'person_outline' },
+  ];
+
+  const items = mode === 'hub' ? hubItems : budgetItems;
 
   return (
     <nav style={{

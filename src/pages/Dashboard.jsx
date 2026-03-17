@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import CompanyLogo from '../components/CompanyLogo';
 import PageHeader from '../components/PageHeader';
-import { savings, patrimonyChart, insights } from '../data/mockData';
+import { patrimonyChart, insights } from '../data/mockData';
 import { useData } from '../context/DataContext';
 
 const Dashboard = () => {
   const { 
     accounts, 
     savingsItems, 
-    user, 
     transactions, 
     deleteAccount, 
     deleteSaving,

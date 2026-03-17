@@ -1,6 +1,24 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { supabase } from '../supabase';
 
-const PageHeader = ({ title }) => {
+const PageHeader = ({ title, onBack }) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
   return (
     <header style={{ 
       position: 'sticky', 
@@ -12,8 +30,36 @@ const PageHeader = ({ title }) => {
       alignItems: 'center',
       justifyContent: 'space-between'
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-        <span className="material-icons-round" style={{ fontSize: 24, color: 'var(--color-text-primary)' }}>menu</span>
+      <div className="header-menu-container" ref={menuRef}>
+        <div 
+          style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+        >
+          <span className="material-icons-round" style={{ fontSize: 24, color: 'var(--color-text-primary)' }}>
+            menu
+          </span>
+        </div>
+
+        {isMenuOpen && (
+          <div className="header-dropdown">
+            <button className="header-dropdown-item" onClick={() => {
+              if (onBack) onBack();
+              else window.location.reload();
+              setIsMenuOpen(false);
+            }}>
+              <span className="material-icons-round">home</span>
+              Retour à l'accueil
+            </button>
+            <div className="header-dropdown-divider"></div>
+            <button className="header-dropdown-item danger" onClick={() => {
+              handleLogout();
+              setIsMenuOpen(false);
+            }}>
+              <span className="material-icons-round">logout</span>
+              Se déconnecter
+            </button>
+          </div>
+        )}
       </div>
 
       <h2 style={{ 

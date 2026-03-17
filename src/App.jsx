@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Budget from './pages/Budget';
 import Previsions from './pages/Previsions';
+import Auth from './pages/Auth';
+import Hub from './pages/Hub';
 import BottomNav from './components/BottomNav';
 import { useData } from './context/DataContext';
+import { supabase } from './supabase';
 import './index.css';
 
-const SCREENS = {
+const BUDGET_SCREENS = {
   dashboard: Dashboard,
   transactions: Transactions,
   budget: Budget,
@@ -15,10 +18,30 @@ const SCREENS = {
 };
 
 function App() {
+  const { session, loading } = useData();
+  const [appMode, setAppMode] = useState('hub'); // 'hub' or 'budget'
   const [activeTab, setActiveTab] = useState('dashboard');
-  const { loading } = useData();
 
-  const ActiveScreen = SCREENS[activeTab];
+  useEffect(() => {
+    if (!session) {
+      setAppMode('hub');
+    }
+  }, [session]);
+
+  if (!session) {
+    return <Auth />;
+  }
+
+  if (appMode === 'hub') {
+    return (
+      <div className="app-container">
+        <Hub onEnterBudget={() => setAppMode('budget')} />
+        <BottomNav mode="hub" activeTab="accueil" setActiveTab={() => {}} />
+      </div>
+    );
+  }
+
+  const ActiveScreen = BUDGET_SCREENS[activeTab];
 
   if (loading) {
     return (
@@ -39,8 +62,8 @@ function App() {
 
   return (
     <div className="app-container">
-      <ActiveScreen key={activeTab} />
-      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+      <ActiveScreen key={activeTab} onBackToHub={() => setAppMode('hub')} />
+      <BottomNav mode="budget" activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>
   );
 }

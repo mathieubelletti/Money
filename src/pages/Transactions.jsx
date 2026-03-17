@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import CompanyLogo from '../components/CompanyLogo';
 import PageHeader from '../components/PageHeader';
-import { formatAmount } from '../utils/helpers';
 import { useData } from '../context/DataContext';
 
 const Transactions = () => {
-  const { transactions: txData, setTransactions: setTxData, categories, globalRecurrences } = useData();
+  const { transactions: txData, addTransaction, categories, globalRecurrences } = useData();
   const [activeFilter, setActiveFilter] = useState('Tous');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   
@@ -77,25 +76,8 @@ const Transactions = () => {
       newItems.push(createTxItem(newTx.name, finalAmount, newTx.account));
     }
 
-    setTxData(prev => {
-      let updated = [...prev];
-      const existingGroupIndex = updated.findIndex(g => g.date === dateLabel);
-      
-      if (existingGroupIndex > -1) {
-        updated[existingGroupIndex] = {
-          ...updated[existingGroupIndex],
-          items: [...newItems, ...updated[existingGroupIndex].items]
-        };
-      } else {
-        updated.push({
-          id: Date.now(),
-          date: dateLabel,
-          dateOrder: -1,
-          items: newItems
-        });
-        updated.sort((a, b) => a.dateOrder - b.dateOrder);
-      }
-      return updated;
+    newItems.forEach(item => {
+      addTransaction({ ...item, dateLabel, date: newTx.date });
     });
 
     setIsAddModalOpen(false);
@@ -243,7 +225,7 @@ const Transactions = () => {
               <span className="material-icons-round" style={{ fontSize: 40, color: 'var(--color-text-tertiary)', opacity: 0.5 }}>receipt_long</span>
             </div>
             <h3 style={{ fontSize: 18, fontWeight: 900, color: 'var(--color-text-primary)', margin: '0 0 12px' }}>Aucune transaction</h3>
-            <p style={{ fontSize: 14, color: 'var(--color-text-secondary)', fontWeight: 500, margin: 0, lineHeight: 1.5, maxWidth: 280, margin: '0 auto' }}>
+            <p style={{ fontSize: 14, color: 'var(--color-text-secondary)', fontWeight: 500, lineHeight: 1.5, maxWidth: 280, margin: '0 auto' }}>
               Ajoutez votre première opération manuellement ou connectez un établissement bancaire.
             </p>
             <button 

@@ -40,20 +40,21 @@ export const budgetCategories = [
   { id: 6, name: 'Sport', icon: 'sports_soccer', spent: 0, limit: 0, color: 'var(--color-primary)', bg: 'var(--color-primary-bg)', type: 'variable' },
 ];
 
-// Reference months structure
+const currentYear = new Date().getFullYear();
+
 export const forecasts = [
-  { id: 1, month: 'Janvier 2024', shortMonth: 'JAN', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
-  { id: 2, month: 'Février 2024', shortMonth: 'FÉV', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
-  { id: 3, month: 'Mars 2024', shortMonth: 'MAR', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
-  { id: 4, month: 'Avril 2024', shortMonth: 'AVR', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
-  { id: 5, month: 'Mai 2024', shortMonth: 'MAI', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
-  { id: 6, month: 'Juin 2024', shortMonth: 'JUI', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
-  { id: 7, month: 'Juillet 2024', shortMonth: 'JUL', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
-  { id: 8, month: 'Août 2024', shortMonth: 'AOU', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
-  { id: 9, month: 'Septembre 2024', shortMonth: 'SEP', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
-  { id: 10, month: 'Octobre 2024', shortMonth: 'OCT', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
-  { id: 11, month: 'Novembre 2024', shortMonth: 'NOV', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
-  { id: 12, month: 'Décembre 2024', shortMonth: 'DÉC', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
+  { id: 1, month: `Janvier ${currentYear}`, shortMonth: 'JAN', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
+  { id: 2, month: `Février ${currentYear}`, shortMonth: 'FÉV', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
+  { id: 3, month: `Mars ${currentYear}`, shortMonth: 'MAR', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
+  { id: 4, month: `Avril ${currentYear}`, shortMonth: 'AVR', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
+  { id: 5, month: `Mai ${currentYear}`, shortMonth: 'MAI', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
+  { id: 6, month: `Juin ${currentYear}`, shortMonth: 'JUI', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
+  { id: 7, month: `Juillet ${currentYear}`, shortMonth: 'JUL', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
+  { id: 8, month: `Août ${currentYear}`, shortMonth: 'AOU', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
+  { id: 9, month: `Septembre ${currentYear}`, shortMonth: 'SEP', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
+  { id: 10, month: `Octobre ${currentYear}`, shortMonth: 'OCT', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
+  { id: 11, month: `Novembre ${currentYear}`, shortMonth: 'NOV', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
+  { id: 12, month: `Décembre ${currentYear}`, shortMonth: 'DÉC', ops: 0, amount: 0, type: 'excedent', color: 'var(--color-primary)' },
 ];
 
 export const txFilters = ['Tous', 'Alimentation', 'Loyer', 'Loisirs', 'Transport', 'Revenus'];

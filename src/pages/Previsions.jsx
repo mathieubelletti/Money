@@ -8,8 +8,9 @@ const Previsions = () => {
   const { 
     forecasts, 
     globalRecurrences, 
-    setGlobalRecurrences, 
-    categories 
+    setGlobalRecurrences,
+    monthsState,
+    setMonthsState
   } = useData();
 
   const COMMON_ICONS = ['home', 'shopping_basket', 'directions_transit', 'movie', 'subscriptions', 'sports_soccer', 'health_and_safety', 'restaurant', 'shopping_bag', 'payments', 'work', 'savings'];
@@ -18,18 +19,7 @@ const Previsions = () => {
   const [isGlobalModalOpen, setIsGlobalModalOpen] = useState(false);
   const [isRolloverEnabled, setIsRolloverEnabled] = useState(true);
 
-  // Individual Months State - CLEAN START
-  const [monthsState, setMonthsState] = useState(
-    forecasts.reduce((acc, f) => {
-      acc[f.id] = {
-        manualReport: 0,
-        revenus: [],
-        fixes: [],
-        variables: []
-      };
-      return acc;
-    }, {})
-  );
+  const getMonthData = (id) => monthsState[id] || { manualReport: 0, revenus: [], fixes: [], variables: [] };
 
   const formatMonthAmount = (amount) => {
     const sign = amount >= 0 ? '+' : '';
@@ -41,15 +31,13 @@ const Previsions = () => {
   };
 
   // Propagation Logic
-  const applyGlobalRecurrences = (force = false) => {
-    // Validation is done by setGlobalRecurrences in context which updates categories
-    setGlobalRecurrences({ ...globalRecurrences }); 
-    
+  const applyGlobalRecurrences = () => {
     setMonthsState(prev => {
       const newState = { ...prev };
       forecasts.forEach(f => {
+        const currentData = getMonthData(f.id);
         newState[f.id] = {
-          ...newState[f.id],
+          ...currentData,
           revenus: globalRecurrences.revenus.map(r => ({ ...r, isLinked: true })),
           fixes: globalRecurrences.fixes.map(r => ({ ...r, isLinked: true })),
           variables: globalRecurrences.variables.map(r => ({ ...r, isLinked: true }))
@@ -62,28 +50,33 @@ const Previsions = () => {
 
   // Field Update with Auto-Unlink
   const updateField = (monthId, section, id, field, value) => {
-    setMonthsState(prev => ({
-      ...prev,
-      [monthId]: {
-        ...prev[monthId],
-        [section]: prev[monthId][section].map(item => 
-          item.id === id ? { ...item, [field]: value, isLinked: field === 'amount' ? false : item.isLinked } : item
-        )
-      }
-    }));
+    setMonthsState(prev => {
+      const currentData = prev[monthId] || { manualReport: 0, revenus: [], fixes: [], variables: [] };
+      return {
+        ...prev,
+        [monthId]: {
+          ...currentData,
+          [section]: currentData[section].map(item => 
+            item.id === id ? { ...item, [field]: value, isLinked: field === 'amount' ? false : item.isLinked } : item
+          )
+        }
+      };
+    });
   };
 
   const toggleLink = (monthId, section, id) => {
     setMonthsState(prev => {
-      const item = prev[monthId][section].find(i => i.id === id);
+      const currentData = prev[monthId] || { manualReport: 0, revenus: [], fixes: [], variables: [] };
+      const item = currentData[section].find(i => i.id === id);
+      if (!item) return prev;
       const globalItem = globalRecurrences[section].find(gi => gi.label === item.label);
       
       const newValue = !item.isLinked;
       return {
         ...prev,
         [monthId]: {
-          ...prev[monthId],
-          [section]: prev[monthId][section].map(i => 
+          ...currentData,
+          [section]: currentData[section].map(i => 
             i.id === id ? { ...i, isLinked: newValue, amount: newValue && globalItem ? globalItem.amount : i.amount } : i
           )
         }
@@ -105,7 +98,7 @@ const Previsions = () => {
     const results = {};
 
     forecasts.forEach((f, index) => {
-      const data = monthsState[f.id];
+      const data = getMonthData(f.id);
       const rev = data.revenus.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
       const fix = data.fixes.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
       const varTotal = data.variables.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
@@ -122,6 +115,13 @@ const Previsions = () => {
   };
 
   const calculatedResults = getCalculatedData();
+
+  if (!forecasts || forecasts.length === 0) {
+    return <div className="screen animate-fade"><PageHeader title="Prévisions annuelles" /><div style={{padding: 24}}>Chargement des prévisions...</div></div>;
+  }
+
+  const lastForecast = forecasts[forecasts.length - 1];
+  const midForecast = forecasts[Math.min(5, forecasts.length - 1)];
 
   return (
     <div className="screen animate-fade">
@@ -195,7 +195,7 @@ const Previsions = () => {
           </div>
           <div style={{ position: 'relative', zIndex: 1 }}>
             <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Solde prévisionnel à 12 mois</div>
-            <div style={{ fontSize: 32, fontWeight: 900, color: 'var(--color-text-primary)', margin: '8px 0' }}>{formatBalance(calculatedResults[forecasts[11].id].final)}</div>
+            <div style={{ fontSize: 32, fontWeight: 900, color: 'var(--color-text-primary)', margin: '8px 0' }}>{formatBalance(calculatedResults[lastForecast.id]?.final || 0)}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div 
                 onClick={() => setIsRolloverEnabled(!isRolloverEnabled)}
@@ -229,7 +229,7 @@ const Previsions = () => {
         <div className="card" style={{ margin: '0 20px', borderRadius: 16, overflow: 'hidden' }}>
           {activeTab === 'Mois' && forecasts.map(f => {
             const isExpanded = expandedMonthId === f.id;
-            const data = monthsState[f.id];
+            const data = getMonthData(f.id);
             const { rev, fix, varTotal, reportBalance, final } = calculatedResults[f.id];
             const totalOps = data.revenus.length + data.fixes.length + data.variables.length;
 
@@ -285,7 +285,7 @@ const Previsions = () => {
                           type="number"
                           placeholder="0"
                           value={data.manualReport || ''}
-                          onChange={(e) => setMonthsState(prev => ({ ...prev, [f.id]: { ...prev[f.id], manualReport: e.target.value } }))}
+                          onChange={(e) => setMonthsState(prev => ({ ...prev, [f.id]: { ...(prev[f.id] || { manualReport: 0, revenus: [], fixes: [], variables: [] }), manualReport: e.target.value } }))}
                           style={{ background: 'white', border: '1px solid var(--color-border)', borderRadius: 8, padding: '4px 8px', width: 80, fontWeight: 700 }} 
                         />
                       )}
@@ -392,8 +392,8 @@ const Previsions = () => {
             <div className="month-forecast-card" style={{ padding: '24px 0' }}>
               <div className="month-forecast-inner" style={{ justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-tertiary)', textTransform: 'uppercase' }}>Résultat annuel estimé</div>
-                <div style={{ fontSize: 32, fontWeight: 900, color: calculatedResults[forecasts[11].id].final >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
-                  {formatMonthAmount(calculatedResults[forecasts[11].id].final)}
+                <div style={{ fontSize: 32, fontWeight: 900, color: (calculatedResults[lastForecast.id]?.final || 0) >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                  {formatMonthAmount(calculatedResults[lastForecast.id]?.final || 0)}
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', fontWeight: 500 }}>Basé sur 12 mois glissants</div>
               </div>
@@ -402,13 +402,13 @@ const Previsions = () => {
         </div>
 
         {/* Alerte conseil */}
-        {calculatedResults[forecasts[5].id].final !== 0 && (
+        {calculatedResults[midForecast.id]?.final !== 0 && (
           <div className="previsions-alert" style={{ marginTop: 24 }}>
             <span className="material-icons-round">tips_and_updates</span>
             <div>
               <div className="previsions-alert-title">Conseil Budget</div>
               <div className="previsions-alert-text">
-                {calculatedResults[forecasts[5].id].final < 0 ? 'En juin, vos prévisions sont dans le rouge. Pensez à ajuster vos dépenses variables.' : 'Vos prévisions sont stables pour le premier semestre. Continuez ainsi !'}
+                {(calculatedResults[midForecast.id]?.final || 0) < 0 ? 'Vos prévisions sont dans le rouge. Pensez à ajuster vos dépenses variables.' : 'Vos prévisions sont stables pour le premier semestre. Continuez ainsi !'}
               </div>
             </div>
           </div>
@@ -450,10 +450,10 @@ const Previsions = () => {
                 <input 
                   type="number"
                   placeholder="Ex: 1540.50"
-                  value={monthsState[forecasts[0].id].manualReport || ''}
+                  value={getMonthData(forecasts[0].id).manualReport || ''}
                   onChange={(e) => setMonthsState(prev => ({ 
                     ...prev, 
-                    [forecasts[0].id]: { ...prev[forecasts[0].id], manualReport: e.target.value } 
+                    [forecasts[0].id]: { ...(prev[forecasts[0].id] || { manualReport: 0, revenus: [], fixes: [], variables: [] }), manualReport: e.target.value } 
                   }))}
                   style={{ width: '100%', background: 'transparent', border: 'none', fontSize: 24, fontWeight: 900, color: 'var(--color-text-primary)', outline: 'none' }}
                 />
