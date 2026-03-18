@@ -1,4 +1,4 @@
-/* === DESIGN SYSTEM - Dashboard Bancaire === */
+﻿/* === DESIGN SYSTEM - Dashboard Bancaire === */
 :root {
   /* Couleurs principales (Exact Stitch Tokens) */
   --color-primary: #18524a;
@@ -7,7 +7,7 @@
   --color-primary-bg: #f0f6f5;
   --color-primary-glass: rgba(24, 82, 74, 0.12);
 
-  /* Couleurs sémantiques */
+  /* Couleurs sÃ©mantiques */
   --color-success: #22c55e;
   --color-success-light: rgba(34, 197, 94, 0.12);
   --color-danger: #ef4444;
@@ -362,7 +362,7 @@ body {
   color: var(--color-text-primary);
 }
 
-/* === ÉPARGNE === */
+/* === Ã‰PARGNE === */
 .savings-item {
   display: flex;
   align-items: center;
@@ -777,7 +777,7 @@ body {
   line-height: 1.5;
 }
 
-/* === PRÉVISIONS === */
+/* === PRÃ‰VISIONS === */
 .previsions-header {
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   padding: 52px var(--space-5) var(--space-5);
@@ -1060,7 +1060,7 @@ body {
   animation: fadeIn 0.3s ease forwards;
 }
 
-/* Délais d'animation staggered */
+/* DÃ©lais d'animation staggered */
 .stagger-1 { animation-delay: 0.05s; opacity: 0; }
 .stagger-2 { animation-delay: 0.10s; opacity: 0; }
 .stagger-3 { animation-delay: 0.15s; opacity: 0; }
@@ -1549,36 +1549,35 @@ body {
   margin: 4px 0;
 }
 
- / *   = = =   R E C U R R E N C E   G R I D   = = =   * / 
- . r e c u r r e n c e - g r i d - i t e m   { 
-     d i s p l a y :   g r i d ; 
-     g r i d - t e m p l a t e - c o l u m n s :   a u t o   1 f r   6 0 p x   1 0 0 p x   a u t o ; 
-     g a p :   8 p x ; 
-     a l i g n - i t e m s :   c e n t e r ; 
- } 
- 
- @ m e d i a   ( m a x - w i d t h :   6 0 0 p x )   { 
-     . r e c u r r e n c e - g r i d - i t e m   { 
-         g r i d - t e m p l a t e - c o l u m n s :   a u t o   1 f r   1 0 0 p x   a u t o ; 
-     } 
-     . r e c u r r e n c e - g r i d - i t e m   i n p u t [ t y p e = \  
- n u m b e r \ ] : n t h - o f - t y p e ( 1 )   {   / *   J o u r   * / 
-         g r i d - c o l u m n :   2 ; 
-         g r i d - r o w :   2 ; 
-         w i d t h :   6 0 p x   ! i m p o r t a n t ; 
-     } 
-     . r e c u r r e n c e - g r i d - i t e m   i n p u t [ t y p e = \ n u m b e r \ ] : n t h - o f - t y p e ( 2 )   {   / *   M o n t a n t   * / 
-         g r i d - c o l u m n :   3 ; 
-         g r i d - r o w :   2 ; 
-         w i d t h :   1 0 0 %   ! i m p o r t a n t ; 
-     } 
-     . r e c u r r e n c e - g r i d - i t e m   b u t t o n : n t h - o f - t y p e ( 1 )   {   / *   I c o n   * / 
-         g r i d - c o l u m n :   1 ; 
-         g r i d - r o w :   1   /   s p a n   2 ; 
-     } 
-     . r e c u r r e n c e - g r i d - i t e m   i n p u t : n t h - o f - t y p e ( 1 )   {   / *   L a b e l   * / 
-         g r i d - c o l u m n :   2   /   s p a n   3 ; 
-     } 
- } 
-  
- 
+
+
+/* === RECURRENCE GRID === */
+.recurrence-grid-item {
+  display: grid;
+  grid-template-columns: auto 1fr 60px 100px auto;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 600px) {
+  .recurrence-grid-item {
+    grid-template-columns: auto 1fr 100px auto;
+  }
+  .recurrence-grid-item input[type="number"]:nth-of-type(1) { /* Jour */
+    grid-column: 2;
+    grid-row: 2;
+    width: 60px !important;
+  }
+  .recurrence-grid-item input[type="number"]:nth-of-type(2) { /* Montant */
+    grid-column: 3;
+    grid-row: 2;
+    width: 100% !important;
+  }
+  .recurrence-grid-item button:nth-of-type(1) { /* Icon */
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+  .recurrence-grid-item input:nth-of-type(1) { /* Label */
+    grid-column: 2 / span 3;
+  }
+}
