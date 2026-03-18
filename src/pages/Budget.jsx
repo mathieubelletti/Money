@@ -32,8 +32,18 @@ const Budget = () => {
     const flat = [];
     (txGroups || []).forEach(group => {
       (group?.items || []).forEach(tx => {
-        const txDate = new Date(tx.date);
-        if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear) {
+        let txMonth, txYear;
+        if (tx.budget_month) {
+          const parts = tx.budget_month.split('-');
+          txYear = parseInt(parts[0], 10);
+          txMonth = parseInt(parts[1], 10) - 1; // 0-indexed month
+        } else {
+          const txDate = new Date(tx.date);
+          txYear = txDate.getFullYear();
+          txMonth = txDate.getMonth();
+        }
+        
+        if (txMonth === currentMonth && txYear === currentYear) {
           flat.push(tx);
         }
       });

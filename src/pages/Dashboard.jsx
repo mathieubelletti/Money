@@ -28,14 +28,37 @@ const Dashboard = () => {
   // Calculate monthly change if possible, else 0
   const monthChange = 0; 
   
-  // Calculate monthly totals from transactions safely
-  const monthlyRevenus = React.useMemo(() => (transactions || []).reduce((acc, group) => {
-    return acc + (group?.items || []).reduce((s, tx) => tx.amount > 0 ? s + tx.amount : s, 0);
-  }, 0), [transactions]);
-  
-  const monthlyDepenses = React.useMemo(() => (transactions || []).reduce((acc, group) => {
-    return acc + (group?.items || []).reduce((s, tx) => tx.amount < 0 ? s + Math.abs(tx.amount) : s, 0);
-  }, 0), [transactions]);
+  // Calculate monthly totals from transactions safely, filtering for current month based on budget_month or date
+  const { monthlyRevenus, monthlyDepenses } = React.useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    let rev = 0;
+    let dep = 0;
+
+    (transactions || []).forEach(group => {
+      (group?.items || []).forEach(tx => {
+        let txMonth, txYear;
+        if (tx.budget_month) {
+          const parts = tx.budget_month.split('-');
+          txYear = parseInt(parts[0], 10);
+          txMonth = parseInt(parts[1], 10) - 1;
+        } else {
+          const txDate = new Date(tx.date);
+          txYear = txDate.getFullYear();
+          txMonth = txDate.getMonth();
+        }
+
+        if (txMonth === currentMonth && txYear === currentYear) {
+          if (tx.amount > 0) rev += tx.amount;
+          if (tx.amount < 0) dep += Math.abs(tx.amount);
+        }
+      });
+    });
+
+    return { monthlyRevenus: rev, monthlyDepenses: dep };
+  }, [transactions]);
 
   useEffect(() => {
     const screenContainer = document.querySelector('.screen');

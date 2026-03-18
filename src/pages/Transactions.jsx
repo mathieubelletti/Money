@@ -13,7 +13,8 @@ const Transactions = () => {
     updateTransaction, 
     categories, 
     accounts,
-    globalRecurrences 
+    globalRecurrences,
+    forecasts
   } = useData();
   
   const [activeFilter, setActiveFilter] = useState('Tous');
@@ -36,6 +37,7 @@ const Transactions = () => {
     account: accounts?.[0]?.id || '',
     toAccount: accounts?.[1]?.id || accounts?.[0]?.id || '',
     date: new Date().toISOString().split('T')[0],
+    budget_month: new Date().toISOString().substring(0, 7) + '-01',
     type: 'Dépenses'
   });
 
@@ -67,6 +69,7 @@ const Transactions = () => {
       account: accounts?.[0]?.id || '',
       toAccount: accounts?.[1]?.id || accounts?.[0]?.id || '',
       date: new Date().toISOString().split('T')[0],
+      budget_month: new Date().toISOString().substring(0, 7) + '-01',
       type: 'Dépenses'
     });
   };
@@ -90,6 +93,7 @@ const Transactions = () => {
       account: tx.account_id || tx.account,
       toAccount: 'Revolut', // Transfers handle separate
       date: tx.date || new Date().toISOString().split('T')[0],
+      budget_month: tx.budget_month || (tx.date ? tx.date.substring(0, 7) + '-01' : new Date().toISOString().substring(0, 7) + '-01'),
       type: tx.amount > 0 ? 'Revenus' : tx.category === 'Transferts' ? 'Virement' : 'Dépenses'
     });
     setEditId(tx.id);
@@ -167,7 +171,8 @@ const Transactions = () => {
       account_id: accId,
       color: amount > 0 ? '#22c55e' : '#191C1F',
       domain: '',
-      bg: amount > 0 ? 'rgba(34,197,94,0.10)' : 'rgba(25,28,31,0.05)'
+      bg: amount > 0 ? 'rgba(34,197,94,0.10)' : 'rgba(25,28,31,0.05)',
+      budget_month: newTx.budget_month || newTx.date.substring(0, 7) + '-01'
     });
 
     const newItems = [];
@@ -489,10 +494,28 @@ const Transactions = () => {
                   <input 
                     type="date" 
                     value={newTx.date}
-                    onChange={e => setNewTx({...newTx, date: e.target.value})}
+                    onChange={e => {
+                      const newDate = e.target.value;
+                      const newMonth = newDate ? newDate.substring(0, 7) + '-01' : newTx.budget_month;
+                      setNewTx({...newTx, date: newDate, budget_month: newMonth});
+                    }}
                     style={{ width: '100%', height: 56, borderRadius: 16, background: 'var(--color-bg)', border: '1px solid var(--color-border)', padding: '0 16px', fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)' }}
                   />
                 </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: 'var(--color-text-tertiary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mois Budgétaire</label>
+                <select 
+                  value={newTx.budget_month}
+                  onChange={e => setNewTx({...newTx, budget_month: e.target.value})}
+                  style={{ width: '100%', height: 56, borderRadius: 16, background: 'var(--color-bg)', border: '1px solid var(--color-border)', padding: '0 16px', fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)', appearance: 'none' }}
+                >
+                  {forecasts?.map(f => (
+                    <option key={f.id} value={`${f.id}-01`}>{f.month}</option>
+                  ))}
+                </select>
+                <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 4, display: 'block', fontStyle: 'italic' }}>Permet d'affecter l'opération à un autre mois que sa date réelle.</span>
               </div>
 
               {newTx.type !== 'Virement' && (
