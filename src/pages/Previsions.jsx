@@ -163,11 +163,13 @@ const Previsions = () => {
   const midForecast = forecasts[Math.min(5, forecasts.length - 1)];
 
   return (
-    <div className="screen animate-fade">
-      <PageHeader title="Prévisions annuelles" />
+    <div className="screen animate-fade" style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+      <div style={{ flexShrink: 0 }}>
+        <PageHeader title="Prévisions annuelles" />
+      </div>
       
       {/* Tabs & Solde Section */}
-      <div style={{ padding: '0 24px 12px' }}>
+      <div style={{ padding: '0 24px 12px', flexShrink: 0 }}>
         <div style={{ 
           display: 'flex', 
           gap: '8px', 
@@ -252,9 +254,9 @@ const Previsions = () => {
         </div>
       </div>
 
-      <div className="screen-content-centered">
+      <div className="screen-content-centered" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Titre section */}
-        <section style={{ padding: '20px 24px 8px' }} className="dashboard-max-width">
+        <section style={{ padding: '20px 24px 8px', flexShrink: 0 }} className="dashboard-max-width">
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 0 }}>
             <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'nowrap' }}>
               {activeTab === 'Mois' ? 'Récapitulatif mensuel' : 
@@ -265,7 +267,7 @@ const Previsions = () => {
         </section>
 
         {/* Liste des prévisions */}
-        <div className="card" style={{ margin: '0 20px', borderRadius: 16, overflow: 'hidden' }}>
+        <div className="card" style={{ margin: '0 20px', borderRadius: 16, overflowY: 'auto', flex: 1, paddingBottom: 80 }}>
           {activeTab === 'Mois' && forecasts.map((f, index) => {
             const isExpanded = expandedMonthId === f.id;
             const data = getMonthData(f.id);
@@ -336,9 +338,9 @@ const Previsions = () => {
 
                     {/* Sections */}
                     {[
-                      { title: 'Revenus', key: 'revenus', icon: 'trending_up', color: 'var(--color-primary-dark)' },
-                      { title: 'Dépenses Fixes', key: 'fixes', icon: 'lock', color: 'var(--color-primary)' },
-                      { title: 'Dépenses Variables', key: 'variables', icon: 'shopping_bag', color: 'var(--color-primary-light)' }
+                      { title: 'Revenus', key: 'revenus', icon: 'trending_up', color: 'var(--color-primary-dark)', total: rev },
+                      { title: 'Dépenses Fixes', key: 'fixes', icon: 'lock', color: 'var(--color-primary)', total: fix },
+                      { title: 'Dépenses Variables', key: 'variables', icon: 'shopping_bag', color: 'var(--color-primary-light)', total: varTotal }
                     ].map(sect => (
                       <div key={sect.key} style={{ marginBottom: 20 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -384,23 +386,31 @@ const Previsions = () => {
                         )) : (
                           <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', fontStyle: 'italic', padding: '4px 8px' }}>Aucune ligne saisie</div>
                         )}
+                        {data[sect.key].length > 0 && (
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12, paddingTop: 12, borderTop: `1px dashed ${sect.color}40` }}>
+                            <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-primary)', background: 'rgba(16, 185, 129, 0.1)', padding: '6px 16px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontSize: 12, opacity: 0.8 }}>Sous-total {sect.title.split(' ').pop()} :</span>
+                              <span>{sect.total.toLocaleString('fr-FR')} €</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
 
                     {/* Résumé Panneau */}
                     <div style={{ marginTop: 24, padding: '16px', background: 'white', borderRadius: 12, border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-sm)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--color-text-secondary)', marginBottom: 4 }}>
-                        <span>TOTAL REVENUS</span>
-                        <span style={{ fontWeight: 700, color: '#22c55e' }}>+ {rev.toLocaleString()} €</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 6 }}>
+                        <span style={{ fontWeight: 600 }}>TOTAL REVENUS</span>
+                        <span style={{ fontWeight: 800, color: '#22c55e' }}>+ {rev.toLocaleString('fr-FR')} €</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--color-text-secondary)', marginBottom: 4 }}>
-                        <span>TOTAL DÉPENSES</span>
-                        <span style={{ fontWeight: 700, color: '#ef4444' }}>- {(fix + varTotal).toLocaleString()} €</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--color-primary)', marginBottom: 6, padding: '6px 12px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: 8 }}>
+                        <span style={{ fontWeight: 800 }}>GRAND TOTAL PRÉVU (Fixes + Var.)</span>
+                        <span style={{ fontWeight: 900 }}>- {(fix + varTotal).toLocaleString('fr-FR')} €</span>
                       </div>
-                      <div style={{ height: 1.5, background: '#eee', margin: '12px 0' }}></div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15 }}>
-                        <span style={{ fontWeight: 800 }}>SOLDE PRÉVU</span>
-                        <span style={{ fontWeight: 900, color: final >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                      <div style={{ height: 1.5, background: '#eee', margin: '16px 0' }}></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, alignItems: 'center' }}>
+                        <span style={{ fontWeight: 800, color: 'var(--color-text-secondary)' }}>NOUVEAU SOLDE</span>
+                        <span style={{ fontWeight: 900, color: final >= 0 ? 'var(--color-success)' : 'var(--color-danger)', fontSize: 18 }}>
                           {formatMonthAmount(final)}
                         </span>
                       </div>
