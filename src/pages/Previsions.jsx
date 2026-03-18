@@ -199,62 +199,64 @@ const Previsions = () => {
           ))}
         </div>
 
-        <div style={{ 
-          background: 'linear-gradient(135deg, var(--color-primary-bg) 0%, #e2eeec 100%)', 
-          padding: '24px', 
-          borderRadius: 24, 
-          border: '1px solid var(--color-border)',
-          position: 'relative',
-          overflow: 'hidden',
-          boxShadow: '0 10px 25px -5px rgba(24, 82, 74, 0.15)'
-        }}>
-          <div style={{ position: 'absolute', top: 20, right: 20, display: 'flex', gap: 12, zIndex: 10 }}>
-            <button 
-              onClick={() => setIsGlobalModalOpen(true)}
-              style={{ 
-                background: 'rgba(255,255,255,0.8)', 
-                border: '1px solid var(--color-primary)', 
-                color: 'var(--color-primary)', 
-                borderRadius: 12, 
-                padding: '6px 14px', 
-                fontSize: 11, 
-                fontWeight: 800, 
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                pointerEvents: 'auto'
-              }}
-            >
-              <span className="material-icons-round" style={{ fontSize: 18 }}>tune</span>
-              GÉRER
-            </button>
-            <div style={{ color: 'var(--color-primary)', opacity: 0.8 }}>
-              <span className="material-icons-round" style={{ fontSize: 28 }}>analytics</span>
-            </div>
-          </div>
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Solde prévisionnel à 12 mois</div>
-            <div style={{ fontSize: 32, fontWeight: 900, color: 'var(--color-text-primary)', margin: '8px 0' }}>{formatBalance(calculatedResults[lastForecast.id]?.final || 0)}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div 
-                onClick={() => setIsRolloverEnabled(!isRolloverEnabled)}
+        <section className="dashboard-max-width" style={{ padding: 0 }}>
+          <div style={{ 
+            background: 'linear-gradient(135deg, var(--color-primary-bg) 0%, #e2eeec 100%)', 
+            padding: '24px', 
+            borderRadius: 24, 
+            border: '1px solid var(--color-border)',
+            position: 'relative',
+            overflow: 'hidden',
+            boxShadow: '0 10px 25px -5px rgba(24, 82, 74, 0.15)'
+          }}>
+            <div style={{ position: 'absolute', top: 20, right: 20, display: 'flex', gap: 12, zIndex: 10 }}>
+              <button 
+                onClick={() => setIsGlobalModalOpen(true)}
                 style={{ 
-                  width: 28, height: 16, borderRadius: 8, 
-                  background: isRolloverEnabled ? 'var(--color-primary)' : '#ccc',
-                  position: 'relative', cursor: 'pointer', transition: '0.3s'
+                  background: 'rgba(255,255,255,0.8)', 
+                  border: '1px solid var(--color-primary)', 
+                  color: 'var(--color-primary)', 
+                  borderRadius: 12, 
+                  padding: '6px 14px', 
+                  fontSize: 11, 
+                  fontWeight: 800, 
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                  pointerEvents: 'auto'
                 }}
               >
-                <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: isRolloverEnabled ? 14 : 2, transition: '0.3s' }} />
+                <span className="material-icons-round" style={{ fontSize: 18 }}>tune</span>
+                GÉRER
+              </button>
+              <div style={{ color: 'var(--color-primary)', opacity: 0.8 }}>
+                <span className="material-icons-round" style={{ fontSize: 28 }}>analytics</span>
               </div>
-              <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 600 }}>Report automatique actif</div>
+            </div>
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Solde prévisionnel à 12 mois</div>
+              <div style={{ fontSize: 32, fontWeight: 900, color: 'var(--color-text-primary)', margin: '8px 0' }}>{formatBalance(calculatedResults[lastForecast.id]?.final || 0)}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div 
+                  onClick={() => setIsRolloverEnabled(!isRolloverEnabled)}
+                  style={{ 
+                    width: 28, height: 16, borderRadius: 8, 
+                    background: isRolloverEnabled ? 'var(--color-primary)' : '#ccc',
+                    position: 'relative', cursor: 'pointer', transition: '0.3s'
+                  }}
+                >
+                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: isRolloverEnabled ? 14 : 2, transition: '0.3s' }} />
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 600 }}>Report automatique actif</div>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
       </div>
 
-      <div className="screen-content-centered" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Titre section */}
         <section style={{ padding: '20px 24px 8px', flexShrink: 0 }} className="dashboard-max-width">
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 0 }}>
@@ -267,7 +269,8 @@ const Previsions = () => {
         </section>
 
         {/* Liste des prévisions */}
-        <div className="card" style={{ margin: '0 20px', borderRadius: 16, overflowY: 'auto', flex: 1, paddingBottom: 80 }}>
+        <section className="dashboard-max-width" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '0 24px 80px' }}>
+          <div className="card" style={{ borderRadius: 16, overflowY: 'auto', flex: 1 }}>
           {activeTab === 'Mois' && forecasts.map((f, index) => {
             const isExpanded = expandedMonthId === f.id;
             const data = getMonthData(f.id);
@@ -468,6 +471,7 @@ const Previsions = () => {
             </div>
           </div>
         )}
+        </section>
       </div>
 
       {/* GLOBAL MANAGEMENT MODAL */}
