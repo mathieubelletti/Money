@@ -326,6 +326,7 @@ export const DataProvider = ({ children }) => {
     const targetMonthsState = specificMonthsState || monthsState;
     if (Object.keys(targetMonthsState).length === 0 && categories.length === 0 && forecasts.length === 0) return;
 
+    const today = new Date().toISOString().split('T')[0];
     setSyncStatus('syncing');
     try {
       const firstForecastId = forecasts[0]?.id;
