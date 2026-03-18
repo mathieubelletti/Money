@@ -115,8 +115,8 @@ const Previsions = () => {
       const varTotal = data.variables.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
       
       const reportBalance = isRolloverEnabled 
-        ? (index === 0 ? parseFloat(data.manualReport) : (results[forecasts[index-1].id]?.final || 0))
-        : parseFloat(data.manualReport);
+        ? (index === 0 ? (parseFloat(data.manualReport) || 0) : (results[forecasts[index-1].id]?.final || 0))
+        : (parseFloat(data.manualReport) || 0);
 
       const final = rev - fix - varTotal + (reportBalance || 0);
       results[f.id] = { rev, fix, varTotal, reportBalance, final };
