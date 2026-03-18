@@ -114,7 +114,8 @@ const Previsions = () => {
       const fix = data.fixes.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
       const varTotal = data.variables.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
       
-      const hasManualOverride = data.manualReport !== undefined && data.manualReport !== '';
+      // Strict check: ignore integer 0 (legacy default initialization), but allow string "0"
+      const hasManualOverride = data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0;
       const autoReport = index === 0 ? 0 : (results[forecasts[index-1].id]?.final || 0);
       const reportBalance = isRolloverEnabled 
         ? (hasManualOverride ? parseFloat(data.manualReport) : autoReport)
@@ -316,12 +317,12 @@ const Previsions = () => {
                         <input 
                           type="number"
                           placeholder={isRolloverEnabled && index > 0 ? (calculatedResults[forecasts[index-1].id]?.final || 0).toFixed(0) : "0"}
-                          value={data.manualReport !== undefined && data.manualReport !== '' ? data.manualReport : ''}
+                          value={data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0 ? data.manualReport : ''}
                           onChange={(e) => setMonthsState(prev => ({ ...prev, [f.id]: { ...(prev[f.id] || { manualReport: '', revenus: [], fixes: [], variables: [] }), manualReport: e.target.value } }))}
                           style={{ 
-                            background: (data.manualReport !== undefined && data.manualReport !== '') ? '#fff' : '#eee',
+                            background: (data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0) ? '#fff' : '#eee',
                             border: '1px solid',
-                            borderColor: (data.manualReport !== undefined && data.manualReport !== '') ? 'var(--color-primary)' : 'var(--color-border)',
+                            borderColor: (data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0) ? 'var(--color-primary)' : 'var(--color-border)',
                             borderRadius: 8, padding: '4px 28px 4px 12px', width: 130, fontWeight: 800, fontSize: 14,
                             outline: 'none', color: 'var(--color-text-primary)'
                           }} 
@@ -329,7 +330,7 @@ const Previsions = () => {
                         <span style={{ position: 'absolute', right: 12, fontSize: 14, fontWeight: 800, color: 'var(--color-text-tertiary)', pointerEvents: 'none' }}>€</span>
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        {data.manualReport !== undefined && data.manualReport !== '' ? '(Modifié manuellement)' : '(Calcul automatique - Modifiable)'}
+                        {data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0 ? '(Modifié manuellement)' : '(Calcul automatique - Modifiable)'}
                       </div>
                     </div>
 
