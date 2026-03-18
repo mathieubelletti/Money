@@ -21,19 +21,19 @@ const Dashboard = () => {
   const [editingItem, setEditingItem] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
-  const totalBalance = (accounts || []).reduce((acc, curr) => acc + (curr?.balance || 0), 0);
+  const totalBalance = React.useMemo(() => (accounts || []).reduce((acc, curr) => acc + (curr?.balance || 0), 0), [accounts]);
   
   // Calculate monthly change if possible, else 0
   const monthChange = 0; 
   
   // Calculate monthly totals from transactions safely
-  const monthlyRevenus = (transactions || []).reduce((acc, group) => {
+  const monthlyRevenus = React.useMemo(() => (transactions || []).reduce((acc, group) => {
     return acc + (group?.items || []).reduce((s, tx) => tx.amount > 0 ? s + tx.amount : s, 0);
-  }, 0);
+  }, 0), [transactions]);
   
-  const monthlyDepenses = (transactions || []).reduce((acc, group) => {
+  const monthlyDepenses = React.useMemo(() => (transactions || []).reduce((acc, group) => {
     return acc + (group?.items || []).reduce((s, tx) => tx.amount < 0 ? s + Math.abs(tx.amount) : s, 0);
-  }, 0);
+  }, 0), [transactions]);
 
   useEffect(() => {
     const screenContainer = document.querySelector('.screen');
@@ -57,7 +57,7 @@ const Dashboard = () => {
 
   const [confirmingId, setConfirmingId] = useState(null);
 
-  const handleDeleteItem = (id) => {
+  const handleDeleteItem = React.useCallback((id) => {
     if (confirmingId === id) {
       if (manageType === 'accounts') {
         deleteAccount(id);
@@ -70,9 +70,9 @@ const Dashboard = () => {
       // Auto-reset after 3 seconds if not confirmed
       setTimeout(() => setConfirmingId(prev => prev === id ? null : prev), 3000);
     }
-  };
+  }, [confirmingId, manageType, deleteAccount, deleteSaving]);
 
-  const handleSaveItem = (e) => {
+  const handleSaveItem = React.useCallback((e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
     
@@ -82,8 +82,9 @@ const Dashboard = () => {
         name: formData.get('name'),
         domain: formData.get('domain'),
         accountNumber: formData.get('accountNumber'),
-        balance: parseFloat(formData.get('balance')),
+        // balance is computed in DataContext, we don't save it here
         initialBalance: parseFloat(formData.get('initialBalance')),
+        initialBalanceDate: formData.get('initialBalanceDate'),
       };
       updateAccount(updatedAccount);
     } else {
@@ -98,9 +99,9 @@ const Dashboard = () => {
       updateSaving(updatedSaving);
     }
     setEditingItem(null);
-  };
+  }, [manageType, editingItem, updateAccount, updateSaving]);
 
-  const handleAddItem = () => {
+  const handleAddItem = React.useCallback(() => {
     if (manageType === 'accounts') {
       const newAcc = {
         name: 'Nouveau Compte',
@@ -111,9 +112,6 @@ const Dashboard = () => {
         accountNumber: 'FR76 0000 0000 0000 0000 0000 000',
       };
       addAccount(newAcc);
-      // Since addAccount is async-ish (functional update), we use a placeholder or wait.
-      // But we can just set editing item to a copy with a generated ID if we want to edit immediately.
-      // For now, let's just let it add.
     } else {
       const newSaving = {
         name: 'Nouveau Livret',
@@ -124,7 +122,7 @@ const Dashboard = () => {
       };
       addSaving(newSaving);
     }
-  };
+  }, [manageType, addAccount, addSaving]);
 
   return (
     <div className="screen">
@@ -454,20 +452,37 @@ const Dashboard = () => {
                           </div>
                         </div>
 
-                        <div style={{ display: 'flex', gap: 12 }}>
-                          <div className="form-group" style={{ flex: 1 }}>
-                            <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 6, display: 'block' }}>SOLDE ACTUEL</label>
-                            <div style={{ position: 'relative' }}>
-                              <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', fontWeight: 800, fontSize: 12 }}>€</span>
-                              <input name="balance" type="number" step="0.01" defaultValue={editingItem.balance} required style={{ width: '100%', padding: '10px 8px 10px 22px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 700, background: 'white' }} />
-                            </div>
-                          </div>
-                          {manageType === 'accounts' && (
+                        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                          {manageType === 'accounts' ? (
+                            <>
+                              <div className="form-group" style={{ flex: '1 1 45%' }}>
+                                <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                  SOLDE INITIAL
+                                  <span className="material-icons-round" style={{ fontSize: 14, cursor: 'help', color: 'var(--color-primary)' }} title="Indiquez le solde de votre compte au moment où vous commencez à utiliser l'application.">help_outline</span>
+                                </label>
+                                <div style={{ position: 'relative' }}>
+                                  <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', fontWeight: 800, fontSize: 12 }}>€</span>
+                                  <input name="initialBalance" type="number" step="0.01" defaultValue={editingItem.initialBalance} required style={{ width: '100%', padding: '10px 8px 10px 22px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 700, background: 'white' }} />
+                                </div>
+                              </div>
+                              <div className="form-group" style={{ flex: '1 1 45%' }}>
+                                <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 6, display: 'block' }}>DATE DU SOLDE INITIAL</label>
+                                <input name="initialBalanceDate" type="date" defaultValue={editingItem.initialBalanceDate || new Date().toISOString().split('T')[0]} required style={{ width: '100%', padding: '10px 8px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 700, background: 'white' }} />
+                              </div>
+                              <div className="form-group" style={{ flex: '1 1 100%' }}>
+                                <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 6, display: 'block' }}>SOLDE ACTUEL (CALCULÉ)</label>
+                                <div style={{ position: 'relative', opacity: 0.7 }}>
+                                  <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', fontWeight: 800, fontSize: 12 }}>€</span>
+                                  <input disabled value={editingItem.balance?.toFixed(2)} style={{ width: '100%', padding: '10px 8px 10px 22px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 700, background: '#f1f5f9', cursor: 'not-allowed' }} />
+                                </div>
+                              </div>
+                            </>
+                          ) : (
                             <div className="form-group" style={{ flex: 1 }}>
-                              <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 6, display: 'block' }}>INITIAL</label>
+                              <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 6, display: 'block' }}>SOLDE ACTUEL</label>
                               <div style={{ position: 'relative' }}>
                                 <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', fontWeight: 800, fontSize: 12 }}>€</span>
-                                <input name="initialBalance" type="number" step="0.01" defaultValue={editingItem.initialBalance} required style={{ width: '100%', padding: '10px 8px 10px 22px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 700, background: 'white' }} />
+                                <input name="balance" type="number" step="0.01" defaultValue={editingItem.balance} required style={{ width: '100%', padding: '10px 8px 10px 22px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 700, background: 'white' }} />
                               </div>
                             </div>
                           )}

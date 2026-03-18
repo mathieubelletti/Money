@@ -17,6 +17,7 @@ CREATE TABLE accounts (
   id text PRIMARY KEY,
   bank text,
   name text,
+  short text,
   balance numeric DEFAULT 0,
   type text,
   color text,
@@ -24,6 +25,7 @@ CREATE TABLE accounts (
   domain text,
   "accountNumber" text,
   "initialBalance" numeric DEFAULT 0,
+  "initialBalanceDate" text,
   user_id uuid REFERENCES auth.users DEFAULT auth.uid()
 );
 
@@ -35,6 +37,7 @@ CREATE TABLE transactions (
   amount numeric DEFAULT 0,
   date text,
   account text,
+  account_id text,
   color text,
   domain text,
   bg text,
@@ -60,6 +63,10 @@ CREATE TABLE forecasts (
   month text,
   income numeric DEFAULT 0,
   expenses numeric DEFAULT 0,
+  amount numeric DEFAULT 0,
+  ops integer DEFAULT 0,
+  type text,
+  color text,
   "shortMonth" text,
   user_id uuid REFERENCES auth.users DEFAULT auth.uid()
 );
@@ -113,3 +120,6 @@ CREATE POLICY "RLS_Forecasts" ON forecasts FOR ALL USING (auth.uid() = user_id) 
 CREATE POLICY "RLS_Savings" ON savings FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "RLS_Goal" ON goal FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "RLS_AppState" ON app_state FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- 5. Force Schema Reload
+NOTIFY pgrst, 'reload schema';

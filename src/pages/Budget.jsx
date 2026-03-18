@@ -3,55 +3,100 @@ import PageHeader from '../components/PageHeader';
 import { useData } from '../context/DataContext';
 
 const Budget = () => {
-  const { categories, transactions: txGroups, goal, setGoal } = useData();
+  const { forecasts, monthsState, transactions: txGroups, goal, setGoal, loading } = useData();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  
-  // Calculate actual spending from transactions
-  const getSpentForCategory = (catName) => {
-    let total = 0;
+
+  // 1. Identify the current month (e.g., "Mars 2026")
+  const currentMonthLabel = React.useMemo(() => {
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' });
+    const label = formatter.format(now);
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }, []);
+
+  // 2. Find the forecast for the current month
+  const currentForecast = React.useMemo(() => {
+    return forecasts?.find(f => f.month === currentMonthLabel);
+  }, [forecasts, currentMonthLabel]);
+
+  const monthData = React.useMemo(() => {
+    return currentForecast ? (monthsState[currentForecast.id] || { fixes: [], variables: [] }) : null;
+  }, [currentForecast, monthsState]);
+
+  // 3. Filter transactions for the current month/year
+  const currentMonthTransactions = React.useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const flat = [];
     (txGroups || []).forEach(group => {
       (group?.items || []).forEach(tx => {
-        if (tx.category === catName && tx.amount < 0) {
-          total += Math.abs(tx.amount);
+        const txDate = new Date(tx.date);
+        if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear) {
+          flat.push(tx);
         }
       });
     });
-    return total;
-  };
+    return flat;
+  }, [txGroups]);
 
-  const categoriesWithSpent = categories.map(c => ({
-    ...c,
-    spent: getSpentForCategory(c.name)
-  }));
+  // 4. Calculate actual spending per budget item
+  const getSpentForLabel = React.useCallback((label) => {
+    return currentMonthTransactions
+      .filter(tx => tx.category === label && tx.amount < 0)
+      .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+  }, [currentMonthTransactions]);
 
-  const totalSpent = categoriesWithSpent.reduce((s, c) => s + c.spent, 0);
-  const totalLimit = categoriesWithSpent.reduce((s, c) => s + c.limit, 0);
-  const remaining = totalLimit - totalSpent;
+  const fixes = React.useMemo(() => {
+    return (monthData?.fixes || []).map(f => ({
+      ...f,
+      spent: getSpentForLabel(f.label),
+      bg: 'rgba(24, 82, 74, 0.05)',
+      color: 'var(--color-primary)',
+      icon: f.icon || 'payments'
+    }));
+  }, [monthData, getSpentForLabel]);
+
+  const variables = React.useMemo(() => {
+    return (monthData?.variables || []).map(v => ({
+      ...v,
+      spent: getSpentForLabel(v.label),
+      bg: 'rgba(24, 82, 74, 0.05)',
+      color: 'var(--color-primary)',
+      icon: v.icon || 'shopping_cart'
+    }));
+  }, [monthData, getSpentForLabel]);
+
+  const totalSpent = React.useMemo(() => {
+    return [...fixes, ...variables].reduce((sum, item) => sum + item.spent, 0);
+  }, [fixes, variables]);
+
+  const totalLimit = React.useMemo(() => {
+    return [...fixes, ...variables].reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+  }, [fixes, variables]);
+
+  const remaining = React.useMemo(() => totalLimit - totalSpent, [totalLimit, totalSpent]);
 
   // --- Goal Logic ---
-  const calculateAutoSaved = () => {
+  const calculateAutoSaved = React.useCallback(() => {
     let total = 0;
     (txGroups || []).forEach(group => {
       (group?.items || []).forEach(tx => {
-        // Assume 'Épargne' category transactions with negative amount 
-        // on main account are savings, or just look for positive amounts 
-        // to a savings account if that data was available.
-        // For this mock, we'll look for positive amounts in category 'Épargne'
-        // or transactions that are specifically tagged.
         if (tx.category === 'Épargne' && tx.amount > 0) {
           total += tx.amount;
         }
       });
     });
     return total;
-  };
+  }, [txGroups]);
 
-  const currentSaved = goal.isManual ? goal.manualAmount : calculateAutoSaved();
-  const progressPct = Math.min((currentSaved / (goal.targetAmount || 1)) * 100, 100);
-  const isFinished = progressPct >= 100;
+  const currentSaved = React.useMemo(() => goal.isManual ? goal.manualAmount : calculateAutoSaved(), [goal.isManual, goal.manualAmount, calculateAutoSaved]);
+  const progressPct = React.useMemo(() => Math.min((currentSaved / (goal.targetAmount || 1)) * 100, 100), [currentSaved, goal.targetAmount]);
+  const isFinished = React.useMemo(() => progressPct >= 100, [progressPct]);
 
   // --- Coaching Logic ---
-  const getCoachingMessage = () => {
+  const coachingMessage = React.useMemo(() => {
     if (isFinished) return "Objectif Terminé ! Félicitations ! 🎉";
     
     const resteTotal = goal.targetAmount - currentSaved;
@@ -75,7 +120,7 @@ const Budget = () => {
     }
 
     return `Économisez encore ${resteTotal.toFixed(0)}€ pour atteindre votre objectif et valider votre prochain badge.`;
-  };
+  }, [isFinished, goal.targetAmount, currentSaved, goal.deadline, progressPct]);
 
   const handleSaveGoal = (e) => {
     e.preventDefault();
@@ -100,6 +145,11 @@ const Budget = () => {
 
       {/* Stats Section */}
       <section style={{ padding: '24px 24px 12px' }} className="dashboard-max-width">
+        <div style={{ textAlign: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-secondary)', background: 'white', padding: '4px 12px', borderRadius: 20, border: '1px solid var(--color-border-light)' }}>
+            {currentMonthLabel}
+          </span>
+        </div>
         <div style={{ 
           background: 'var(--color-primary-bg)', 
           padding: '20px', 
@@ -142,91 +192,109 @@ const Budget = () => {
         </div>
       </div>
 
-      {/* Dépenses Fixes */}
-      <section style={{ padding: '8px 24px 12px' }} className="dashboard-max-width">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'nowrap' }}>Dépenses Fixes</h3>
-          <div style={{ flex: 1, height: 1.5, background: '#000000', opacity: 0.2 }}></div>
+      {!monthData ? (
+        <div style={{ padding: '40px 24px', textAlign: 'center' }}>
+          <div style={{ background: 'white', padding: 32, borderRadius: 24, border: '2px dashed var(--color-border)' }}>
+            <span className="material-icons-round" style={{ fontSize: 48, color: 'var(--color-primary)', opacity: 0.3, marginBottom: 16 }}>calendar_today</span>
+            <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text-primary)', margin: '0 0 8px' }}>Aucun budget configuré</p>
+            <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: 0 }}>Rendez-vous dans l'onglet <strong>Prévisions</strong> pour commencer à planifier ce mois.</p>
+          </div>
         </div>
-        <div className="card" style={{ borderRadius: 16, marginBottom: 24 }}>
-          {categoriesWithSpent.filter(c => c.type === 'fixe').map(cat => {
-            const pct = Math.min((cat.spent / cat.limit) * 100, 100);
-            const isOver = cat.spent > cat.limit;
-            return (
-              <div key={cat.id} className="budget-cat-item">
-                <div className="budget-cat-row">
-                  <div className="budget-cat-icon" style={{ background: cat.bg }}>
-                    <span className="material-icons-round" style={{ color: cat.color }}>{cat.icon}</span>
-                  </div>
-                  <div className="budget-cat-name">{cat.name}</div>
-                  <div className="budget-cat-amounts">
-                    <div className="budget-cat-spent" style={{ color: isOver ? 'var(--color-danger)' : 'var(--color-text-primary)' }}>
-                      {cat.spent} €
+      ) : (
+        <>
+          {/* Dépenses Fixes */}
+          <section style={{ padding: '8px 24px 12px' }} className="dashboard-max-width">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'nowrap' }}>Dépenses Fixes</h3>
+              <div style={{ flex: 1, height: 1.5, background: '#000000', opacity: 0.2 }}></div>
+            </div>
+            <div className="card" style={{ borderRadius: 16, marginBottom: 24 }}>
+              {fixes.length === 0 ? (
+                <p style={{ padding: 20, textAlign: 'center', fontSize: 12, color: 'var(--color-text-tertiary)' }}>Aucune dépense fixe ce mois-ci</p>
+              ) : fixes.map(cat => {
+                const limit = parseFloat(cat.amount) || 0.01;
+                const pct = Math.min((cat.spent / limit) * 100, 100);
+                const isOver = cat.spent > limit;
+                return (
+                  <div key={cat.id} className="budget-cat-item">
+                    <div className="budget-cat-row">
+                      <div className="budget-cat-icon" style={{ background: cat.bg }}>
+                        <span className="material-icons-round" style={{ color: cat.color }}>{cat.icon}</span>
+                      </div>
+                      <div className="budget-cat-name">{cat.label}</div>
+                      <div className="budget-cat-amounts">
+                        <div className="budget-cat-spent" style={{ color: isOver ? 'var(--color-danger)' : 'var(--color-text-primary)' }}>
+                          {cat.spent.toLocaleString('fr-FR')} €
+                        </div>
+                        <div className="budget-cat-limit">/ {limit} €</div>
+                      </div>
                     </div>
-                    <div className="budget-cat-limit">/{cat.limit} €</div>
+                    <div className="budget-progress-bar">
+                      <div
+                        className="budget-progress-fill"
+                        style={{
+                          width: `${pct}%`,
+                          background: isOver
+                            ? 'var(--color-danger)'
+                            : pct > 80
+                              ? 'var(--color-warning)'
+                              : 'var(--color-primary)',
+                        }}
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="budget-progress-bar">
-                  <div
-                    className="budget-progress-fill"
-                    style={{
-                      width: `${pct}%`,
-                      background: isOver
-                        ? 'var(--color-danger)'
-                        : pct > 80
-                          ? 'var(--color-warning)'
-                          : 'var(--color-primary)',
-                    }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+                );
+              })}
+            </div>
+          </section>
 
-      {/* Dépenses Variables */}
-      <section style={{ padding: '8px 24px 12px' }} className="dashboard-max-width">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'nowrap' }}>Dépenses Variables</h3>
-          <div style={{ flex: 1, height: 1.5, background: '#000000', opacity: 0.2 }}></div>
-        </div>
-        <div className="card" style={{ borderRadius: 16 }}>
-          {categoriesWithSpent.filter(c => c.type === 'variable').map(cat => {
-            const pct = Math.min((cat.spent / cat.limit) * 100, 100);
-            const isOver = cat.spent > cat.limit;
-            return (
-              <div key={cat.id} className="budget-cat-item">
-                <div className="budget-cat-row">
-                  <div className="budget-cat-icon" style={{ background: cat.bg }}>
-                    <span className="material-icons-round" style={{ color: cat.color }}>{cat.icon}</span>
-                  </div>
-                  <div className="budget-cat-name">{cat.name}</div>
-                  <div className="budget-cat-amounts">
-                    <div className="budget-cat-spent" style={{ color: isOver ? 'var(--color-danger)' : 'var(--color-text-primary)' }}>
-                      {cat.spent} €
+          {/* Dépenses Variables */}
+          <section style={{ padding: '8px 24px 12px' }} className="dashboard-max-width">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'nowrap' }}>Dépenses Variables</h3>
+              <div style={{ flex: 1, height: 1.5, background: '#000000', opacity: 0.2 }}></div>
+            </div>
+            <div className="card" style={{ borderRadius: 16 }}>
+              {variables.length === 0 ? (
+                <p style={{ padding: 20, textAlign: 'center', fontSize: 12, color: 'var(--color-text-tertiary)' }}>Aucune dépense variable ce mois-ci</p>
+              ) : variables.map(cat => {
+                const limit = parseFloat(cat.amount) || 0.01;
+                const pct = Math.min((cat.spent / limit) * 100, 100);
+                const isOver = cat.spent > limit;
+                return (
+                  <div key={cat.id} className="budget-cat-item">
+                    <div className="budget-cat-row">
+                      <div className="budget-cat-icon" style={{ background: cat.bg }}>
+                        <span className="material-icons-round" style={{ color: cat.color }}>{cat.icon}</span>
+                      </div>
+                      <div className="budget-cat-name">{cat.label}</div>
+                      <div className="budget-cat-amounts">
+                        <div className="budget-cat-spent" style={{ color: isOver ? 'var(--color-danger)' : 'var(--color-text-primary)' }}>
+                          {cat.spent.toLocaleString('fr-FR')} €
+                        </div>
+                        <div className="budget-cat-limit">/ {limit} €</div>
+                      </div>
                     </div>
-                    <div className="budget-cat-limit">/{cat.limit} €</div>
+                    <div className="budget-progress-bar">
+                      <div
+                        className="budget-progress-fill"
+                        style={{
+                          width: `${pct}%`,
+                          background: isOver
+                            ? 'var(--color-danger)'
+                            : pct > 80
+                              ? 'var(--color-warning)'
+                              : 'var(--color-primary)',
+                        }}
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="budget-progress-bar">
-                  <div
-                    className="budget-progress-fill"
-                    style={{
-                      width: `${pct}%`,
-                      background: isOver
-                        ? 'var(--color-danger)'
-                        : pct > 80
-                          ? 'var(--color-warning)'
-                          : 'var(--color-primary)',
-                    }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+                );
+              })}
+            </div>
+          </section>
+        </>
+      )}
 
       {/* Objectif Section */}
       <div 
@@ -246,7 +314,7 @@ const Budget = () => {
 
         <div className="budget-objectif-title">{goal.icon} {goal.name}</div>
         <div className="budget-objectif-text">
-          {getCoachingMessage()}
+          {coachingMessage}
         </div>
         <div style={{ marginTop: 12, height: 8, background: 'rgba(255,255,255,0.2)', borderRadius: 99, overflow: 'hidden' }}>
           <div 

@@ -10,7 +10,9 @@ const Previsions = () => {
     globalRecurrences, 
     setGlobalRecurrences,
     monthsState,
-    setMonthsState
+    setMonthsState,
+    saveGlobalConfig,
+    loading
   } = useData();
 
   const COMMON_ICONS = ['home', 'shopping_basket', 'directions_transit', 'movie', 'subscriptions', 'sports_soccer', 'health_and_safety', 'restaurant', 'shopping_bag', 'payments', 'work', 'savings'];
@@ -31,11 +33,13 @@ const Previsions = () => {
   };
 
   // Propagation Logic
-  const applyGlobalRecurrences = () => {
+  const applyGlobalRecurrences = React.useCallback(async () => {
+    let finalMonthsState = null;
+    
     setMonthsState(prev => {
       const newState = { ...prev };
       forecasts.forEach(f => {
-        const currentData = getMonthData(f.id);
+        const currentData = prev[f.id] || { manualReport: 0, revenus: [], fixes: [], variables: [] };
         newState[f.id] = {
           ...currentData,
           revenus: globalRecurrences.revenus.map(r => ({ ...r, isLinked: true })),
@@ -43,13 +47,20 @@ const Previsions = () => {
           variables: globalRecurrences.variables.map(r => ({ ...r, isLinked: true }))
         };
       });
+      finalMonthsState = newState;
       return newState;
     });
+    
+    // Save to Supabase using the fresh state
+    if (finalMonthsState) {
+      await saveGlobalConfig(finalMonthsState);
+    }
+    
     setIsGlobalModalOpen(false);
-  };
+  }, [forecasts, globalRecurrences, saveGlobalConfig]);
 
   // Field Update with Auto-Unlink
-  const updateField = (monthId, section, id, field, value) => {
+  const updateField = React.useCallback((monthId, section, id, field, value) => {
     setMonthsState(prev => {
       const currentData = prev[monthId] || { manualReport: 0, revenus: [], fixes: [], variables: [] };
       return {
@@ -62,9 +73,9 @@ const Previsions = () => {
         }
       };
     });
-  };
+  }, []);
 
-  const toggleLink = (monthId, section, id) => {
+  const toggleLink = React.useCallback((monthId, section, id) => {
     setMonthsState(prev => {
       const currentData = prev[monthId] || { manualReport: 0, revenus: [], fixes: [], variables: [] };
       const item = currentData[section].find(i => i.id === id);
@@ -82,23 +93,23 @@ const Previsions = () => {
         }
       };
     });
-  };
+  }, [globalRecurrences]);
   
   // Add dynamic recurrence
-  const addGlobalRecurrence = (section) => {
+  const addGlobalRecurrence = React.useCallback((section) => {
     const newId = Date.now() + Math.random();
-    setGlobalRecurrences({
-      ...globalRecurrences,
-      [section]: [...globalRecurrences[section], { id: newId, label: '', amount: '', isLinked: true }]
-    });
-  };
+    setGlobalRecurrences(prev => ({
+      ...prev,
+      [section]: [...prev[section], { id: newId, label: '', amount: '', isLinked: true }]
+    }));
+  }, [setGlobalRecurrences]);
 
   // Totals & Cascading Rollover Calculation
-  const getCalculatedData = () => {
+  const calculatedResults = React.useMemo(() => {
     const results = {};
 
     forecasts.forEach((f, index) => {
-      const data = getMonthData(f.id);
+      const data = monthsState[f.id] || { manualReport: 0, revenus: [], fixes: [], variables: [] };
       const rev = data.revenus.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
       const fix = data.fixes.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
       const varTotal = data.variables.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
@@ -112,12 +123,37 @@ const Previsions = () => {
     });
 
     return results;
-  };
+  }, [forecasts, monthsState, isRolloverEnabled]);
 
-  const calculatedResults = getCalculatedData();
-
-  if (!forecasts || forecasts.length === 0) {
-    return <div className="screen animate-fade"><PageHeader title="Prévisions annuelles" /><div style={{padding: 24}}>Chargement des prévisions...</div></div>;
+  if (loading || !forecasts || forecasts.length === 0) {
+    return (
+      <div className="screen animate-fade">
+        <PageHeader title="Prévisions annuelles" />
+        <div style={{
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          height: '60vh',
+          gap: 16
+        }}>
+          <div className="spinner" style={{ 
+            width: 40, 
+            height: 40, 
+            border: '4px solid var(--color-primary-glass)', 
+            borderTop: '4px solid var(--color-primary)', 
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+          }}></div>
+          <div style={{fontSize: 14, fontWeight: 600, color: 'var(--color-text-secondary)'}}>
+            Chargement de vos prévisions...
+          </div>
+          <style>{`
+            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+          `}</style>
+        </div>
+      </div>
+    );
   }
 
   const lastForecast = forecasts[forecasts.length - 1];

@@ -32,16 +32,47 @@ export const DataProvider = ({ children }) => {
     const local = getLocal('money_forecasts', initialForecasts);
     const validForecasts = local && local.length > 0 ? local : initialForecasts;
     const currentYear = new Date().getFullYear();
-    return validForecasts.map(f => ({ ...f, month: f.month ? f.month.replace(/\d{4}/, currentYear) : f.month }));
+    return validForecasts.map(f => ({ 
+      ...f, 
+      month: (f.month && typeof f.month === 'string') ? f.month.replace(/\d{4}/, currentYear) : f.month 
+    }));
   });
   const [goal, setGoal] = useState(() => getLocal('money_goal', { id: 'default-goal', name: 'Objectif', targetAmount: 500, manualAmount: 100, icon: '🏖️' }));
   const [globalRecurrences, setGlobalRecurrences] = useState(() => getLocal('money_global_recurrences', { revenus: [], fixes: [], variables: [] }));
   const [monthsState, setMonthsState] = useState(() => getLocal('money_forecasts_detail', {}));
   
-  const hasFetchedRef = useRef(false);
+  // Dynamic balance calculation
+  const accountsWithBalances = React.useMemo(() => {
+    // 1. Flatten all transactions across groups
+    const flatTxs = transactions.reduce((acc, group) => [...acc, ...group.items], []);
+    
+    // 2. Map and compute balance for each account
+    return accounts.map(acc => {
+      const startDate = acc.initialBalanceDate || '1970-01-01';
+      
+      const txSum = flatTxs
+        .filter(tx => {
+          const isSameAccount = (tx.account_id && String(tx.account_id) === String(acc.id)) || 
+                               (!tx.account_id && tx.account === acc.name);
+          if (!isSameAccount) return false;
+          
+          // Only include transactions >= initialBalanceDate
+          return (tx.date || '9999-12-31') >= startDate;
+        })
+        .reduce((sum, tx) => sum + (tx.amount || 0), 0);
+      
+      return {
+        ...acc,
+        balance: (acc.initialBalance || 0) + txSum
+      };
+    });
+  }, [accounts, transactions]);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [usingSupabase, setUsingSupabase] = useState(false);
+  const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, success, error
+  const hasFetchedRef = useRef(false);
+  const syncTimeoutRef = useRef(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
@@ -75,9 +106,7 @@ export const DataProvider = ({ children }) => {
       const safeFcs = fcs || [];
       const safeSt = st || [];
 
-      if (!safeCats.length && !safeTxs.length && !safeAccs.length) {
-        await migrateFromLocal();
-      } else {
+      if (safeCats.length || safeTxs.length || safeAccs.length || safeSvs.length) {
         setUsingSupabase(true);
         if (safeCats.length) setCategories(safeCats);
         if (safeAccs.length) setAccounts(safeAccs);
@@ -89,7 +118,10 @@ export const DataProvider = ({ children }) => {
           safeTxs.forEach(tx => {
             const label = tx.dateLabel || "Inconnu";
             let g = grouped.find(gr => gr.dateLabel === label);
-            if (!g) { g = { dateLabel: label, items: [] }; grouped.push(g); }
+            if (!g) { 
+              g = { id: `g_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, dateLabel: label, items: [] }; 
+              grouped.push(g); 
+            }
             g.items.push(tx);
           });
           setTransactions(grouped);
@@ -97,7 +129,11 @@ export const DataProvider = ({ children }) => {
 
         if (safeFcs.length) {
           const year = new Date().getFullYear();
-          setForecasts(safeFcs.map(f => ({ ...f, month: f.month ? f.month.replace(/\d{4}/, year) : f.month })));
+          const sortedFcs = [...safeFcs].sort((a, b) => parseInt(a.id) - parseInt(b.id));
+          setForecasts(sortedFcs.map(f => ({ 
+            ...f, 
+            month: (f.month && typeof f.month === 'string') ? f.month.replace(/\d{4}/, year) : f.month 
+          })));
         }
 
         if (safeSt.length) {
@@ -106,6 +142,9 @@ export const DataProvider = ({ children }) => {
           if (gr?.value) setGlobalRecurrences(gr.value);
           if (fd?.value) setMonthsState(fd.value);
         }
+      } else {
+        // Truly empty on Supabase - only then check local migration
+        await migrateFromLocal();
       }
     } catch (e) {
       console.error('Fetch error:', e);
@@ -116,82 +155,233 @@ export const DataProvider = ({ children }) => {
 
   const migrateFromLocal = async () => {
     const flatTxs = [];
-    transactions.forEach(g => g.items.forEach(tx => flatTxs.push({ ...tx, dateLabel: g.dateLabel })));
+    transactions.forEach(g => g.items.forEach(tx => flatTxs.push({ ...tx, dateLabel: g.dateLabel, user_id: session?.user?.id })));
     try {
       await Promise.all([
-        categories.length && supabase.from('categories').upsert(categories),
+        categories.length && supabase.from('categories').upsert(categories.map(c => ({ ...c, user_id: session?.user?.id }))),
         flatTxs.length && supabase.from('transactions').upsert(flatTxs),
-        accounts.length && supabase.from('accounts').upsert(accounts),
-        savingsItems.length && supabase.from('savings').upsert(savingsItems),
-        forecasts.length && supabase.from('forecasts').upsert(forecasts),
-        supabase.from('goal').upsert([goal]),
-        supabase.from('app_state').upsert([{ key: 'globalRecurrences', value: globalRecurrences }, { key: 'forecasts_detail', value: monthsState }])
-      ]);
+        accounts.length && supabase.from('accounts').upsert(accounts.map(a => ({ ...a, user_id: session?.user?.id }))),
+        savingsItems.length && supabase.from('savings').upsert(savingsItems.map(s => ({ ...s, user_id: session?.user?.id }))),
+        forecasts.length && supabase.from('forecasts').upsert(forecasts.map(f => ({ ...f, user_id: session?.user?.id }))),
+        supabase.from('goal').upsert([{ ...goal, user_id: session?.user?.id }]),
+        supabase.from('app_state').upsert([
+          { key: 'globalRecurrences', value: globalRecurrences, user_id: session?.user?.id },
+          { key: 'forecasts_detail', value: monthsState, user_id: session?.user?.id }
+        ])
+      ].filter(Boolean));
       setUsingSupabase(true);
     } catch (e) { console.error('Migration failed:', e); }
   };
 
   useEffect(() => { if (session) fetchAllData(); }, [session]);
 
-  const addTransaction = (tx) => {
+  const addTransactions = React.useCallback((txs) => {
     setTransactions(prev => {
-      const label = tx.dateLabel || "Aujourd'hui";
       const updated = [...prev];
-      const idx = updated.findIndex(g => g.dateLabel === label);
-      if (idx > -1) updated[idx].items = [tx, ...updated[idx].items];
-      else updated.push({ dateLabel: label, items: [tx] });
-      if (usingSupabase) supabase.from('transactions').insert([{ ...tx, dateLabel: label }]).catch(console.error);
+      txs.forEach(tx => {
+        const label = tx.dateLabel || "Aujourd'hui";
+        const idx = updated.findIndex(g => g.dateLabel === label);
+        if (idx > -1) {
+          updated[idx] = { ...updated[idx], items: [tx, ...updated[idx].items] };
+        } else {
+          updated.push({ id: `g_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, dateLabel: label, items: [tx] });
+        }
+      });
       return updated;
     });
-  };
+    if (usingSupabase) {
+      const inserts = txs.map(tx => ({ ...tx, dateLabel: tx.dateLabel || "Aujourd'hui", user_id: session?.user?.id }));
+      supabase.from('transactions').insert(inserts).then(({ error }) => { if (error) console.error(error); });
+    }
+  }, [usingSupabase, session]);
 
-  const deleteAccount = (id) => {
+  const addTransaction = React.useCallback((tx) => {
+    addTransactions([tx]);
+  }, [addTransactions]);
+
+  const deleteTransaction = React.useCallback((id) => {
+    setTransactions(prev => {
+      return prev.map(group => ({
+        ...group,
+        items: group.items.filter(item => String(item.id) !== String(id))
+      })).filter(group => group.items.length > 0);
+    });
+    if (usingSupabase) {
+      supabase.from('transactions').delete().eq('id', id).then(({ error }) => { if (error) console.error(error); });
+    }
+  }, [usingSupabase]);
+
+  const updateTransaction = React.useCallback((tx) => {
+    setTransactions(prev => {
+      return prev.map(group => ({
+        ...group,
+        items: group.items.map(item => String(item.id) === String(tx.id) ? { ...tx, user_id: session?.user?.id } : item)
+      }));
+    });
+    if (usingSupabase) {
+      supabase.from('transactions').upsert([{ ...tx, user_id: session?.user?.id }]).then(({ error }) => { if (error) console.error(error); });
+    }
+  }, [usingSupabase, session]);
+
+  const deleteAccount = React.useCallback((id) => {
     setAccounts(prev => prev.filter(a => String(a.id) !== String(id)));
-    if (usingSupabase) supabase.from('accounts').delete().eq('id', String(id)).catch(console.error);
-  };
+    if (usingSupabase) supabase.from('accounts').delete().eq('id', String(id)).then(({ error }) => { if (error) console.error(error); });
+  }, [usingSupabase]);
 
-  const updateMonthForecast = (id, income, expenses) => {
+  const updateMonthForecast = React.useCallback((id, income, expenses) => {
     setForecasts(prev => prev.map(f => String(f.id) === String(id) ? { ...f, income, expenses } : f));
     if (usingSupabase) {
       const f = forecasts.find(i => String(i.id) === String(id));
-      if (f) supabase.from('forecasts').upsert([{ ...f, user_id: session.user.id, income, expenses }]).catch(console.error);
+      if (f) supabase.from('forecasts').upsert([{ ...f, user_id: session.user.id, income, expenses }]).then(({ error }) => { if (error) console.error(error); });
     }
-  };
+  }, [usingSupabase, forecasts, session?.user?.id]);
 
-  const addAccount = (acc) => {
-    const newAcc = { ...acc, id: String(Date.now() + Math.random()) };
+  const addAccount = React.useCallback((acc) => {
+    const today = new Date().toISOString().split('T')[0];
+    const newAcc = { 
+      ...acc, 
+      id: `acc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, 
+      user_id: session?.user?.id,
+      initialBalanceDate: acc.initialBalanceDate || today
+    };
     setAccounts(prev => [...prev, newAcc]);
-    if (usingSupabase) supabase.from('accounts').insert([{ ...newAcc, user_id: session?.user?.id }]).catch(console.error);
-  };
+    if (usingSupabase) supabase.from('accounts').insert([newAcc]).then(({ error }) => { if (error) console.error(error); });
+  }, [usingSupabase, session?.user?.id]);
 
-  const updateAccount = (acc) => {
-    setAccounts(prev => prev.map(a => String(a.id) === String(acc.id) ? acc : a));
-    if (usingSupabase) supabase.from('accounts').upsert([{ ...acc, user_id: session?.user?.id }]).catch(console.error);
-  };
+  const updateAccount = React.useCallback((acc) => {
+    setAccounts(prev => prev.map(a => String(a.id) === String(acc.id) ? { ...acc, user_id: session?.user?.id } : a));
+    
+    // If updating the first account, sync its balance to the first month's manual report
+    if (accounts.length > 0 && String(accounts[0].id) === String(acc.id)) {
+      setMonthsState(prev => {
+        const firstId = forecasts[0]?.id;
+        if (!firstId) return prev;
+        return {
+          ...prev,
+          [firstId]: { ...(prev[firstId] || { revenus: [], fixes: [], variables: [] }), manualReport: acc.initialBalance }
+        };
+      });
+    }
 
-  const addSaving = (sav) => {
-    const newSav = { ...sav, id: String(Date.now() + Math.random()) };
+    if (usingSupabase) supabase.from('accounts').upsert([{ ...acc, user_id: session?.user?.id }]).then(({ error }) => { if (error) console.error(error); });
+  }, [usingSupabase, session?.user?.id, accounts, forecasts]);
+
+  const addSaving = React.useCallback((sav) => {
+    const newSav = { ...sav, id: `sav_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, user_id: session?.user?.id };
     setSavingsItems(prev => [...prev, newSav]);
-    if (usingSupabase) supabase.from('savings').insert([{ ...newSav, user_id: session?.user?.id }]).catch(console.error);
-  };
+    if (usingSupabase) supabase.from('savings').insert([newSav]).then(({ error }) => { if (error) console.error(error); });
+  }, [usingSupabase, session?.user?.id]);
 
-  const updateSaving = (sav) => {
-    setSavingsItems(prev => prev.map(s => String(s.id) === String(sav.id) ? sav : s));
-    if (usingSupabase) supabase.from('savings').upsert([{ ...sav, user_id: session?.user?.id }]).catch(console.error);
-  };
+  const updateSaving = React.useCallback((sav) => {
+    setSavingsItems(prev => prev.map(s => String(s.id) === String(sav.id) ? { ...sav, user_id: session?.user?.id } : s));
+    if (usingSupabase) supabase.from('savings').upsert([{ ...sav, user_id: session?.user?.id }]).then(({ error }) => { if (error) console.error(error); });
+  }, [usingSupabase, session?.user?.id]);
 
-  const deleteSaving = (id) => {
+  const deleteSaving = React.useCallback((id) => {
     setSavingsItems(prev => prev.filter(s => String(s.id) !== String(id)));
-    if (usingSupabase) supabase.from('savings').delete().eq('id', String(id)).catch(console.error);
-  };
+    if (usingSupabase) supabase.from('savings').delete().eq('id', String(id)).then(({ error }) => { if (error) console.error(error); });
+  }, [usingSupabase]);
 
-  const value = {
-    categories, transactions, setTransactions, accounts, savingsItems, forecasts, 
+  const saveGlobalConfig = React.useCallback(async (specificMonthsState) => {
+    const userId = session?.user?.id;
+    if (!usingSupabase || !userId) return;
+
+    const targetMonthsState = specificMonthsState || monthsState;
+    if (Object.keys(targetMonthsState).length === 0 && categories.length === 0 && forecasts.length === 0) return;
+
+    setSyncStatus('syncing');
+    try {
+      const firstForecastId = forecasts[0]?.id;
+      const startBalance = firstForecastId ? parseFloat(targetMonthsState[firstForecastId]?.manualReport || 0) : 0;
+      
+      let accountsToUpsert = [...accounts];
+      if (accountsToUpsert.length === 0) {
+        accountsToUpsert = [{
+          id: `acc_${Date.now()}_main`,
+          name: 'Compte Principal',
+          bank: 'Ma Banque',
+          balance: startBalance,
+          initialBalance: startBalance,
+          initialBalanceDate: today,
+          type: 'Courant',
+          color: 'var(--color-primary)',
+          icon: 'account_balance_wallet',
+          domain: 'google.com',
+          accountNumber: 'FR76 ...',
+          user_id: userId
+        }];
+      } else {
+        // Only update if it actually changed to avoid redundant state cycles
+        const newBalance = parseFloat(startBalance || 0);
+        if (accountsToUpsert[0].initialBalance !== newBalance) {
+          accountsToUpsert[0] = { ...accountsToUpsert[0], initialBalance: newBalance, user_id: userId };
+        }
+      }
+
+      const promises = [
+        supabase.from('app_state').upsert([
+          { key: 'globalRecurrences', value: globalRecurrences, user_id: userId },
+          { key: 'forecasts_detail', value: targetMonthsState, user_id: userId }
+        ]),
+        categories.length > 0 && supabase.from('categories').upsert(categories.map(c => ({ ...c, user_id: userId }))),
+        forecasts.length > 0 && supabase.from('forecasts').upsert(forecasts.map(f => ({ ...f, user_id: userId }))),
+        supabase.from('accounts').upsert(accountsToUpsert.map(a => ({ ...a, user_id: userId })))
+      ].filter(Boolean);
+
+      const results = await Promise.all(promises);
+      const errors = results.filter(r => r?.error).map(r => r.error);
+      
+      if (errors.length > 0) throw errors[0];
+      
+      // Perform local state update ONLY if count or content changed, or if it was empty
+      if (accounts.length !== accountsToUpsert.length || accounts[0]?.initialBalance !== startBalance) {
+        setAccounts(accountsToUpsert);
+      }
+      
+      setSyncStatus('success');
+      setTimeout(() => setSyncStatus('idle'), 3000);
+      console.log('Global configuration synced');
+    } catch (err) {
+      console.error('Auto-sync error:', err);
+      setSyncStatus('error');
+    }
+  }, [usingSupabase, globalRecurrences, monthsState, categories, forecasts, accounts, session]);
+
+  // Automatic watcher for real-time save of categories, goal, and recurrences
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    // Clear previous timeout
+    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+
+    if (usingSupabase && session?.user?.id) {
+      syncTimeoutRef.current = setTimeout(() => {
+        saveGlobalConfig();
+      }, 2000); // 2s debounce
+    }
+
+    return () => {
+      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+    };
+  }, [categories, goal, globalRecurrences, monthsState, usingSupabase, session?.user?.id, saveGlobalConfig]);
+
+  const value = React.useMemo(() => ({
+    categories, transactions, setTransactions, accounts: accountsWithBalances, savingsItems, forecasts, 
     setForecasts: updateMonthForecast, monthsState, setMonthsState,
-    globalRecurrences, setGlobalRecurrences, addTransaction, 
+    globalRecurrences, setGlobalRecurrences, addTransaction, addTransactions, deleteTransaction, updateTransaction,
     addAccount, updateAccount, addSaving, updateSaving, deleteSaving,
-    deleteAccount, goal, setGoal, loading, usingSupabase, session, user: session?.user
-  };
+    deleteAccount, goal, setGoal, loading, usingSupabase, session, user: session?.user,
+    saveGlobalConfig, syncStatus
+  }), [
+    categories, transactions, accountsWithBalances, savingsItems, forecasts, updateMonthForecast, monthsState, 
+    globalRecurrences, addTransaction, addTransactions, deleteTransaction, updateTransaction,
+    addAccount, updateAccount, addSaving, updateSaving, deleteSaving,
+    deleteAccount, goal, loading, usingSupabase, session, saveGlobalConfig, syncStatus
+  ]);
 
   return (
     <DataContext.Provider value={value}>

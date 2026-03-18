@@ -6,6 +6,7 @@ import Previsions from './pages/Previsions';
 import Auth from './pages/Auth';
 import Hub from './pages/Hub';
 import BottomNav from './components/BottomNav';
+import SyncIndicator from './components/SyncIndicator';
 import { useData } from './context/DataContext';
 import { supabase } from './supabase';
 import './index.css';
@@ -35,6 +36,7 @@ function App() {
   if (appMode === 'hub') {
     return (
       <div className="app-container">
+        <SyncIndicator />
         <Hub onEnterBudget={() => setAppMode('budget')} />
         <BottomNav mode="hub" activeTab="accueil" setActiveTab={() => {}} />
       </div>
@@ -62,6 +64,7 @@ function App() {
 
   return (
     <div className="app-container">
+      <SyncIndicator />
       <ActiveScreen key={activeTab} onBackToHub={() => setAppMode('hub')} />
       <BottomNav mode="budget" activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>
