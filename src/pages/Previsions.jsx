@@ -306,7 +306,7 @@ const Previsions = () => {
 
                 {/* Expand Panel */}
                 <div style={{ 
-                  maxHeight: isExpanded ? '1200px' : '0', 
+                  maxHeight: isExpanded ? '4000px' : '0', 
                   overflow: 'hidden', 
                   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                   background: '#f9fafb'
