@@ -34,7 +34,19 @@ const Auth = () => {
       });
       if (error) setError(error.message);
     }
+    setLoading(false);
+  };
 
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError(null);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+    if (error) setError(error.message);
     setLoading(false);
   };
 
@@ -117,9 +129,14 @@ const Auth = () => {
         <div className="auth-divider-line"></div>
       </div>
 
-      <button className="auth-btn-google">
+      <button 
+        className="auth-btn-google" 
+        onClick={handleGoogleLogin}
+        disabled={loading}
+        type="button"
+      >
         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
-        Continuer avec Google
+        {loading ? 'Redirection...' : 'Continuer avec Google'}
       </button>
 
       <div className="auth-footer">
