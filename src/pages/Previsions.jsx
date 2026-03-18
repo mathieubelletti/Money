@@ -527,8 +527,6 @@ const Previsions = () => {
                 </div>
                 {globalRecurrences[sect].length > 0 ? globalRecurrences[sect].map((line, idx) => (
                   <div key={line.id} className="recurrence-grid-item" style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'auto 1fr 60px 100px auto',
                     gap: 8, 
                     marginBottom: 12, 
                     alignItems: 'center',
@@ -537,7 +535,7 @@ const Previsions = () => {
                     borderRadius: 16,
                     border: '1px solid #e2e8f0'
                   }}>
-                    <div>
+                    <div className="rg-icon">
                       <button 
                         onClick={() => {
                           const nextIdx = (COMMON_ICONS.indexOf(line.icon || COMMON_ICONS[0]) + 1) % COMMON_ICONS.length;

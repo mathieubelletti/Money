@@ -1,4 +1,4 @@
-﻿/* === DESIGN SYSTEM - Dashboard Bancaire === */
+/* === DESIGN SYSTEM - Dashboard Bancaire === */
 :root {
   /* Couleurs principales (Exact Stitch Tokens) */
   --color-primary: #18524a;
@@ -1555,29 +1555,22 @@ body {
 .recurrence-grid-item {
   display: grid;
   grid-template-columns: auto 1fr 60px 100px auto;
+  grid-template-areas: "icon label day amount delete";
   gap: 8px;
   align-items: center;
 }
 
+.recurrence-grid-item > .rg-icon { grid-area: icon; }
+.recurrence-grid-item > input:nth-of-type(1) { grid-area: label; }
+.recurrence-grid-item > input:nth-of-type(2) { grid-area: day; }
+.recurrence-grid-item > input:nth-of-type(3) { grid-area: amount; }
+.recurrence-grid-item > button { grid-area: delete; }
+
 @media (max-width: 600px) {
   .recurrence-grid-item {
-    grid-template-columns: auto 1fr 100px auto;
-  }
-  .recurrence-grid-item input[type="number"]:nth-of-type(1) { /* Jour */
-    grid-column: 2;
-    grid-row: 2;
-    width: 60px !important;
-  }
-  .recurrence-grid-item input[type="number"]:nth-of-type(2) { /* Montant */
-    grid-column: 3;
-    grid-row: 2;
-    width: 100% !important;
-  }
-  .recurrence-grid-item button:nth-of-type(1) { /* Icon */
-    grid-column: 1;
-    grid-row: 1 / span 2;
-  }
-  .recurrence-grid-item input:nth-of-type(1) { /* Label */
-    grid-column: 2 / span 3;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: 
+      "icon label delete"
+      "day amount amount";
   }
 }
