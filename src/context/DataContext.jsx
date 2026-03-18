@@ -16,11 +16,19 @@ export const useData = () => {
   return context;
 };
 
-const getLocal = (key, initial) => {
+const getLocal = (key, initial, userId = null) => {
   try {
-    const saved = localStorage.getItem(key);
+    const finalKey = userId ? `${key}_${userId}` : key;
+    const saved = localStorage.getItem(finalKey);
     return saved ? JSON.parse(saved) : initial;
   } catch { return initial; }
+};
+
+const setLocal = (key, value, userId = null) => {
+  try {
+    const finalKey = userId ? `${key}_${userId}` : key;
+    localStorage.setItem(finalKey, JSON.stringify(value));
+  } catch (e) { console.error('Local storage save failed', e); }
 };
 
 export const DataProvider = ({ children }) => {
@@ -70,13 +78,42 @@ export const DataProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [usingSupabase, setUsingSupabase] = useState(false);
-  const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, success, error
+  const [syncStatus, setSyncStatus] = useState('idle');
   const hasFetchedRef = useRef(false);
+  const lastUserIdRef = useRef(null);
   const syncTimeoutRef = useRef(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => setSession(sess));
+    supabase.auth.getSession().then(({ data: { session: sess } }) => {
+      setSession(sess);
+      if (sess?.user?.id) lastUserIdRef.current = sess.user.id;
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => {
+      setSession(sess);
+      
+      const newUserId = sess?.user?.id;
+      if (newUserId !== lastUserIdRef.current) {
+        // User changed or logged out
+        hasFetchedRef.current = false;
+        lastUserIdRef.current = newUserId;
+        
+        // Reset state to initial or user-specific local storage
+        setCategories(getLocal('money_categories', initialCategories, newUserId));
+        setTransactions(getLocal('money_transactions', initialTransactions, newUserId));
+        setAccounts(getLocal('money_accounts', initialAccounts, newUserId));
+        setSavingsItems(getLocal('money_savings', initialSavings, newUserId));
+        setForecasts(getLocal('money_forecasts', initialForecasts, newUserId));
+        setGoal(getLocal('money_goal', { id: 'default-goal', name: 'Objectif', targetAmount: 500, manualAmount: 100, icon: '🏖️' }, newUserId));
+        setGlobalRecurrences(getLocal('money_global_recurrences', { revenus: [], fixes: [], variables: [] }, newUserId));
+        setMonthsState(getLocal('money_forecasts_detail', {}, newUserId));
+        
+        if (!newUserId) {
+          setUsingSupabase(false);
+          setLoading(false);
+        }
+      }
+    });
     return () => subscription.unsubscribe();
   }, []);
 
@@ -368,6 +405,21 @@ export const DataProvider = ({ children }) => {
       if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
     };
   }, [categories, goal, globalRecurrences, monthsState, usingSupabase, session?.user?.id, saveGlobalConfig]);
+
+  // Persist to user-specific local storage
+  useEffect(() => {
+    const userId = session?.user?.id;
+    if (!userId) return;
+
+    setLocal('money_categories', categories, userId);
+    setLocal('money_transactions', transactions, userId);
+    setLocal('money_accounts', accounts, userId);
+    setLocal('money_savings', savingsItems, userId);
+    setLocal('money_forecasts', forecasts, userId);
+    setLocal('money_goal', goal, userId);
+    setLocal('money_global_recurrences', globalRecurrences, userId);
+    setLocal('money_forecasts_detail', monthsState, userId);
+  }, [categories, transactions, accounts, savingsItems, forecasts, goal, globalRecurrences, monthsState, session?.user?.id]);
 
   const value = React.useMemo(() => ({
     categories, transactions, setTransactions, accounts: accountsWithBalances, savingsItems, forecasts, 
