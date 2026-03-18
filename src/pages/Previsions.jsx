@@ -312,20 +312,25 @@ const Previsions = () => {
                     {/* Solde Report */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-secondary)' }}>Solde de report :</div>
-                      <div style={{ background: '#eee', borderRadius: 8, padding: '4px 12px', minWidth: 100, fontWeight: 800, fontSize: 14 }}>
-                        {reportBalance.toLocaleString('fr-FR')} €
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <input 
+                          type="number"
+                          placeholder={isRolloverEnabled && index > 0 ? (calculatedResults[forecasts[index-1].id]?.final || 0).toFixed(0) : "0"}
+                          value={data.manualReport !== undefined && data.manualReport !== '' ? data.manualReport : ''}
+                          onChange={(e) => setMonthsState(prev => ({ ...prev, [f.id]: { ...(prev[f.id] || { manualReport: '', revenus: [], fixes: [], variables: [] }), manualReport: e.target.value } }))}
+                          style={{ 
+                            background: (data.manualReport !== undefined && data.manualReport !== '') ? '#fff' : '#eee',
+                            border: '1px solid',
+                            borderColor: (data.manualReport !== undefined && data.manualReport !== '') ? 'var(--color-primary)' : 'var(--color-border)',
+                            borderRadius: 8, padding: '4px 28px 4px 12px', width: 130, fontWeight: 800, fontSize: 14,
+                            outline: 'none', color: 'var(--color-text-primary)'
+                          }} 
+                        />
+                        <span style={{ position: 'absolute', right: 12, fontSize: 14, fontWeight: 800, color: 'var(--color-text-tertiary)', pointerEvents: 'none' }}>€</span>
                       </div>
-                      <div style={{ fontSize: 10, color: 'var(--color-text-tertiary)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        {isRolloverEnabled && index > 0 && !(data.manualReport !== undefined && data.manualReport !== '') && '(Report auto)'}
-                        <span style={{ opacity: 0.7 }}>(Saisie manuelle possible)</span>
+                      <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        {data.manualReport !== undefined && data.manualReport !== '' ? '(Modifié manuellement)' : '(Calcul automatique - Modifiable)'}
                       </div>
-                      <input 
-                        type="number"
-                        placeholder={isRolloverEnabled && index > 0 ? (calculatedResults[forecasts[index-1].id]?.final || 0).toFixed(0) : "0"}
-                        value={data.manualReport !== undefined ? data.manualReport : ''}
-                        onChange={(e) => setMonthsState(prev => ({ ...prev, [f.id]: { ...(prev[f.id] || { manualReport: '', revenus: [], fixes: [], variables: [] }), manualReport: e.target.value } }))}
-                        style={{ background: (isRolloverEnabled && index > 0 && !(data.manualReport !== undefined && data.manualReport !== '')) ? '#f8fafc' : 'white', border: '1px solid var(--color-border)', borderRadius: 8, padding: '4px 8px', width: 80, fontWeight: 700 }} 
-                      />
                     </div>
 
                     {/* Sections */}
@@ -350,10 +355,11 @@ const Previsions = () => {
                             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                               <input 
                                 type="number"
-                                value={line.amount}
+                                placeholder="0"
+                                value={line.amount !== undefined ? line.amount : ''}
                                 onChange={(e) => updateField(f.id, sect.key, line.id, 'amount', e.target.value)}
                                 style={{ 
-                                  width: 90, height: 36, borderRadius: 8, 
+                                  width: 110, height: 36, borderRadius: 8, 
                                   border: '1px solid var(--color-border-light)', 
                                   padding: '0 28px 0 8px', fontSize: 13, textAlign: 'right', fontWeight: 700,
                                   background: line.isLinked ? '#fff' : '#fff9eb',
