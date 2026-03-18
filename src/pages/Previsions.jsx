@@ -114,8 +114,10 @@ const Previsions = () => {
       const fix = data.fixes.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
       const varTotal = data.variables.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
       
+      const hasManualOverride = data.manualReport !== undefined && data.manualReport !== '';
+      const autoReport = index === 0 ? 0 : (results[forecasts[index-1].id]?.final || 0);
       const reportBalance = isRolloverEnabled 
-        ? (index === 0 ? (parseFloat(data.manualReport) || 0) : (results[forecasts[index-1].id]?.final || 0))
+        ? (hasManualOverride ? parseFloat(data.manualReport) : autoReport)
         : (parseFloat(data.manualReport) || 0);
 
       const final = rev - fix - varTotal + (reportBalance || 0);
@@ -263,7 +265,7 @@ const Previsions = () => {
 
         {/* Liste des prévisions */}
         <div className="card" style={{ margin: '0 20px', borderRadius: 16, overflow: 'hidden' }}>
-          {activeTab === 'Mois' && forecasts.map(f => {
+          {activeTab === 'Mois' && forecasts.map((f, index) => {
             const isExpanded = expandedMonthId === f.id;
             const data = getMonthData(f.id);
             const { rev, fix, varTotal, reportBalance, final } = calculatedResults[f.id];
@@ -313,18 +315,17 @@ const Previsions = () => {
                       <div style={{ background: '#eee', borderRadius: 8, padding: '4px 12px', minWidth: 100, fontWeight: 800, fontSize: 14 }}>
                         {reportBalance.toLocaleString('fr-FR')} €
                       </div>
-                      <div style={{ fontSize: 10, color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>
-                        {f.id === forecasts[0].id ? '(Saisie manuelle possible)' : '(Calculé via report auto)'}
+                      <div style={{ fontSize: 10, color: 'var(--color-text-tertiary)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        {isRolloverEnabled && index > 0 && !(data.manualReport !== undefined && data.manualReport !== '') && '(Report auto)'}
+                        <span style={{ opacity: 0.7 }}>(Saisie manuelle possible)</span>
                       </div>
-                      {f.id === forecasts[0].id && (
-                        <input 
-                          type="number"
-                          placeholder="0"
-                          value={data.manualReport || ''}
-                          onChange={(e) => setMonthsState(prev => ({ ...prev, [f.id]: { ...(prev[f.id] || { manualReport: 0, revenus: [], fixes: [], variables: [] }), manualReport: e.target.value } }))}
-                          style={{ background: 'white', border: '1px solid var(--color-border)', borderRadius: 8, padding: '4px 8px', width: 80, fontWeight: 700 }} 
-                        />
-                      )}
+                      <input 
+                        type="number"
+                        placeholder={isRolloverEnabled && index > 0 ? (calculatedResults[forecasts[index-1].id]?.final || 0).toFixed(0) : "0"}
+                        value={data.manualReport !== undefined ? data.manualReport : ''}
+                        onChange={(e) => setMonthsState(prev => ({ ...prev, [f.id]: { ...(prev[f.id] || { manualReport: '', revenus: [], fixes: [], variables: [] }), manualReport: e.target.value } }))}
+                        style={{ background: (isRolloverEnabled && index > 0 && !(data.manualReport !== undefined && data.manualReport !== '')) ? '#f8fafc' : 'white', border: '1px solid var(--color-border)', borderRadius: 8, padding: '4px 8px', width: 80, fontWeight: 700 }} 
+                      />
                     </div>
 
                     {/* Sections */}
