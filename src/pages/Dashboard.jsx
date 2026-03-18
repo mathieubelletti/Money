@@ -20,6 +20,8 @@ const Dashboard = () => {
   const [manageType, setManageType] = useState('accounts'); // 'accounts' or 'savings'
   const [editingItem, setEditingItem] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallBtn, setShowInstallBtn] = useState(false);
 
   const totalBalance = React.useMemo(() => (accounts || []).reduce((acc, curr) => acc + (curr?.balance || 0), 0), [accounts]);
   
@@ -47,6 +49,30 @@ const Dashboard = () => {
     }
     return () => screenContainer?.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBtn(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      console.log('User accepted the install prompt');
+    }
+    setDeferredPrompt(null);
+    setShowInstallBtn(false);
+  };
+
 
   const scrollToTop = () => {
     const screenContainer = document.querySelector('.screen');
@@ -163,6 +189,35 @@ const Dashboard = () => {
           </div>
         </div>
       </section>
+
+      {showInstallBtn && (
+        <section style={{ padding: '16px 24px 0' }} className="dashboard-max-width">
+          <button 
+            className="pwa-install-btn animate-fade"
+            onClick={handleInstallClick}
+            style={{
+              width: '100%',
+              padding: '14px',
+              borderRadius: '16px',
+              background: 'var(--color-primary)',
+              border: 'none',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: '800',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
+              transition: 'all 0.2s'
+            }}
+          >
+            <span className="material-icons-round" style={{ fontSize: '20px' }}>download_for_offline</span>
+            Installer l'application sur mon mobile
+          </button>
+        </section>
+      )}
 
       {/* Monthly Summary (Revenus / Dépenses) */}
       <section style={{ padding: '24px' }} className="dashboard-max-width">
