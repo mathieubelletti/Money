@@ -516,14 +516,14 @@ export const DataProvider = ({ children }) => {
     setForecasts: updateMonthForecast, monthsState, setMonthsState,
     globalRecurrences, setGlobalRecurrences, addTransaction, addTransactions, deleteTransaction, updateTransaction,
     addAccount, updateAccount, addSaving, updateSaving, deleteSaving,
-    deleteAccount, goal, loading, usingSupabase, session, user: session?.user,
+    deleteAccount, goal, setGoal, loading, usingSupabase, session, user: session?.user,
     saveGlobalConfig, syncStatus, selectedPeriod, setSelectedPeriod,
     fetchingPrevisions, fetchPrevisions, updatePrevision
   }), [
     categories, transactions, accountsWithBalances, savingsItems, forecasts, updateMonthForecast, monthsState, 
     globalRecurrences, addTransaction, addTransactions, deleteTransaction, updateTransaction,
     addAccount, updateAccount, addSaving, updateSaving, deleteSaving,
-    deleteAccount, goal, loading, usingSupabase, session, saveGlobalConfig, syncStatus, selectedPeriod,
+    deleteAccount, goal, setGoal, loading, usingSupabase, session, saveGlobalConfig, syncStatus, selectedPeriod, setSelectedPeriod,
     fetchingPrevisions, fetchPrevisions, updatePrevision
   ]);
 

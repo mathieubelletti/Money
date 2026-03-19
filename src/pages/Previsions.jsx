@@ -28,6 +28,30 @@ const Previsions = () => {
     fetchPrevisions();
   }, [fetchPrevisions]);
 
+  // Totals & Cascading Rollover Calculation
+  const calculatedResults = React.useMemo(() => {
+    const results = {};
+
+    forecasts.forEach((f, index) => {
+      const data = monthsState[f.id] || { manualReport: 0, revenus: [], fixes: [], variables: [] };
+      const rev = data.revenus.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+      const fix = data.fixes.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+      const varTotal = data.variables.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+      
+      // Strict check: ignore integer 0 (legacy default initialization), but allow string "0"
+      const hasManualOverride = data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0;
+      const autoReport = index === 0 ? 0 : (results[forecasts[index-1].id]?.final || 0);
+      const reportBalance = isRolloverEnabled 
+        ? (hasManualOverride ? parseFloat(data.manualReport) : autoReport)
+        : (parseFloat(data.manualReport) || 0);
+
+      const final = rev - fix - varTotal + (reportBalance || 0);
+      results[f.id] = { rev, fix, varTotal, reportBalance, final };
+    });
+
+    return results;
+  }, [forecasts, monthsState, isRolloverEnabled]);
+
   const getMonthData = (id) => monthsState[id] || { manualReport: 0, revenus: [], fixes: [], variables: [] };
 
   const formatMonthAmount = (amount) => {
@@ -118,30 +142,6 @@ const Previsions = () => {
       [section]: [...prev[section], { id: newId, label: '', amount: '', day: '15', isLinked: true }]
     }));
   }, [setGlobalRecurrences]);
-
-  // Totals & Cascading Rollover Calculation
-  const calculatedResults = React.useMemo(() => {
-    const results = {};
-
-    forecasts.forEach((f, index) => {
-      const data = monthsState[f.id] || { manualReport: 0, revenus: [], fixes: [], variables: [] };
-      const rev = data.revenus.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
-      const fix = data.fixes.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
-      const varTotal = data.variables.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
-      
-      // Strict check: ignore integer 0 (legacy default initialization), but allow string "0"
-      const hasManualOverride = data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0;
-      const autoReport = index === 0 ? 0 : (results[forecasts[index-1].id]?.final || 0);
-      const reportBalance = isRolloverEnabled 
-        ? (hasManualOverride ? parseFloat(data.manualReport) : autoReport)
-        : (parseFloat(data.manualReport) || 0);
-
-      const final = rev - fix - varTotal + (reportBalance || 0);
-      results[f.id] = { rev, fix, varTotal, reportBalance, final };
-    });
-
-    return results;
-  }, [forecasts, monthsState, isRolloverEnabled]);
 
   if (loading || fetchingPrevisions || !forecasts || forecasts.length === 0) {
     return (
