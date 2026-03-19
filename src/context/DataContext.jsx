@@ -110,6 +110,7 @@ export const DataProvider = ({ children }) => {
   const [syncStatus, setSyncStatus] = useState('idle');
   const hasFetchedRef = useRef(false);
   const lastUserIdRef = useRef(null);
+  const [fetchingPrevisions, setFetchingPrevisions] = useState(false);
   const syncTimeoutRef = useRef(null);
 
   useEffect(() => {
@@ -432,6 +433,47 @@ export const DataProvider = ({ children }) => {
     }
   }, [usingSupabase, globalRecurrences, monthsState, categories, forecasts, accounts, session]);
 
+  const fetchPrevisions = React.useCallback(async () => {
+    if (!session?.user?.id) return;
+    setFetchingPrevisions(true);
+    try {
+      const { data, error } = await supabase
+        .from('previsions')
+        .select('*')
+        .eq('annee', 2026);
+      
+      if (error) throw error;
+      
+      // If we want to sync this with monthsState, we could do it here
+      // But according to instructions, we just need the function
+      return data;
+    } catch (err) {
+      console.error('Error fetching previsions:', err);
+      return [];
+    } finally {
+      setFetchingPrevisions(false);
+    }
+  }, [session?.user?.id]);
+
+  const updatePrevision = React.useCallback(async (mois, montant) => {
+    if (!session?.user?.id) return;
+    try {
+      const { error } = await supabase
+        .from('previsions')
+        .upsert({
+          user_id: session.user.id,
+          mois,
+          annee: 2026,
+          montant_previsionnel: montant,
+          statut: montant >= 0 ? 'Excedent' : 'Déficit'
+        }, { onConflict: 'user_id,mois,annee' });
+      
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error updating prevision:', err);
+    }
+  }, [session?.user?.id]);
+
   // Automatic watcher for real-time save of categories, goal, and recurrences
   const isInitialMount = useRef(true);
   useEffect(() => {
@@ -474,13 +516,15 @@ export const DataProvider = ({ children }) => {
     setForecasts: updateMonthForecast, monthsState, setMonthsState,
     globalRecurrences, setGlobalRecurrences, addTransaction, addTransactions, deleteTransaction, updateTransaction,
     addAccount, updateAccount, addSaving, updateSaving, deleteSaving,
-    deleteAccount, goal, setGoal, loading, usingSupabase, session, user: session?.user,
-    saveGlobalConfig, syncStatus, selectedPeriod, setSelectedPeriod
+    deleteAccount, goal, loading, usingSupabase, session, user: session?.user,
+    saveGlobalConfig, syncStatus, selectedPeriod, setSelectedPeriod,
+    fetchingPrevisions, fetchPrevisions, updatePrevision
   }), [
     categories, transactions, accountsWithBalances, savingsItems, forecasts, updateMonthForecast, monthsState, 
     globalRecurrences, addTransaction, addTransactions, deleteTransaction, updateTransaction,
     addAccount, updateAccount, addSaving, updateSaving, deleteSaving,
-    deleteAccount, goal, loading, usingSupabase, session, saveGlobalConfig, syncStatus, selectedPeriod
+    deleteAccount, goal, loading, usingSupabase, session, saveGlobalConfig, syncStatus, selectedPeriod,
+    fetchingPrevisions, fetchPrevisions, updatePrevision
   ]);
 
   return (

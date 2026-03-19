@@ -12,7 +12,10 @@ const Previsions = () => {
     monthsState,
     setMonthsState,
     saveGlobalConfig,
-    loading
+    loading,
+    fetchingPrevisions,
+    fetchPrevisions,
+    updatePrevision
   } = useData();
 
   const COMMON_ICONS = ['home', 'shopping_basket', 'directions_transit', 'movie', 'subscriptions', 'sports_soccer', 'health_and_safety', 'restaurant', 'shopping_bag', 'payments', 'work', 'savings'];
@@ -20,6 +23,10 @@ const Previsions = () => {
   const [expandedMonthId, setExpandedMonthId] = useState(null);
   const [isGlobalModalOpen, setIsGlobalModalOpen] = useState(false);
   const [isRolloverEnabled, setIsRolloverEnabled] = useState(true);
+
+  React.useEffect(() => {
+    fetchPrevisions();
+  }, [fetchPrevisions]);
 
   const getMonthData = (id) => monthsState[id] || { manualReport: 0, revenus: [], fixes: [], variables: [] };
 
@@ -73,7 +80,15 @@ const Previsions = () => {
         }
       };
     });
-  }, []);
+
+    // Handle Supabase update after state change
+    if (field === 'amount') {
+      setTimeout(() => {
+        const { final } = calculatedResults[monthId];
+        updatePrevision(monthId, final);
+      }, 0);
+    }
+  }, [calculatedResults, updatePrevision]);
 
   const toggleLink = React.useCallback((monthId, section, id) => {
     setMonthsState(prev => {
@@ -128,7 +143,7 @@ const Previsions = () => {
     return results;
   }, [forecasts, monthsState, isRolloverEnabled]);
 
-  if (loading || !forecasts || forecasts.length === 0) {
+  if (loading || fetchingPrevisions || !forecasts || forecasts.length === 0) {
     return (
       <div className="screen animate-fade">
         <PageHeader title="Prévisions annuelles" />
@@ -163,7 +178,7 @@ const Previsions = () => {
   const midForecast = forecasts[Math.min(5, forecasts.length - 1)];
 
   return (
-    <div className="screen animate-fade" style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+    <div className="screen animate-fade" style={{ display: 'flex', flexDirection: 'column' }}>
       <div style={{ flexShrink: 0 }}>
         <PageHeader title="Prévisions annuelles" />
       </div>
@@ -256,9 +271,9 @@ const Previsions = () => {
         </section>
       </div>
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
         {/* Titre section */}
-        <section style={{ padding: '20px 24px 8px', flexShrink: 0 }} className="dashboard-max-width">
+        <section style={{ padding: '20px 24px 8px' }} className="dashboard-max-width">
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 0 }}>
             <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'nowrap' }}>
               {activeTab === 'Mois' ? 'Récapitulatif mensuel' : 
@@ -269,8 +284,8 @@ const Previsions = () => {
         </section>
 
         {/* Liste des prévisions */}
-        <section className="dashboard-max-width" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '0 24px 80px' }}>
-          <div className="card" style={{ borderRadius: 16, overflowY: 'auto', flex: 1 }}>
+        <section className="dashboard-max-width recapitulatif-mensuel" style={{ padding: '0 24px 120px' }}>
+          <div className="card" style={{ borderRadius: 16 }}>
           {activeTab === 'Mois' && forecasts.map((f, index) => {
             const isExpanded = expandedMonthId === f.id;
             const data = getMonthData(f.id);
@@ -323,7 +338,17 @@ const Previsions = () => {
                           type="number"
                           placeholder={isRolloverEnabled && index > 0 ? (calculatedResults[forecasts[index-1].id]?.final || 0).toFixed(0) : "0"}
                           value={data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0 ? data.manualReport : ''}
-                          onChange={(e) => setMonthsState(prev => ({ ...prev, [f.id]: { ...(prev[f.id] || { manualReport: '', revenus: [], fixes: [], variables: [] }), manualReport: e.target.value } }))}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setMonthsState(prev => ({ 
+                              ...prev, 
+                              [f.id]: { ...(prev[f.id] || { manualReport: '', revenus: [], fixes: [], variables: [] }), manualReport: val } 
+                            }));
+                            setTimeout(() => {
+                              const { final } = calculatedResults[f.id];
+                              updatePrevision(f.id, final);
+                            }, 0);
+                          }}
                           style={{ 
                             background: (data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0) ? '#fff' : '#eee',
                             border: '1px solid',
