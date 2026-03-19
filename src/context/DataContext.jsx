@@ -604,7 +604,12 @@ export const DataProvider = ({ children }) => {
               statut: final >= 0 ? 'Excedent' : 'Déficit'
             };
           });
-          return supabase.from('previsions').upsert(previsionsToSync, { onConflict: 'user_id,mois,annee' });
+          const { error: prevError } = await supabase.from('previsions').upsert(previsionsToSync, { onConflict: 'user_id,mois,annee' });
+          if (prevError) {
+            console.error('❌ Error syncing previsions table:', prevError);
+            return { error: prevError };
+          }
+          return { error: null };
         },
         goal && goal.id !== 'default-goal' && supabase.from('goal').upsert([{ 
           id: goal.id, 
