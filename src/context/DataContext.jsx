@@ -514,21 +514,25 @@ export const DataProvider = ({ children }) => {
       });
 
       // Also ensure we sync categories if we have unique labels from recurrences
-      // This helps populate the categories table for first-time users
+      // Use deterministic IDs to avoid duplicates in Supabase
       let categoriesToSync = [...categories];
-      if (categoriesToSync.length === 0) {
-        const labels = new Set();
-        Object.values(globalRecurrences).forEach(sect => {
-          sect.forEach(r => { if (r.label) labels.add(r.label); });
-        });
-        categoriesToSync = Array.from(labels).map(l => ({
-          id: `cat_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-          name: l,
-          icon: 'category',
-          color: 'var(--color-primary)',
-          user_id: userId
-        }));
-      }
+      const labels = new Set();
+      Object.values(globalRecurrences).forEach(sect => {
+        sect.forEach(r => { if (r.label) labels.add(r.label); });
+      });
+
+      labels.forEach(l => {
+        const detId = `cat_${l.toLowerCase().trim().replace(/[^a-z0-0]/g, '_')}`;
+        if (!categoriesToSync.some(c => c.name === l || c.id === detId)) {
+          categoriesToSync.push({
+            id: detId,
+            name: l,
+            icon: 'category',
+            color: 'var(--color-primary)',
+            user_id: userId
+          });
+        }
+      });
 
       // Delete all existing forecasts for this user first, then re-insert clean
       const syncForecasts = async () => {
