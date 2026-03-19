@@ -9,6 +9,7 @@ const Dashboard = () => {
     accounts, 
     savingsItems, 
     transactions, 
+    deleteAccount,
     deleteSaving,
     addAccount,
     addSaving,
