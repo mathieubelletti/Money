@@ -442,7 +442,15 @@ export const DataProvider = ({ children }) => {
         const income = (data.revenus || []).reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
         const expenseItems = [...(data.fixes || []), ...(data.variables || [])];
         const expenses = expenseItems.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
-        return { ...f, income, expenses, user_id: userId };
+        
+        // Return only the columns that exist in Supabase to avoid 400 errors
+        return { 
+          id: f.id, 
+          month: f.month, 
+          income, 
+          expenses, 
+          user_id: userId 
+        };
       });
 
       // Also ensure we sync categories if we have unique labels from recurrences
@@ -480,7 +488,20 @@ export const DataProvider = ({ children }) => {
         ]),
         categoriesToSync.length > 0 && supabase.from('categories').upsert(categoriesToSync.map(c => ({ ...c, user_id: userId }))),
         syncForecasts(),
-        supabase.from('accounts').upsert(accountsToUpsert.map(a => ({ ...a, user_id: userId })))
+        supabase.from('accounts').upsert(accountsToUpsert.map(a => ({
+          id: a.id,
+          name: a.name,
+          bank: a.bank,
+          balance: a.balance,
+          initialBalance: a.initialBalance,
+          initialBalanceDate: a.initialBalanceDate,
+          type: a.type,
+          color: a.color,
+          icon: a.icon,
+          domain: a.domain,
+          accountNumber: a.accountNumber,
+          user_id: userId
+        })))
       ].filter(Boolean);
 
       const results = await Promise.all(promises);
