@@ -44,7 +44,11 @@ const PageHeader = ({ title, onBack }) => {
 
         {isMenuOpen && (
           <div className="header-dropdown">
-            <button className="header-dropdown-item" onClick={() => {
+            <div style={{ padding: '12px 16px 8px', borderBottom: '1px solid var(--color-border-light)' }}>
+              <div style={{ fontSize: 10, color: 'var(--color-text-tertiary)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 2 }}>Compte Connecté</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-primary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session?.user?.email}</div>
+            </div>
+            <button className="header-dropdown-item" style={{ marginTop: 4 }} onClick={() => {
               if (onBack) onBack();
               else window.location.reload();
               setIsMenuOpen(false);
