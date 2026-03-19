@@ -436,10 +436,33 @@ export const DataProvider = ({ children }) => {
         }
       }
 
-      const forecastsToSync = forecasts.map(f => ({ ...f, user_id: userId }));
+      // Calculate totals for each forecast based on the detail state
+      const forecastsToSync = forecasts.map(f => {
+        const data = targetMonthsState[f.id] || { revenus: [], fixes: [], variables: [] };
+        const income = (data.revenus || []).reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+        const expenseItems = [...(data.fixes || []), ...(data.variables || [])];
+        const expenses = expenseItems.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+        return { ...f, income, expenses, user_id: userId };
+      });
+
+      // Also ensure we sync categories if we have unique labels from recurrences
+      // This helps populate the categories table for first-time users
+      let categoriesToSync = [...categories];
+      if (categoriesToSync.length === 0) {
+        const labels = new Set();
+        Object.values(globalRecurrences).forEach(sect => {
+          sect.forEach(r => { if (r.label) labels.add(r.label); });
+        });
+        categoriesToSync = Array.from(labels).map(l => ({
+          id: `cat_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+          name: l,
+          icon: 'category',
+          color: 'var(--color-primary)',
+          user_id: userId
+        }));
+      }
 
       // Delete all existing forecasts for this user first, then re-insert clean
-      // This eliminates any duplicates from past migrations
       const syncForecasts = async () => {
         if (forecastsToSync.length === 0) return { error: null };
         const { error: delError } = await supabase
@@ -455,7 +478,7 @@ export const DataProvider = ({ children }) => {
           { key: 'globalRecurrences', value: globalRecurrences, user_id: userId },
           { key: 'forecasts_detail', value: targetMonthsState, user_id: userId }
         ]),
-        categories.length > 0 && supabase.from('categories').upsert(categories.map(c => ({ ...c, user_id: userId }))),
+        categoriesToSync.length > 0 && supabase.from('categories').upsert(categoriesToSync.map(c => ({ ...c, user_id: userId }))),
         syncForecasts(),
         supabase.from('accounts').upsert(accountsToUpsert.map(a => ({ ...a, user_id: userId })))
       ].filter(Boolean);
@@ -531,30 +554,10 @@ export const DataProvider = ({ children }) => {
     // Always clear previous timeout first
     if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
     
-    // Validation logic for auto-sync
-    const isValid = () => {
-      // Check globalRecurrences: all items should have label and amount if they are present
-      for (const sect in globalRecurrences) {
-        if (globalRecurrences[sect].some(line => {
-          // If label or amount or day is partially filled, consider the whole state "dirty/invalid" for sync
-          // unless it's a completely new empty line (which is handled by addGlobalRecurrence)
-          const hasLabel = line.label && line.label.trim().length > 0;
-          const hasAmount = line.amount !== '' && !isNaN(parseFloat(line.amount));
-          const hasDay = line.day !== '' && !isNaN(parseInt(line.day, 10));
-          
-          // An item is "in progress" and thus invalid for sync if some fields are filled but not all
-          const isStarted = hasLabel || hasAmount || hasDay;
-          const isComplete = hasLabel && hasAmount && hasDay;
-          return isStarted && !isComplete;
-        })) return false;
-      }
-      return true;
-    };
-
-    if (usingSupabase && session?.user?.id && isValid()) {
+    if (usingSupabase && session?.user?.id) {
       syncTimeoutRef.current = setTimeout(() => {
         saveGlobalConfig();
-      }, 5000); // Increased debounce to 5s for smoother typing experience
+      }, 10000); // 10s debounce to avoid too many partial syncs while typing
     }
 
     return () => {
