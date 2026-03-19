@@ -48,6 +48,7 @@ export const DataProvider = ({ children }) => {
   const [goal, setGoal] = useState(() => getLocal('money_goal', { id: 'default-goal', name: 'Objectif', targetAmount: 500, manualAmount: 100, icon: '🏖️' }));
   const [globalRecurrences, setGlobalRecurrences] = useState(() => getLocal('money_global_recurrences', { revenus: [], fixes: [], variables: [] }));
   const [monthsState, setMonthsState] = useState(() => getLocal('money_forecasts_detail', {}));
+  const [selectedPeriod, setSelectedPeriod] = useState(() => new Date().toISOString().substring(0, 7) + '-01');
   
   // Dynamic balance calculation
   const accountsWithBalances = React.useMemo(() => {
@@ -428,12 +429,12 @@ export const DataProvider = ({ children }) => {
     globalRecurrences, setGlobalRecurrences, addTransaction, addTransactions, deleteTransaction, updateTransaction,
     addAccount, updateAccount, addSaving, updateSaving, deleteSaving,
     deleteAccount, goal, setGoal, loading, usingSupabase, session, user: session?.user,
-    saveGlobalConfig, syncStatus
+    saveGlobalConfig, syncStatus, selectedPeriod, setSelectedPeriod
   }), [
     categories, transactions, accountsWithBalances, savingsItems, forecasts, updateMonthForecast, monthsState, 
     globalRecurrences, addTransaction, addTransactions, deleteTransaction, updateTransaction,
     addAccount, updateAccount, addSaving, updateSaving, deleteSaving,
-    deleteAccount, goal, loading, usingSupabase, session, saveGlobalConfig, syncStatus
+    deleteAccount, goal, loading, usingSupabase, session, saveGlobalConfig, syncStatus, selectedPeriod
   ]);
 
   return (

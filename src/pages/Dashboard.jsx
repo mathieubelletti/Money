@@ -9,12 +9,14 @@ const Dashboard = () => {
     accounts, 
     savingsItems, 
     transactions, 
-    deleteAccount, 
     deleteSaving,
     addAccount,
     addSaving,
     updateAccount,
-    updateSaving
+    updateSaving,
+    selectedPeriod,
+    setSelectedPeriod,
+    forecasts
   } = useData();
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [manageType, setManageType] = useState('accounts'); // 'accounts' or 'savings'
@@ -23,16 +25,41 @@ const Dashboard = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallBtn, setShowInstallBtn] = useState(false);
 
-  const totalBalance = React.useMemo(() => (accounts || []).reduce((acc, curr) => acc + (curr?.balance || 0), 0), [accounts]);
-  
+  const [isFiltering, setIsFiltering] = useState(false);
+
+  const handlePeriodChange = (val) => {
+    setIsFiltering(true);
+    setSelectedPeriod(val);
+    setTimeout(() => setIsFiltering(false), 300);
+  };
+
+  const historicalBalance = React.useMemo(() => {
+    if (!selectedPeriod) return 0;
+    const [yearStr, monthStr] = selectedPeriod.split('-');
+    const endOfSelectedMonth = new Date(yearStr, monthStr, 0).toISOString().split('T')[0];
+
+    let total = (accounts || []).reduce((acc, curr) => acc + (parseFloat(curr?.initialBalance) || 0), 0);
+
+    (transactions || []).forEach(group => {
+      (group?.items || []).forEach(tx => {
+        const txDate = tx.budget_month || tx.date;
+        if (txDate <= endOfSelectedMonth) {
+          total += parseFloat(tx.amount) || 0;
+        }
+      });
+    });
+    return total;
+  }, [accounts, transactions, selectedPeriod]);
+
   // Calculate monthly change if possible, else 0
   const monthChange = 0; 
   
-  // Calculate monthly totals from transactions safely, filtering for current month based on budget_month or date
+  // Calculate monthly totals from transactions safely, filtering for selected period
   const { monthlyRevenus, monthlyDepenses } = React.useMemo(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+    if (!selectedPeriod) return { monthlyRevenus: 0, monthlyDepenses: 0 };
+    const [yearStr, monthStr] = selectedPeriod.split('-');
+    const pYear = parseInt(yearStr, 10);
+    const pMonth = parseInt(monthStr, 10) - 1;
 
     let rev = 0;
     let dep = 0;
@@ -50,7 +77,7 @@ const Dashboard = () => {
           txMonth = txDate.getMonth();
         }
 
-        if (txMonth === currentMonth && txYear === currentYear) {
+        if (txMonth === pMonth && txYear === pYear) {
           if (tx.amount > 0) rev += tx.amount;
           if (tx.amount < 0) dep += Math.abs(tx.amount);
         }
@@ -58,7 +85,7 @@ const Dashboard = () => {
     });
 
     return { monthlyRevenus: rev, monthlyDepenses: dep };
-  }, [transactions]);
+  }, [transactions, selectedPeriod]);
 
   useEffect(() => {
     const screenContainer = document.querySelector('.screen');
@@ -177,8 +204,46 @@ const Dashboard = () => {
     <div className="screen">
       <PageHeader title="Tableau de bord" />
 
-      {/* Balance Card Section */}
-      <section style={{ padding: '24px 24px 0' }} className="dashboard-max-width">
+      {/* Interactive Month Selector */}
+      <section style={{ padding: '0 24px 16px' }} className="dashboard-max-width">
+        <div 
+          className="scrollbar-hide"
+          style={{
+            display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8, scrollBehavior: 'smooth'
+          }}
+        >
+          {forecasts?.map(f => {
+            const periodValue = `${f.id}-01`;
+            const isSelected = selectedPeriod === periodValue;
+            return (
+              <button
+                key={f.id}
+                onClick={() => handlePeriodChange(periodValue)}
+                style={{
+                  flexShrink: 0,
+                  padding: '8px 20px',
+                  borderRadius: 20,
+                  background: isSelected ? 'var(--color-primary)' : 'rgba(255,255,255,0.6)',
+                  color: isSelected ? 'white' : 'var(--color-text-primary)',
+                  border: isSelected ? 'none' : '1px solid var(--color-border-light)',
+                  backdropFilter: 'blur(10px)',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  boxShadow: isSelected ? '0 4px 12px rgba(24, 82, 74, 0.3)' : 'var(--shadow-sm)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {f.month.toUpperCase()}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <div style={{ opacity: isFiltering ? 0.4 : 1, transition: 'opacity 0.2s ease-in-out' }}>
+        {/* Balance Card Section */}
+        <section style={{ padding: '0 24px 0' }} className="dashboard-max-width">
         <div style={{ 
           background: 'linear-gradient(135deg, var(--color-primary-bg) 0%, #e2eeec 100%)', 
           padding: '24px', 
@@ -194,7 +259,7 @@ const Dashboard = () => {
           <div style={{ position: 'relative', zIndex: 1 }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-secondary)', margin: 0 }}>Solde Total consolidé</p>
             <h1 style={{ fontSize: 36, fontWeight: 900, color: 'var(--color-text-primary)', margin: '12px 0', letterSpacing: '-0.02em' }}>
-              {totalBalance.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
+              {historicalBalance.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
             </h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {monthChange !== 0 ? (
@@ -206,7 +271,9 @@ const Dashboard = () => {
                   <span style={{ color: 'var(--color-text-tertiary)', fontSize: 13, fontWeight: 600 }}>ce mois-ci</span>
                 </>
               ) : (
-                <span style={{ color: 'var(--color-text-tertiary)', fontSize: 12, fontWeight: 600, fontStyle: 'italic' }}>Données du mois en cours</span>
+                <span style={{ color: 'var(--color-text-tertiary)', fontSize: 12, fontWeight: 600, fontStyle: 'italic' }}>
+                  {selectedPeriod === new Date().toISOString().substring(0, 7) + '-01' ? 'Mois en cours' : 'Fin du mois sélectionné'}
+                </span>
               )}
             </div>
           </div>
@@ -414,6 +481,7 @@ const Dashboard = () => {
           ))}
         </div>
       </section>
+      </div>
 
       {/* Manage Modal */}
       {isManageModalOpen && (
