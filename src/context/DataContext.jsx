@@ -175,7 +175,9 @@ export const DataProvider = ({ children }) => {
 
       if (safeCats.length || safeTxs.length || safeAccs.length || safeSvs.length) {
         setUsingSupabase(true);
-        if (safeCats.length) setCategories(safeCats);
+        // Always sync categories from Supabase — respects user deletions
+        // If user deleted all categories in Supabase, clear local state too
+        setCategories(safeCats);
         if (safeAccs.length) setAccounts(safeAccs);
         if (safeSvs.length) setSavingsItems(safeSvs);
         if (gl) setGoal(gl);
