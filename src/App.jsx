@@ -29,6 +29,7 @@ function App() {
     }
   }, [session]);
 
+  // Show auth page if no session
   if (!session) {
     return <Auth />;
   }
@@ -45,23 +46,8 @@ function App() {
 
   const ActiveScreen = BUDGET_SCREENS[activeTab];
 
-  if (loading) {
-    return (
-      <div style={{ 
-        height: '100vh', display: 'flex', alignItems: 'center', 
-        justifyContent: 'center', background: 'var(--color-bg)',
-        flexDirection: 'column', gap: 16
-      }}>
-        <div className="spinner" style={{ 
-          width: 40, height: 40, border: '4px solid var(--color-primary-glass)', 
-          borderTopColor: 'var(--color-primary)', borderRadius: '50%',
-          animation: 'spin 1s linear infinite'
-        }} />
-        <p style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>Chargement de vos données...</p>
-      </div>
-    );
-  }
-
+  // No full-page loading spinner during navigation — prevents jitter.
+  // Data loads in background via SyncIndicator + local storage cache.
   return (
     <div className="app-container">
       <SyncIndicator />
