@@ -194,12 +194,30 @@ export const DataProvider = ({ children }) => {
         }
 
         if (safeFcs.length) {
+          const userId = session?.user?.id;
           const year = new Date().getFullYear();
-          const sortedFcs = [...safeFcs].sort((a, b) => parseInt(a.id) - parseInt(b.id));
-          setForecasts(sortedFcs.map(f => ({ 
-            ...f, 
-            month: (f.month && typeof f.month === 'string') ? f.month.replace(/\d{4}/, year) : f.month 
-          })));
+          
+          // Helper to extract index from ID (handles numeric and prefixed IDs)
+          const getIdx = (id) => {
+            const parts = String(id).split('_');
+            const slug = parts[parts.length - 1];
+            if (slug.includes('-')) {
+              return parseInt(slug.split('-')[1], 10) - 1;
+            }
+            return parseInt(slug, 10) - 1;
+          };
+
+          const sortedFcs = [...safeFcs].sort((a, b) => getIdx(a.id) - getIdx(b.id));
+          
+          setForecasts(sortedFcs.map((f, idx) => {
+            const monthNum = String(idx + 1).padStart(2, '0');
+            const standardSlug = `${year}-${monthNum}`;
+            return { 
+              ...f, 
+              id: userId ? `${userId}_${standardSlug}` : standardSlug,
+              month: (f.month && typeof f.month === 'string') ? f.month.replace(/\d{4}/, year) : f.month 
+            };
+          }));
         }
 
         if (safeSt.length) {

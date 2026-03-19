@@ -36,6 +36,7 @@ const Dashboard = () => {
 
   const historicalBalance = React.useMemo(() => {
     const monthSlug = selectedPeriod.split('_').pop(); 
+    if (!monthSlug || !monthSlug.includes('-')) return 0;
     const [yearStr, monthStr] = monthSlug.split('-');
     const endOfSelectedMonth = new Date(yearStr, monthStr, 0).toISOString().split('T')[0];
 
@@ -59,6 +60,7 @@ const Dashboard = () => {
   const { monthlyRevenus, monthlyDepenses } = React.useMemo(() => {
     if (!selectedPeriod) return { monthlyRevenus: 0, monthlyDepenses: 0 };
     const monthSlug = selectedPeriod.split('_').pop();
+    if (!monthSlug || !monthSlug.includes('-')) return { monthlyRevenus: 0, monthlyDepenses: 0 };
     const [yearStr, monthStr] = monthSlug.split('-');
     const pYear = parseInt(yearStr, 10);
     const pMonth = parseInt(monthStr, 10) - 1;
