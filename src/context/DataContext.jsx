@@ -276,7 +276,7 @@ export const DataProvider = ({ children }) => {
     
     const categoriesToMigrate = (isDefaultCategories && !hasOtherData) ? [] : categories;
 
-    const shouldMigrateGoal = goal && goal.id !== 'default-goal' || hasOtherData;
+    const shouldMigrateGoal = goal && goal.id !== 'default-goal';
 
     try {
       await Promise.all([
@@ -573,6 +573,17 @@ export const DataProvider = ({ children }) => {
         ]),
         syncCategories(),
         syncForecasts(),
+        goal && goal.id !== 'default-goal' && supabase.from('goal').upsert([{ 
+          id: goal.id, 
+          name: goal.name, 
+          targetAmount: goal.targetAmount, 
+          manualAmount: goal.manualAmount, 
+          deadline: goal.deadline, 
+          icon: goal.icon, 
+          color: goal.color, 
+          isManual: goal.isManual, 
+          user_id: userId 
+        }]),
         supabase.from('accounts').upsert(accountsToUpsert.map(a => ({
           id: a.id,
           name: a.name,
