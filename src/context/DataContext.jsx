@@ -72,6 +72,7 @@ export const DataProvider = ({ children }) => {
   });
   const [goal, setGoal] = useState(() => getLocal('money_goal', { id: 'default-goal', name: 'Objectif', targetAmount: 500, manualAmount: 100, icon: '🏖️' }));
   const [globalRecurrences, setGlobalRecurrences] = useState(() => getLocal('money_global_recurrences', { revenus: [], fixes: [], variables: [] }));
+  const [isRolloverEnabled, setIsRolloverEnabled] = useState(() => getLocal('money_rollover_enabled', true));
   const [selectedPeriod, setSelectedPeriod] = useState(() => {
     const userId = getLocal('money_session', null)?.user?.id;
     const slug = new Date().toISOString().substring(0, 7);
@@ -573,20 +574,26 @@ export const DataProvider = ({ children }) => {
         syncCategories(),
         syncForecasts(),
         async () => {
-          // New: Also sync the 'previsions' table for balances
-          const previsionsToSync = forecasts.map(f => {
-            const data = targetMonthsState[f.id] || { revenus: [], fixes: [], variables: [] };
+          // New: Also sync the 'previsions' table for balances with CORRECT rollover logic
+          let runningBalance = 0;
+          const previsionsToSync = forecasts.map((f, index) => {
+            const data = targetMonthsState[f.id] || { manualReport: 0, revenus: [], fixes: [], variables: [] };
             const revLines = data.revenus || [];
             const fixLines = data.fixes || [];
             const varLines = data.variables || [];
             
             const income = revLines.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
             const expenses = [...fixLines, ...varLines].reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
-            const manualReport = parseFloat(data.manualReport) || 0;
             
-            // Simplified calculation of 'final' balance for this month
-            // In a real app we might need the previous month's final, but here we sync what's current in the UI
-            const final = manualReport + income - expenses;
+            const hasManualOverride = data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0;
+            const autoReport = index === 0 ? 0 : runningBalance;
+            const reportBalance = isRolloverEnabled 
+              ? (hasManualOverride ? parseFloat(data.manualReport) : autoReport)
+              : (parseFloat(data.manualReport) || 0);
+            
+            const final = income - expenses + (reportBalance || 0);
+            runningBalance = final; // Carry over for next month
+
             const monthSlug = f.id.split('_').pop();
 
             return {
@@ -643,7 +650,7 @@ export const DataProvider = ({ children }) => {
       console.error('Auto-sync error:', err);
       setSyncStatus('error');
     }
-  }, [usingSupabase, globalRecurrences, monthsState, categories, forecasts, accounts, session]);
+  }, [usingSupabase, globalRecurrences, monthsState, categories, forecasts, accounts, session, isRolloverEnabled]);
 
   const fetchPrevisions = React.useCallback(async () => {
     if (!session?.user?.id) return;
@@ -729,13 +736,44 @@ export const DataProvider = ({ children }) => {
   }, [categories, transactions, accounts, savingsItems, forecasts, goal, globalRecurrences, monthsState, session?.user?.id]);
 
   const value = React.useMemo(() => ({
-    categories, setCategories, transactions, setTransactions, accounts: accountsWithBalances, savingsItems, forecasts, 
-    setForecasts: updateMonthForecast, monthsState, setMonthsState,
-    globalRecurrences, setGlobalRecurrences, addTransaction, addTransactions, deleteTransaction, updateTransaction,
-    addAccount, updateAccount, addSaving, updateSaving, deleteSaving,
-    deleteAccount, goal, setGoal, loading, usingSupabase, session, user: session?.user,
-    saveGlobalConfig, syncStatus, selectedPeriod, setSelectedPeriod,
-    fetchingPrevisions, fetchPrevisions, updatePrevision
+    categories,
+    transactions,
+    accounts: accountsWithBalances,
+    savingsItems,
+    setCategories,
+    setTransactions,
+    setAccounts,
+    setSavingsItems,
+    addTransaction,
+    updateTransaction,
+    deleteTransaction,
+    addAccount,
+    updateAccount,
+    deleteAccount,
+    addSaving,
+    updateSaving,
+    deleteSaving,
+    forecasts,
+    setForecasts: updateMonthForecast,
+    monthsState,
+    setMonthsState,
+    globalRecurrences,
+    setGlobalRecurrences,
+    saveGlobalConfig,
+    loading,
+    fetchingPrevisions,
+    fetchPrevisions,
+    updatePrevision,
+    session,
+    selectedPeriod,
+    setSelectedPeriod,
+    goal,
+    setGoal,
+    isRolloverEnabled,
+    setIsRolloverEnabled,
+    usingSupabase,
+    syncStatus,
+    user: session?.user,
   }), [
     categories, transactions, accountsWithBalances, savingsItems, forecasts, updateMonthForecast, monthsState, 
     globalRecurrences, addTransaction, addTransactions, deleteTransaction, updateTransaction,

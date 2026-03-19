@@ -40,7 +40,6 @@ const Previsions = () => {
   const [activeTab, setActiveTab] = useState('Mois');
   const [expandedMonthId, setExpandedMonthId] = useState(null);
   const [isGlobalModalOpen, setIsGlobalModalOpen] = useState(false);
-  const [isRolloverEnabled, setIsRolloverEnabled] = useState(true);
 
   React.useEffect(() => {
     fetchPrevisions();
