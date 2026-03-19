@@ -239,10 +239,13 @@ export const DataProvider = ({ children }) => {
           setForecasts(fullFcs.map((f, idx) => {
             const monthNum = String(idx + 1).padStart(2, '0');
             const standardSlug = `${year}-${monthNum}`;
+            const monthName = (f.month && typeof f.month === 'string') ? f.month.replace(/\d{4}/, year) : f.month;
+            const shortMonth = monthName ? monthName.substring(0, 3).toUpperCase() : '';
             return { 
               ...f, 
               id: userId ? `${userId}_${standardSlug}` : standardSlug,
-              month: (f.month && typeof f.month === 'string') ? f.month.replace(/\d{4}/, year) : f.month 
+              month: monthName,
+              shortMonth
             };
           }));
         }
