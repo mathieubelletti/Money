@@ -15,7 +15,9 @@ const Previsions = () => {
     loading,
     fetchingPrevisions,
     fetchPrevisions,
-    updatePrevision
+    updatePrevision,
+    isRolloverEnabled,
+    setIsRolloverEnabled
   } = useData();
 
   const COMMON_ICONS = ['category', 'payments', 'shopping_cart', 'home', 'trending_up', 'restaurant', 'local_gas_station', 'flight', 'medical_services', 'fitness_center', 'subscriptions', 'bolt', 'water_drop', 'smartphone', 'shopping_bag', 'checkroom', 'bakery_dining', 'coffee', 'local_bar', 'redeem', 'favorite', 'school', 'build', 'commute'];

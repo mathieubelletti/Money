@@ -784,7 +784,7 @@ export const DataProvider = ({ children }) => {
     globalRecurrences, addTransaction, addTransactions, deleteTransaction, updateTransaction,
     addAccount, updateAccount, addSaving, updateSaving, deleteSaving,
     deleteAccount, goal, setGoal, loading, usingSupabase, session, saveGlobalConfig, syncStatus, selectedPeriod, setSelectedPeriod,
-    fetchingPrevisions, fetchPrevisions, updatePrevision
+    fetchingPrevisions, fetchPrevisions, updatePrevision, isRolloverEnabled, setIsRolloverEnabled
   ]);
 
   return (
