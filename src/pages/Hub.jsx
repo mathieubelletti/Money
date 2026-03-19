@@ -16,8 +16,8 @@ const Hub = ({ onEnterBudget }) => {
       name: 'Budget',
       desc: 'Gérez vos finances personnelles',
       icon: 'insights',
-      color: '#18524a',
-      bg: 'rgba(24, 82, 74, 0.12)',
+      color: 'var(--color-primary)',
+      bg: 'var(--color-primary-glass)',
       onClick: onEnterBudget
     },
     {
@@ -25,24 +25,24 @@ const Hub = ({ onEnterBudget }) => {
       name: 'Commun',
       desc: 'Dépenses partagées à deux',
       icon: 'groups',
-      color: '#3b82f6',
-      bg: 'rgba(59, 130, 246, 0.12)',
+      color: 'var(--color-primary)',
+      bg: 'var(--color-primary-glass)',
     },
     {
       id: 'tasks',
       name: 'Tasks',
       desc: 'Gestion de projets complexes',
       icon: 'assignment',
-      color: '#f59e0b',
-      bg: 'rgba(245, 158, 11, 0.12)',
+      color: 'var(--color-primary)',
+      bg: 'var(--color-primary-glass)',
     },
     {
       id: 'todolist',
       name: 'Todolist',
       desc: 'Simple check-list quotidienne',
       icon: 'done_all',
-      color: '#8b5cf6',
-      bg: 'rgba(139, 92, 246, 0.12)',
+      color: 'var(--color-primary)',
+      bg: 'var(--color-primary-glass)',
     }
   ];
 

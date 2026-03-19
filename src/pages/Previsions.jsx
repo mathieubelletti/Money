@@ -18,7 +18,25 @@ const Previsions = () => {
     updatePrevision
   } = useData();
 
-  const COMMON_ICONS = ['home', 'shopping_basket', 'directions_transit', 'movie', 'subscriptions', 'sports_soccer', 'health_and_safety', 'restaurant', 'shopping_bag', 'payments', 'work', 'savings'];
+  const COMMON_ICONS = ['category', 'payments', 'shopping_cart', 'home', 'trending_up', 'restaurant', 'local_gas_station', 'flight', 'medical_services', 'fitness_center', 'subscriptions', 'bolt', 'water_drop', 'smartphone', 'shopping_bag', 'checkroom', 'bakery_dining', 'coffee', 'local_bar', 'redeem', 'favorite', 'school', 'build', 'commute'];
+
+  const ICON_LIBRARY = {
+    // Revenus
+    'salaire': 'payments', 'paye': 'payments', 'payé': 'payments', 'dividende': 'trending_up', 'bourse': 'trending_up', 'remboursement': 'savings', 'caf': 'savings',
+    // Fixes/Charges
+    'assurance': 'verified_user', 'matmut': 'verified_user', 'axa': 'verified_user', 'internet': 'wifi', 'orange': 'wifi', 'free': 'wifi', 'bouygues': 'wifi', 'sfr': 'wifi',
+    'mobile': 'smartphone', 'telephone': 'smartphone', 'téléphone': 'smartphone', 'electricite': 'bolt', 'électricité': 'bolt', 'edf': 'bolt', 'engie': 'bolt', 'gaz': 'gas_meter', 'eau': 'water_drop', 'suez': 'water_drop',
+    'netflix': 'subscriptions', 'spotify': 'subscriptions', 'disney': 'subscriptions', 'prime': 'subscriptions', 'gym': 'fitness_center', 'sport': 'fitness_center',
+    'loyer': 'home', 'habiter': 'home', 'maison': 'home', 'appartement': 'home', 'travaux': 'build',
+    // Variables
+    'course': 'shopping_cart', 'supermarché': 'shopping_cart', 'leclerc': 'shopping_cart', 'carrefour': 'shopping_cart', 'lidl': 'shopping_cart', 'intermarché': 'shopping_cart', 'auchan': 'shopping_cart',
+    'restaurant': 'restaurant', 'resto': 'restaurant', 'uber': 'restaurant', 'deliveroo': 'restaurant', 'mcdonald': 'restaurant', 'mcdo': 'restaurant', 'burger': 'restaurant',
+    'carpurant': 'local_gas_station', 'essence': 'local_gas_station', 'total': 'local_gas_station', 'gazole': 'local_gas_station', 'diesel': 'local_gas_station', 'peage': 'directions_car', 'péage': 'directions_car',
+    'avion': 'flight', 'voyage': 'flight', 'vacances': 'beach_access', 'hotel': 'hotel', 'hôtel': 'hotel', 'cinema': 'movie', 'cinéma': 'movie',
+    'shopping': 'shopping_bag', 'vetement': 'checkroom', 'vêtement': 'checkroom', 'sante': 'medical_services', 'santé': 'medical_services', 'pharmacie': 'medical_services', 'medecin': 'medical_services', 'médecin': 'medical_services',
+    'coiffeur': 'content_cut', 'cadeau': 'redeem', 'donation': 'favorite', 'boulangerie': 'bakery_dining', 'pain': 'bakery_dining', 'cafe': 'coffee', 'café': 'coffee', 'bar': 'local_bar',
+    'ecole': 'school', 'école': 'school', 'fac': 'school', 'amazon': 'shopping_bag', 'transport': 'commute', 'train': 'train', 'sncf': 'train', 'ter': 'train'
+  };
   const [activeTab, setActiveTab] = useState('Mois');
   const [expandedMonthId, setExpandedMonthId] = useState(null);
   const [isGlobalModalOpen, setIsGlobalModalOpen] = useState(false);
@@ -638,9 +656,32 @@ const Previsions = () => {
                     <input 
                       value={line.label}
                       onChange={(e) => {
+                        const newLabel = e.target.value;
+                        const lower = newLabel.toLowerCase();
+                        let detectedIcon = null;
+                        
+                        // Search for keywords in the library
+                        for (const [key, icon] of Object.entries(ICON_LIBRARY)) {
+                          if (lower.includes(key)) {
+                            detectedIcon = icon;
+                            break;
+                          }
+                        }
+
                         setGlobalRecurrences(prev => ({
                           ...prev,
-                          [sect]: prev[sect].map(item => item.id === line.id ? { ...item, label: e.target.value } : item)
+                          [sect]: prev[sect].map(item => {
+                            if (item.id === line.id) {
+                              // Only auto-update icon if it's currently default 'category' or empty
+                              const shouldAutoUpdate = !item.icon || item.icon === 'category';
+                              return { 
+                                ...item, 
+                                label: newLabel,
+                                icon: (detectedIcon && shouldAutoUpdate) ? detectedIcon : item.icon
+                              };
+                            }
+                            return item;
+                          })
                         }));
                       }}
                       placeholder={sect === 'revenus' ? "Libellé..." : "Loyer, Netflix..."}
