@@ -570,47 +570,48 @@ const Previsions = () => {
                   <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     {sect === 'revenus' ? 'Revenus' : sect === 'fixes' ? 'Dépenses Fixes' : 'Dépenses Variables'}
                   </div>
-                  <button 
-                    onClick={() => addGlobalRecurrence(sect)}
-                    style={{ 
-                      background: 'var(--color-primary)', 
-                      border: 'none', 
-                      width: 28, height: 28, 
-                      borderRadius: 8, 
-                      color: 'white', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 10px rgba(24, 82, 74, 0.2)'
-                    }}
-                  >
-                    <span className="material-icons-round" style={{ fontSize: 18 }}>add</span>
-                  </button>
-                  <button 
-                    onClick={() => {
-                      setGlobalRecurrences(prev => ({
-                        ...prev,
-                        [sect]: [...prev[sect]].sort((a, b) => (parseInt(a.day, 10) || 0) - (parseInt(b.day, 10) || 0))
-                      }));
-                    }}
-                    style={{ 
-                      background: 'white', 
-                      border: '1px solid #e2e8f0', 
-                      width: 28, height: 28, 
-                      borderRadius: 8, 
-                      color: '#64748b', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      cursor: 'pointer',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                      marginLeft: 8
-                    }}
-                    title="Trier par jour"
-                  >
-                    <span className="material-icons-round" style={{ fontSize: 18 }}>sort</span>
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <button 
+                      onClick={() => addGlobalRecurrence(sect)}
+                      style={{ 
+                        background: 'var(--color-primary)', 
+                        border: 'none', 
+                        width: 28, height: 28, 
+                        borderRadius: 8, 
+                        color: 'white', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 10px rgba(24, 82, 74, 0.2)'
+                      }}
+                    >
+                      <span className="material-icons-round" style={{ fontSize: 18 }}>add</span>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setGlobalRecurrences(prev => ({
+                          ...prev,
+                          [sect]: [...prev[sect]].sort((a, b) => (parseInt(a.day, 10) || 0) - (parseInt(b.day, 10) || 0))
+                        }));
+                      }}
+                      style={{ 
+                        background: 'white', 
+                        border: '1px solid #e2e8f0', 
+                        width: 28, height: 28, 
+                        borderRadius: 8, 
+                        color: '#64748b', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                      }}
+                      title="Trier par jour"
+                    >
+                      <span className="material-icons-round" style={{ fontSize: 18 }}>sort</span>
+                    </button>
+                  </div>
                 </div>
                 {globalRecurrences[sect].length > 0 ? globalRecurrences[sect].map((line, idx) => (
                   <div key={line.id} className="recurrence-grid-item" style={{ 
