@@ -573,6 +573,33 @@ export const DataProvider = ({ children }) => {
         ]),
         syncCategories(),
         syncForecasts(),
+        async () => {
+          // New: Also sync the 'previsions' table for balances
+          const previsionsToSync = forecasts.map(f => {
+            const data = targetMonthsState[f.id] || { revenus: [], fixes: [], variables: [] };
+            const revLines = data.revenus || [];
+            const fixLines = data.fixes || [];
+            const varLines = data.variables || [];
+            
+            const income = revLines.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+            const expenses = [...fixLines, ...varLines].reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+            const manualReport = parseFloat(data.manualReport) || 0;
+            
+            // Simplified calculation of 'final' balance for this month
+            // In a real app we might need the previous month's final, but here we sync what's current in the UI
+            const final = manualReport + income - expenses;
+            const monthSlug = f.id.split('_').pop();
+
+            return {
+              user_id: userId,
+              mois: monthSlug,
+              annee: 2026,
+              montant_previsionnel: final,
+              statut: final >= 0 ? 'Excedent' : 'Déficit'
+            };
+          });
+          return supabase.from('previsions').upsert(previsionsToSync, { onConflict: 'user_id,mois,annee' });
+        },
         goal && goal.id !== 'default-goal' && supabase.from('goal').upsert([{ 
           id: goal.id, 
           name: goal.name, 
@@ -641,14 +668,15 @@ export const DataProvider = ({ children }) => {
     }
   }, [session?.user?.id]);
 
-  const updatePrevision = React.useCallback(async (mois, montant) => {
+  const updatePrevision = React.useCallback(async (monthId, montant) => {
     if (!session?.user?.id) return;
+    const monthSlug = String(monthId).split('_').pop(); // Get '2026-03' from 'uuid_2026-03'
     try {
       const { error } = await supabase
         .from('previsions')
         .upsert({
           user_id: session.user.id,
-          mois: String(mois),
+          mois: monthSlug,
           annee: 2026,
           montant_previsionnel: parseFloat(montant) || 0,
           statut: (parseFloat(montant) || 0) >= 0 ? 'Excedent' : 'Déficit'
