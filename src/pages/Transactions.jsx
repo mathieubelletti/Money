@@ -173,9 +173,9 @@ const Transactions = () => {
       amount: amount,
       account: getAccountName(accId),
       account_id: accId,
-      color: amount > 0 ? '#22c55e' : '#191C1F',
+      color: 'var(--color-text-primary)',
       domain: '',
-      bg: amount > 0 ? 'rgba(34,197,94,0.10)' : 'rgba(25,28,31,0.05)',
+      bg: 'rgba(0,0,0,0.05)',
       budget_month: newTx.budget_month || newTx.date.substring(0, 7) + '-01'
     });
 
@@ -332,7 +332,6 @@ const Transactions = () => {
                         name={tx.name} 
                         size={44} 
                         bg={tx.bg} 
-                        color={tx.color}
                         icon={tx.categoryIcon}
                       />
                     </div>

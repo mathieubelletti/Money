@@ -150,7 +150,7 @@ export const DataProvider = ({ children }) => {
 
   const fetchAllData = async (force = false) => {
     if ((hasFetchedRef.current && !force) || !session?.user) {
-      if (!session?.user) setLoading(false);
+      setLoading(false); // Safety: ensure loading is false if we return early
       return;
     }
     hasFetchedRef.current = true;
@@ -721,10 +721,11 @@ export const DataProvider = ({ children }) => {
     if (!session?.user?.id) return;
     setFetchingPrevisions(true);
     try {
+      const currentYear = new Date().getFullYear();
       const { data, error } = await supabase
         .from('previsions')
         .select('*')
-        .eq('annee', 2026);
+        .eq('annee', currentYear);
       
       if (error) throw error;
       
@@ -742,13 +743,14 @@ export const DataProvider = ({ children }) => {
   const updatePrevision = React.useCallback(async (monthId, montant) => {
     if (!session?.user?.id) return;
     const monthSlug = String(monthId).split('_').pop(); // Get '2026-03' from 'uuid_2026-03'
+    const currentYear = new Date().getFullYear();
     try {
       const { error } = await supabase
         .from('previsions')
         .upsert({
           user_id: session.user.id,
           mois: monthSlug,
-          annee: 2026,
+          annee: currentYear,
           montant_previsionnel: parseFloat(montant) || 0,
           statut: (parseFloat(montant) || 0) >= 0 ? 'Excedent' : 'Déficit'
         }, { onConflict: 'user_id,mois,annee' });
