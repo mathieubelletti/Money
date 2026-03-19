@@ -35,8 +35,8 @@ const Dashboard = () => {
   };
 
   const historicalBalance = React.useMemo(() => {
-    if (!selectedPeriod) return 0;
-    const [yearStr, monthStr] = selectedPeriod.split('-');
+    const monthSlug = selectedPeriod.split('_').pop(); 
+    const [yearStr, monthStr] = monthSlug.split('-');
     const endOfSelectedMonth = new Date(yearStr, monthStr, 0).toISOString().split('T')[0];
 
     let total = (accounts || []).reduce((acc, curr) => acc + (parseFloat(curr?.initialBalance) || 0), 0);
@@ -58,7 +58,8 @@ const Dashboard = () => {
   // Calculate monthly totals from transactions safely, filtering for selected period
   const { monthlyRevenus, monthlyDepenses } = React.useMemo(() => {
     if (!selectedPeriod) return { monthlyRevenus: 0, monthlyDepenses: 0 };
-    const [yearStr, monthStr] = selectedPeriod.split('-');
+    const monthSlug = selectedPeriod.split('_').pop();
+    const [yearStr, monthStr] = monthSlug.split('-');
     const pYear = parseInt(yearStr, 10);
     const pMonth = parseInt(monthStr, 10) - 1;
 
@@ -69,7 +70,8 @@ const Dashboard = () => {
       (group?.items || []).forEach(tx => {
         let txMonth, txYear;
         if (tx.budget_month) {
-          const parts = tx.budget_month.split('-');
+          const mSlug = tx.budget_month.split('_').pop();
+          const parts = mSlug.split('-');
           txYear = parseInt(parts[0], 10);
           txMonth = parseInt(parts[1], 10) - 1;
         } else {
@@ -214,7 +216,7 @@ const Dashboard = () => {
           }}
         >
           {forecasts?.map(f => {
-            const periodValue = `${f.id}-01`;
+            const periodValue = f.id;
             const isSelected = selectedPeriod === periodValue;
             return (
               <button
@@ -273,7 +275,7 @@ const Dashboard = () => {
                 </>
               ) : (
                 <span style={{ color: 'var(--color-text-tertiary)', fontSize: 12, fontWeight: 600, fontStyle: 'italic' }}>
-                  {selectedPeriod === new Date().toISOString().substring(0, 7) + '-01' ? 'Mois en cours' : 'Fin du mois sélectionné'}
+                  {selectedPeriod === new Date().toISOString().substring(0, 7) ? 'Mois en cours' : 'Fin du mois sélectionné'}
                 </span>
               )}
             </div>

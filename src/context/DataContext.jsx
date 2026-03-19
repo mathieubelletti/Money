@@ -36,19 +36,47 @@ export const DataProvider = ({ children }) => {
   const [transactions, setTransactions] = useState(() => getLocal('money_transactions', initialTransactions));
   const [accounts, setAccounts] = useState(() => getLocal('money_accounts', initialAccounts));
   const [savingsItems, setSavingsItems] = useState(() => getLocal('money_savings', initialSavings));
+  const [monthsState, setMonthsState] = useState(() => {
+    const local = getLocal('money_forecasts_detail', {});
+    const userId = getLocal('money_session', null)?.user?.id;
+    const currentYear = new Date().getFullYear();
+    const migrated = {};
+    // Migration: If keys are "1", "2" or "YYYY-MM", migrate them to "userId_YYYY-MM"
+    Object.keys(local).forEach(key => {
+      let monthPart = key;
+      if (!isNaN(key) && parseInt(key) <= 12) {
+        monthPart = `${currentYear}-${key.padStart(2, '0')}`;
+      }
+      if (userId && !key.startsWith(userId)) {
+        migrated[`${userId}_${monthPart}`] = local[key];
+      } else {
+        migrated[key] = local[key];
+      }
+    });
+    return migrated;
+  });
   const [forecasts, setForecasts] = useState(() => {
     const local = getLocal('money_forecasts', initialForecasts);
+    const userId = getLocal('money_session', null)?.user?.id;
     const validForecasts = local && local.length > 0 ? local : initialForecasts;
     const currentYear = new Date().getFullYear();
-    return validForecasts.map(f => ({ 
-      ...f, 
-      month: (f.month && typeof f.month === 'string') ? f.month.replace(/\d{4}/, currentYear) : f.month 
-    }));
+    return validForecasts.map((f, idx) => {
+      const monthNum = String(idx + 1).padStart(2, '0');
+      const standardSlug = `${currentYear}-${monthNum}`;
+      return { 
+        ...f, 
+        id: userId ? `${userId}_${standardSlug}` : standardSlug,
+        month: (f.month && typeof f.month === 'string') ? f.month.replace(/\d{4}/, currentYear) : f.month 
+      };
+    });
   });
   const [goal, setGoal] = useState(() => getLocal('money_goal', { id: 'default-goal', name: 'Objectif', targetAmount: 500, manualAmount: 100, icon: '🏖️' }));
   const [globalRecurrences, setGlobalRecurrences] = useState(() => getLocal('money_global_recurrences', { revenus: [], fixes: [], variables: [] }));
-  const [monthsState, setMonthsState] = useState(() => getLocal('money_forecasts_detail', {}));
-  const [selectedPeriod, setSelectedPeriod] = useState(() => new Date().toISOString().substring(0, 7) + '-01');
+  const [selectedPeriod, setSelectedPeriod] = useState(() => {
+    const userId = getLocal('money_session', null)?.user?.id;
+    const slug = new Date().toISOString().substring(0, 7);
+    return userId ? `${userId}_${slug}` : slug;
+  });
   
   // Dynamic balance calculation
   const accountsWithBalances = React.useMemo(() => {
@@ -424,7 +452,7 @@ export const DataProvider = ({ children }) => {
   }, [categories, transactions, accounts, savingsItems, forecasts, goal, globalRecurrences, monthsState, session?.user?.id]);
 
   const value = React.useMemo(() => ({
-    categories, transactions, setTransactions, accounts: accountsWithBalances, savingsItems, forecasts, 
+    categories, setCategories, transactions, setTransactions, accounts: accountsWithBalances, savingsItems, forecasts, 
     setForecasts: updateMonthForecast, monthsState, setMonthsState,
     globalRecurrences, setGlobalRecurrences, addTransaction, addTransactions, deleteTransaction, updateTransaction,
     addAccount, updateAccount, addSaving, updateSaving, deleteSaving,

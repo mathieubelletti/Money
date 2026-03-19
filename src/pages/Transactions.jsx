@@ -73,7 +73,7 @@ const Transactions = () => {
       account: accounts?.[0]?.id || '',
       toAccount: accounts?.[1]?.id || accounts?.[0]?.id || '',
       date: new Date().toISOString().split('T')[0],
-      budget_month: new Date().toISOString().substring(0, 7) + '-01',
+      budget_month: new Date().toISOString().substring(0, 7),
       type: 'Dépenses'
     });
   };
@@ -508,7 +508,9 @@ const Transactions = () => {
                     value={newTx.date}
                     onChange={e => {
                       const newDate = e.target.value;
-                      const newMonth = newDate ? newDate.substring(0, 7) + '-01' : newTx.budget_month;
+                      const monthSlug = newDate ? newDate.substring(0, 7) : null;
+                      const targetForecast = forecasts.find(f => f.id.endsWith(monthSlug));
+                      const newMonth = targetForecast ? targetForecast.id : newTx.budget_month;
                       setNewTx({...newTx, date: newDate, budget_month: newMonth});
                     }}
                     style={{ width: '100%', height: 56, borderRadius: 16, background: 'var(--color-bg)', border: '1px solid var(--color-border)', padding: '0 16px', fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)' }}
@@ -524,7 +526,7 @@ const Transactions = () => {
                   style={{ width: '100%', height: 56, borderRadius: 16, background: 'var(--color-bg)', border: '1px solid var(--color-border)', padding: '0 16px', fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)', appearance: 'none' }}
                 >
                   {forecasts?.map(f => (
-                    <option key={f.id} value={`${f.id}-01`}>{f.month}</option>
+                    <option key={f.id} value={f.id}>{f.month}</option>
                   ))}
                 </select>
                 <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 4, display: 'block', fontStyle: 'italic' }}>Permet d'affecter l'opération à un autre mois que sa date réelle.</span>
