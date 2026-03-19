@@ -209,8 +209,22 @@ export const DataProvider = ({ children }) => {
           };
 
           const sortedFcs = [...safeFcs].sort((a, b) => getIdx(a.id) - getIdx(b.id));
+
+          // Deduplicate: keep only one forecast per month position (0–11)
+          // This handles cases where migrations created duplicate rows
+          const deduplicatedFcs = [];
+          const seenMonths = new Set();
+          for (const f of sortedFcs) {
+            const idx = getIdx(f.id);
+            if (idx >= 0 && idx < 12 && !seenMonths.has(idx)) {
+              seenMonths.add(idx);
+              deduplicatedFcs.push({ ...f, _monthIdx: idx });
+            }
+          }
+          // Sort again by month index after deduplication
+          deduplicatedFcs.sort((a, b) => a._monthIdx - b._monthIdx);
           
-          setForecasts(sortedFcs.map((f, idx) => {
+          setForecasts(deduplicatedFcs.slice(0, 12).map((f, idx) => {
             const monthNum = String(idx + 1).padStart(2, '0');
             const standardSlug = `${year}-${monthNum}`;
             return { 
