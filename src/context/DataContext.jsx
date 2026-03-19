@@ -113,6 +113,7 @@ export const DataProvider = ({ children }) => {
   const lastUserIdRef = useRef(null);
   const [fetchingPrevisions, setFetchingPrevisions] = useState(false);
   const syncTimeoutRef = useRef(null);
+  const isSyncingFromServerRef = useRef(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: sess } }) => {
@@ -173,15 +174,17 @@ export const DataProvider = ({ children }) => {
       const safeSvs = svs || [];
       const safeFcs = fcs || [];
       const safeSt = st || [];
-
+      
+      isSyncingFromServerRef.current = true; // Guard starts
+      
       if (safeCats.length || safeTxs.length || safeAccs.length || safeSvs.length) {
         setUsingSupabase(true);
         // Always sync categories from Supabase — respects user deletions
         // If user deleted all categories in Supabase, clear local state too
-        setCategories(safeCats);
-        if (safeAccs.length) setAccounts(safeAccs);
-        if (safeSvs.length) setSavingsItems(safeSvs);
-        if (gl) setGoal(gl);
+        if (JSON.stringify(categories) !== JSON.stringify(safeCats)) setCategories(safeCats);
+        if (safeAccs.length && JSON.stringify(accounts) !== JSON.stringify(safeAccs)) setAccounts(safeAccs);
+        if (safeSvs.length && JSON.stringify(savingsItems) !== JSON.stringify(safeSvs)) setSavingsItems(safeSvs);
+        if (gl && JSON.stringify(goal) !== JSON.stringify(gl)) setGoal(gl);
         
         if (safeTxs.length) {
           // Sort by actual date descending
@@ -215,7 +218,7 @@ export const DataProvider = ({ children }) => {
             }
             g.items.push(tx);
           });
-          setTransactions(grouped);
+          if (JSON.stringify(transactions) !== JSON.stringify(grouped)) setTransactions(grouped);
         }
 
         if (safeFcs.length) {
@@ -258,7 +261,7 @@ export const DataProvider = ({ children }) => {
             }
           }
           
-          setForecasts(fullFcs.map((f, idx) => {
+          const newForecasts = fullFcs.map((f, idx) => {
             const monthNum = String(idx + 1).padStart(2, '0');
             const standardSlug = `${year}-${monthNum}`;
             const monthName = (f.month && typeof f.month === 'string') ? f.month.replace(/\d{4}/, year) : f.month;
@@ -269,14 +272,15 @@ export const DataProvider = ({ children }) => {
               month: monthName,
               shortMonth
             };
-          }));
+          });
+          if (JSON.stringify(forecasts) !== JSON.stringify(newForecasts)) setForecasts(newForecasts);
         }
 
         if (safeSt.length) {
           const gr = safeSt.find(s => s.key === 'globalRecurrences');
           const fd = safeSt.find(s => s.key === 'forecasts_detail');
-          if (gr?.value) setGlobalRecurrences(gr.value);
-          if (fd?.value) setMonthsState(fd.value);
+          if (gr?.value && JSON.stringify(globalRecurrences) !== JSON.stringify(gr.value)) setGlobalRecurrences(gr.value);
+          if (fd?.value && JSON.stringify(monthsState) !== JSON.stringify(fd.value)) setMonthsState(fd.value);
         }
       } else {
         // Truly empty on Supabase - only then check local migration
@@ -285,6 +289,7 @@ export const DataProvider = ({ children }) => {
     } catch (e) {
       console.error('Fetch error:', e);
     } finally {
+      setTimeout(() => { isSyncingFromServerRef.current = false; }, 500); // Guard ends
       setLoading(false);
     }
   };
@@ -776,7 +781,8 @@ export const DataProvider = ({ children }) => {
     // Always clear previous timeout first
     if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
     
-    if (usingSupabase && session?.user?.id) {
+    // Guard: Don't sync back if we just loaded this data FROM the server
+    if (usingSupabase && session?.user?.id && !isSyncingFromServerRef.current) {
       syncTimeoutRef.current = setTimeout(() => {
         saveGlobalConfig();
       }, 10000); // 10s debounce to avoid too many partial syncs while typing
@@ -787,10 +793,12 @@ export const DataProvider = ({ children }) => {
     };
   }, [categories, goal, globalRecurrences, monthsState, usingSupabase, session?.user?.id, saveGlobalConfig]);
 
-  // Persist to user-specific local storage
+  // Persist to user-specific  // Auto-Sync Effect (Debounced)
   useEffect(() => {
-    const userId = session?.user?.id;
-    if (!userId) return;
+    // 1. Guard: Don't sync back if we just loaded this data FROM the server
+    if (!usingSupabase || !session?.user?.id || loading || isSyncingFromServerRef.current) return;
+    
+    const userId = session.user.id;
 
     setLocal('money_categories', categories, userId);
     setLocal('money_transactions', transactions, userId);
