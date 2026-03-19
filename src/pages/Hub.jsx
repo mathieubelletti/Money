@@ -5,6 +5,7 @@ const Hub = ({ onEnterBudget }) => {
   const { session } = useData();
   const user = session?.user;
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Utilisateur';
+  const avatarUrl = user?.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`;
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
