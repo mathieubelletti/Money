@@ -62,9 +62,13 @@ const Transactions = () => {
     setIsAddModalOpen(false);
     setIsEditing(false);
     setEditId(null);
+    
+    // Auto-select first available expense category or 'Divers'
+    const firstExpense = globalRecurrences.fixes?.[0]?.label || globalRecurrences.variables?.[0]?.label || 'Divers';
+    
     setNewTx({
       name: '',
-      category: 'Alimentation',
+      category: firstExpense,
       amount: '',
       account: accounts?.[0]?.id || '',
       toAccount: accounts?.[1]?.id || accounts?.[0]?.id || '',
@@ -442,7 +446,15 @@ const Transactions = () => {
                 <button
                   key={t}
                   type="button"
-                  onClick={() => setNewTx({...newTx, type: t})}
+                  onClick={() => {
+                    let firstCat = 'Divers';
+                    if (t === 'Revenus') {
+                      firstCat = globalRecurrences.revenus?.[0]?.label || 'Divers';
+                    } else if (t === 'Dépenses') {
+                      firstCat = globalRecurrences.fixes?.[0]?.label || globalRecurrences.variables?.[0]?.label || 'Divers';
+                    }
+                    setNewTx({...newTx, type: t, category: firstCat});
+                  }}
                   style={{
                     flex: 1,
                     height: 40,
@@ -526,21 +538,19 @@ const Transactions = () => {
                     onChange={e => setNewTx({...newTx, category: e.target.value})}
                     style={{ width: '100%', height: 56, borderRadius: 16, background: 'var(--color-bg)', border: '1px solid var(--color-border)', padding: '0 16px', fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)', appearance: 'none' }}
                   >
-                    <optgroup label="Revenus">
-                      {globalRecurrences.revenus.map(r => (
-                        <option key={r.id} value={r.label}>{r.label}</option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="Dépenses Fixes">
-                      {globalRecurrences.fixes.map(r => (
-                        <option key={r.id} value={r.label}>{r.label}</option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="Dépenses Variables">
-                      {globalRecurrences.variables.map(r => (
-                        <option key={r.id} value={r.label}>{r.label}</option>
-                      ))}
-                    </optgroup>
+                    {newTx.type === 'Revenus' ? (
+                      <>
+                        {globalRecurrences.revenus.map(r => (
+                          <option key={r.id} value={r.label}>{r.label}</option>
+                        ))}
+                      </>
+                    ) : (
+                      <>
+                        {[...globalRecurrences.fixes, ...globalRecurrences.variables].map(r => (
+                          <option key={r.id} value={r.label}>{r.label}</option>
+                        ))}
+                      </>
+                    )}
                     <option value="Divers">Divers</option>
                   </select>
                 </div>
