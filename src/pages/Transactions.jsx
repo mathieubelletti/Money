@@ -282,11 +282,25 @@ const Transactions = () => {
       <div className="screen-content-centered" style={{ padding: '0 16px', minHeight: '300px', display: filteredGroups.length === 0 ? 'flex' : 'block', alignItems: 'center', justifyContent: 'center' }}>
         {filteredGroups.length > 0 ? filteredGroups.map(group => (
           <div key={group.id} className="animate-slide-up" style={{ marginBottom: 24, width: '100%' }}>
-            <div className="tx-date-container" style={{ padding: '0 4px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span className="tx-date-label" style={{ fontSize: 12, fontWeight: 800, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.02em' }}>{group.date}</span>
-              <span className="tx-date-value" style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-tertiary)', opacity: 0.6 }}>
-                {group.dateOrder === 0 ? 'Aujourd\'hui' : group.dateOrder === 1 ? 'Hier' : group.date}
+            <div className="tx-date-separator" style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 12, 
+              padding: '8px 12px 12px',
+              marginTop: 10
+            }}>
+              <span style={{ 
+                fontSize: 13, 
+                fontWeight: 900, 
+                color: 'var(--color-text-primary)', 
+                opacity: 0.8,
+                textTransform: 'uppercase', 
+                letterSpacing: '0.05em',
+                whiteSpace: 'nowrap'
+              }}>
+                {group.dateLabel}
               </span>
+              <div style={{ flex: 1, height: 1, background: 'var(--color-border)', opacity: 0.3 }}></div>
             </div>
             
             <div style={{ 

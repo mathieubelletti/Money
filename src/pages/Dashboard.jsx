@@ -17,8 +17,14 @@ const Dashboard = () => {
     updateSaving,
     selectedPeriod,
     setSelectedPeriod,
-    forecasts
+    forecasts,
+    refreshData
   } = useData();
+
+  useEffect(() => {
+    // Force a fresh fetch from Supabase on dashboard mount (Cache Invalidation)
+    refreshData();
+  }, [refreshData]);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [manageType, setManageType] = useState('accounts'); // 'accounts' or 'savings'
   const [editingItem, setEditingItem] = useState(null);

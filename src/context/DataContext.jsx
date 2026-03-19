@@ -148,8 +148,8 @@ export const DataProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchAllData = async () => {
-    if (hasFetchedRef.current || !session?.user) {
+  const fetchAllData = async (force = false) => {
+    if ((hasFetchedRef.current && !force) || !session?.user) {
       if (!session?.user) setLoading(false);
       return;
     }
@@ -184,12 +184,33 @@ export const DataProvider = ({ children }) => {
         if (gl) setGoal(gl);
         
         if (safeTxs.length) {
+          // Sort by actual date descending
+          const sorted = [...safeTxs].sort((a, b) => new Date(b.date) - new Date(a.date));
+          
+          const today = new Date().toISOString().split('T')[0];
+          const yesterdayOpen = new Date();
+          yesterdayOpen.setDate(yesterdayOpen.getDate() - 1);
+          const yesterday = yesterdayOpen.toISOString().split('T')[0];
+
           const grouped = [];
-          safeTxs.forEach(tx => {
-            const label = tx.dateLabel || "Inconnu";
-            let g = grouped.find(gr => gr.dateLabel === label);
+          sorted.forEach(tx => {
+            const dateKey = tx.date || today;
+            let g = grouped.find(gr => gr.date === dateKey);
             if (!g) { 
-              g = { id: `g_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, dateLabel: label, items: [] }; 
+              let label = dateKey;
+              if (dateKey === today) label = "Aujourd'hui";
+              else if (dateKey === yesterday) label = "Hier";
+              else {
+                const d = new Date(dateKey);
+                label = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+              }
+              
+              g = { 
+                id: `g_${dateKey}`, 
+                date: dateKey, 
+                dateLabel: label, 
+                items: [] 
+              }; 
               grouped.push(g); 
             }
             g.items.push(tx);
@@ -295,6 +316,45 @@ export const DataProvider = ({ children }) => {
       setUsingSupabase(true);
     } catch (e) { console.error('Migration failed:', e); }
   };
+
+  const refreshData = React.useCallback(() => {
+    hasFetchedRef.current = false;
+    fetchAllData(true);
+  }, [session]);
+
+  // Supabase Realtime Listener
+  useEffect(() => {
+    if (!session?.user?.id || !usingSupabase) return;
+
+    // Throttle/Debounce the sync to avoid multiple rapid refreshes
+    let syncTimeout = null;
+    const triggerSync = () => {
+      if (syncTimeout) clearTimeout(syncTimeout);
+      syncTimeout = setTimeout(() => {
+        refreshData();
+      }, 1000); // 1s debounce
+    };
+
+    const channel = supabase
+      .channel('app-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public' },
+        (payload) => {
+          // Only sync if the change belongs to the current user (RLS usually handles this, 
+          // but we check payload just in case if user_id is present)
+          if (!payload.new || payload.new.user_id === session.user.id || !payload.new.user_id) {
+            triggerSync();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+      if (syncTimeout) clearTimeout(syncTimeout);
+    };
+  }, [session?.user?.id, usingSupabase, refreshData]);
 
   useEffect(() => { if (session) fetchAllData(); }, [session]);
 
@@ -573,7 +633,7 @@ export const DataProvider = ({ children }) => {
         ]),
         syncCategories(),
         syncForecasts(),
-        async () => {
+        (async () => {
           // New: Also sync the 'previsions' table for balances with CORRECT rollover logic
           let runningBalance = 0;
           const previsionsToSync = forecasts.map((f, index) => {
@@ -610,7 +670,7 @@ export const DataProvider = ({ children }) => {
             return { error: prevError };
           }
           return { error: null };
-        },
+        })(),
         goal && goal.id !== 'default-goal' && supabase.from('goal').upsert([{ 
           id: goal.id, 
           name: goal.name, 
@@ -779,13 +839,16 @@ export const DataProvider = ({ children }) => {
     usingSupabase,
     syncStatus,
     user: session?.user,
+    refreshData,
   }), [
     categories, transactions, accountsWithBalances, savingsItems, forecasts, updateMonthForecast, monthsState, 
     globalRecurrences, addTransaction, addTransactions, deleteTransaction, updateTransaction,
     addAccount, updateAccount, addSaving, updateSaving, deleteSaving,
     deleteAccount, goal, setGoal, loading, usingSupabase, session, saveGlobalConfig, syncStatus, selectedPeriod, setSelectedPeriod,
-    fetchingPrevisions, fetchPrevisions, updatePrevision, isRolloverEnabled, setIsRolloverEnabled
-  ]);
+      fetchingPrevisions, fetchPrevisions, updatePrevision, isRolloverEnabled, setIsRolloverEnabled,
+      refreshData,
+      syncStatus
+    ]);
 
   return (
     <DataContext.Provider value={value}>
