@@ -428,13 +428,27 @@ export const DataProvider = ({ children }) => {
         }
       }
 
+      const forecastsToSync = forecasts.map(f => ({ ...f, user_id: userId }));
+
+      // Delete all existing forecasts for this user first, then re-insert clean
+      // This eliminates any duplicates from past migrations
+      const syncForecasts = async () => {
+        if (forecastsToSync.length === 0) return { error: null };
+        const { error: delError } = await supabase
+          .from('forecasts')
+          .delete()
+          .eq('user_id', userId);
+        if (delError) return { error: delError };
+        return supabase.from('forecasts').insert(forecastsToSync);
+      };
+
       const promises = [
         supabase.from('app_state').upsert([
           { key: 'globalRecurrences', value: globalRecurrences, user_id: userId },
           { key: 'forecasts_detail', value: targetMonthsState, user_id: userId }
         ]),
         categories.length > 0 && supabase.from('categories').upsert(categories.map(c => ({ ...c, user_id: userId }))),
-        forecasts.length > 0 && supabase.from('forecasts').upsert(forecasts.map(f => ({ ...f, user_id: userId }))),
+        syncForecasts(),
         supabase.from('accounts').upsert(accountsToUpsert.map(a => ({ ...a, user_id: userId })))
       ].filter(Boolean);
 
