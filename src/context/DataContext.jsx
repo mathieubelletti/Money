@@ -267,13 +267,19 @@ export const DataProvider = ({ children }) => {
   const migrateFromLocal = async () => {
     const flatTxs = [];
     transactions.forEach(g => g.items.forEach(tx => flatTxs.push({ ...tx, dateLabel: g.dateLabel, user_id: session?.user?.id })));
+    // Filter categories: don't migrate if it's just the default mock set and nothing else is being migrated
+    const isDefaultCategories = categories.length === 6 && categories.every(c => typeof c.id === 'number' && c.id >= 1 && c.id <= 6);
+    const hasOtherData = flatTxs.length > 0 || accounts.length > 0 || savingsItems.length > 0;
+    
+    const categoriesToMigrate = (isDefaultCategories && !hasOtherData) ? [] : categories;
+
     try {
       await Promise.all([
-        categories.length && supabase.from('categories').upsert(categories.map(c => ({ ...c, user_id: session?.user?.id }))),
-        flatTxs.length && supabase.from('transactions').upsert(flatTxs),
-        accounts.length && supabase.from('accounts').upsert(accounts.map(a => ({ ...a, user_id: session?.user?.id }))),
-        savingsItems.length && supabase.from('savings').upsert(savingsItems.map(s => ({ ...s, user_id: session?.user?.id }))),
-        forecasts.length && supabase.from('forecasts').upsert(forecasts.map(f => ({ ...f, user_id: session?.user?.id }))),
+        categoriesToMigrate.length > 0 && supabase.from('categories').upsert(categoriesToMigrate.map(c => ({ ...c, user_id: session?.user?.id }))),
+        flatTxs.length > 0 && supabase.from('transactions').upsert(flatTxs),
+        accounts.length > 0 && supabase.from('accounts').upsert(accounts.map(a => ({ ...a, user_id: session?.user?.id }))),
+        savingsItems.length > 0 && supabase.from('savings').upsert(savingsItems.map(s => ({ ...s, user_id: session?.user?.id }))),
+        forecasts.length > 0 && supabase.from('forecasts').upsert(forecasts.map(f => ({ ...f, user_id: session?.user?.id }))),
         supabase.from('goal').upsert([{ ...goal, user_id: session?.user?.id }]),
         supabase.from('app_state').upsert([
           { key: 'globalRecurrences', value: globalRecurrences, user_id: session?.user?.id },
