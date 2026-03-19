@@ -384,20 +384,80 @@ export const DataProvider = ({ children }) => {
   }, [usingSupabase, session?.user?.id, accounts, forecasts]);
 
   const addSaving = React.useCallback((sav) => {
-    const newSav = { ...sav, id: `sav_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, user_id: session?.user?.id };
+    const userId = session?.user?.id;
+    const newSav = { 
+      ...sav, 
+      id: `sav_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, 
+      user_id: userId 
+    };
     setSavingsItems(prev => [...prev, newSav]);
-    if (usingSupabase) supabase.from('savings').insert([newSav]).then(({ error }) => { if (error) console.error(error); });
+    if (usingSupabase && userId) {
+      setSyncStatus('syncing');
+      supabase.from('savings')
+        .insert([{ 
+          id: newSav.id, 
+          name: newSav.name, 
+          bank: newSav.bank, 
+          balance: newSav.balance, 
+          domain: newSav.domain, 
+          user_id: userId 
+        }])
+        .then(({ error }) => { 
+          if (error) {
+            console.error('Savings Insert Error:', error);
+            setSyncStatus('error');
+          } else {
+            setSyncStatus('success');
+            setTimeout(() => setSyncStatus('idle'), 2000);
+          }
+        });
+    }
   }, [usingSupabase, session?.user?.id]);
 
   const updateSaving = React.useCallback((sav) => {
-    setSavingsItems(prev => prev.map(s => String(s.id) === String(sav.id) ? { ...sav, user_id: session?.user?.id } : s));
-    if (usingSupabase) supabase.from('savings').upsert([{ ...sav, user_id: session?.user?.id }]).then(({ error }) => { if (error) console.error(error); });
+    const userId = session?.user?.id;
+    setSavingsItems(prev => prev.map(s => String(s.id) === String(sav.id) ? { ...sav, user_id: userId } : s));
+    if (usingSupabase && userId) {
+      setSyncStatus('syncing');
+      supabase.from('savings')
+        .upsert([{ 
+          id: sav.id, 
+          name: sav.name, 
+          bank: sav.bank, 
+          balance: sav.balance, 
+          domain: sav.domain, 
+          user_id: userId 
+        }])
+        .then(({ error }) => { 
+          if (error) {
+            console.error('Savings Update Error:', error);
+            setSyncStatus('error');
+          } else {
+            setSyncStatus('success');
+            setTimeout(() => setSyncStatus('idle'), 2000);
+          }
+        });
+    }
   }, [usingSupabase, session?.user?.id]);
 
   const deleteSaving = React.useCallback((id) => {
     setSavingsItems(prev => prev.filter(s => String(s.id) !== String(id)));
-    if (usingSupabase) supabase.from('savings').delete().eq('id', String(id)).then(({ error }) => { if (error) console.error(error); });
-  }, [usingSupabase]);
+    if (usingSupabase && session?.user?.id) {
+      setSyncStatus('syncing');
+      supabase.from('savings')
+        .delete()
+        .eq('id', String(id))
+        .then(({ error }) => { 
+          if (error) {
+            console.error('Savings Delete Error:', error);
+            setSyncStatus('error');
+          } else {
+            setSyncStatus('success');
+            setTimeout(() => setSyncStatus('idle'), 2000);
+          }
+        });
+    }
+  }, [usingSupabase, session?.user?.id]);
 
   const saveGlobalConfig = React.useCallback(async (specificMonthsState) => {
     const userId = session?.user?.id;
@@ -552,15 +612,19 @@ export const DataProvider = ({ children }) => {
         .from('previsions')
         .upsert({
           user_id: session.user.id,
-          mois,
+          mois: String(mois),
           annee: 2026,
-          montant_previsionnel: montant,
-          statut: montant >= 0 ? 'Excedent' : 'Déficit'
+          montant_previsionnel: parseFloat(montant) || 0,
+          statut: (parseFloat(montant) || 0) >= 0 ? 'Excedent' : 'Déficit'
         }, { onConflict: 'user_id,mois,annee' });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase Prevision Sync Error:', error);
+        setSyncStatus('error');
+      }
     } catch (err) {
-      console.error('Error updating prevision:', err);
+      console.error('Internal Prevision updating error:', err);
+      setSyncStatus('error');
     }
   }, [session?.user?.id]);
 
