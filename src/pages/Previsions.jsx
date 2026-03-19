@@ -240,34 +240,31 @@ const Previsions = () => {
             overflow: 'hidden',
             boxShadow: '0 10px 25px -5px rgba(24, 82, 74, 0.15)'
           }}>
-            <div style={{ position: 'absolute', top: 20, right: 20, display: 'flex', gap: 12, zIndex: 10 }}>
+            <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 10 }}>
               <button 
                 onClick={() => setIsGlobalModalOpen(true)}
                 style={{ 
-                  background: 'rgba(255,255,255,0.8)', 
+                  background: 'rgba(255,255,255,0.9)', 
                   border: '1px solid var(--color-primary)', 
                   color: 'var(--color-primary)', 
                   borderRadius: 12, 
-                  padding: '6px 14px', 
-                  fontSize: 11, 
+                  padding: '6px 12px', 
+                  fontSize: 10, 
                   fontWeight: 800, 
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 6,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                  gap: 4,
+                  boxShadow: '0 4px 12px rgba(24, 82, 74, 0.1)',
                   pointerEvents: 'auto'
                 }}
               >
-                <span className="material-icons-round" style={{ fontSize: 18 }}>tune</span>
+                <span className="material-icons-round" style={{ fontSize: 16 }}>tune</span>
                 GÉRER
               </button>
-              <div style={{ color: 'var(--color-primary)', opacity: 0.8 }}>
-                <span className="material-icons-round" style={{ fontSize: 28 }}>analytics</span>
-              </div>
             </div>
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Solde prévisionnel à 12 mois</div>
+              <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', paddingRight: 90 }}>Solde prévisionnel à 12 mois</div>
               <div style={{ fontSize: 32, fontWeight: 900, color: 'var(--color-text-primary)', margin: '8px 0' }}>{formatBalance(calculatedResults[lastForecast.id]?.final || 0)}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div 

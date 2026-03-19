@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
+import { useData } from '../context/DataContext';
 
 const PageHeader = ({ title, onBack }) => {
+  const { session } = useData();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -75,17 +77,22 @@ const PageHeader = ({ title, onBack }) => {
         {title}
       </h2>
 
-      <div style={{ 
-        width: 40, 
-        height: 40, 
-        borderRadius: '50%', 
-        background: 'var(--color-primary-glass)', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        cursor: 'pointer'
-      }}>
-        <span className="material-icons-round" style={{ color: 'var(--color-primary)', fontSize: 22 }}>notifications</span>
+      <div 
+        onClick={() => setIsMenuOpen(!isMenuOpen)}
+        style={{ 
+          width: 36, 
+          height: 36, 
+          borderRadius: '50%', 
+          overflow: 'hidden',
+          border: '1px solid var(--color-border)',
+          cursor: 'pointer'
+        }}
+      >
+        <img 
+          src={session?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session?.user?.email}`} 
+          alt="Avatar" 
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
       </div>
     </header>
   );

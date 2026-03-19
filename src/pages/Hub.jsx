@@ -50,7 +50,7 @@ const Hub = ({ onEnterBudget }) => {
       <header className="hub-header">
         <div className="hub-user">
           <img 
-            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} 
+            src={avatarUrl} 
             alt="User" 
             className="hub-avatar" 
           />
