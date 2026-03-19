@@ -1574,3 +1574,8 @@ body {
       "day amount amount";
   }
 }
+
+/* Hide bottom nav on mobile when form is open to avoid overlapping buttons */
+body.form-open .bottom-nav {
+  display: none !important;
+}

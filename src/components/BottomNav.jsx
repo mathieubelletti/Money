@@ -17,7 +17,7 @@ const BottomNav = ({ mode, activeTab, setActiveTab }) => {
   const items = mode === 'hub' ? hubItems : budgetItems;
 
   return (
-    <nav style={{
+    <nav className="bottom-nav" style={{
       position: 'fixed',
       bottom: 0,
       left: '50%',

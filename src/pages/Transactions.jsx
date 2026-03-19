@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CompanyLogo from '../components/CompanyLogo';
 import PageHeader from '../components/PageHeader';
 import SwipeAction from '../components/SwipeAction';
@@ -28,6 +28,17 @@ const Transactions = () => {
   const [showUndo, setShowUndo] = useState(false);
   const [undoTx, setUndoTx] = useState(null);
   const undoTimerRef = React.useRef(null);
+
+  // Hide bottom navbar when form is open (mobile UX)
+  useEffect(() => {
+    const isOpen = isAddModalOpen || isEditing;
+    if (isOpen) {
+      document.body.classList.add('form-open');
+    } else {
+      document.body.classList.remove('form-open');
+    }
+    return () => document.body.classList.remove('form-open');
+  }, [isAddModalOpen, isEditing]);
   
   // Form State
   const [newTx, setNewTx] = useState({

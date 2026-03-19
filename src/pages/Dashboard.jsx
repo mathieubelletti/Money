@@ -249,43 +249,76 @@ const Dashboard = () => {
       </section>
 
       <div style={{ opacity: isFiltering ? 0.4 : 1, transition: 'opacity 0.2s ease-in-out' }}>
-        {/* Balance Card Section */}
+        {/* Patrimoine Section */}
         <section style={{ padding: '0 24px 0' }} className="dashboard-max-width">
-        <div style={{ 
-          background: 'linear-gradient(135deg, var(--color-primary-bg) 0%, #e2eeec 100%)', 
-          padding: '24px', 
-          borderRadius: 24, 
-          border: '1px solid var(--color-border)',
-          position: 'relative',
-          overflow: 'hidden',
-          boxShadow: '0 10px 25px -5px rgba(24, 82, 74, 0.15)'
-        }}>
-          <div style={{ position: 'absolute', top: 20, right: 20, color: 'var(--color-primary)', opacity: 0.8 }}>
-            <span className="material-icons-round" style={{ fontSize: 28 }}>account_balance_wallet</span>
-          </div>
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-secondary)', margin: 0 }}>Solde Total consolidé</p>
-            <h1 style={{ fontSize: 36, fontWeight: 900, color: 'var(--color-text-primary)', margin: '12px 0', letterSpacing: '-0.02em' }}>
-              {historicalBalance.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
-            </h1>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {monthChange !== 0 ? (
-                <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: monthChange > 0 ? 'var(--color-success)' : 'var(--color-danger)', fontWeight: 800, fontSize: 13 }}>
-                    <span className="material-icons-round" style={{ fontSize: 18 }}>{monthChange > 0 ? 'trending_up' : 'trending_down'}</span>
-                    <span>{monthChange > 0 ? '+' : ''}{monthChange}%</span>
+        {(() => {
+          const totalAccounts = (accounts || []).reduce((s, a) => s + (parseFloat(a.balance) || 0), 0);
+          const totalSavings = (savingsItems || []).reduce((s, sv) => s + (parseFloat(sv.balance) || 0), 0);
+          const totalPatrimoine = totalAccounts + totalSavings;
+          const savingsRatio = totalPatrimoine > 0 ? (totalSavings / totalPatrimoine) * 100 : 0;
+          const accountsRatio = 100 - savingsRatio;
+          return (
+            <div style={{ 
+              background: 'linear-gradient(135deg, var(--color-primary-bg) 0%, #e2eeec 100%)', 
+              padding: '24px', 
+              borderRadius: 24, 
+              border: '1px solid var(--color-border)',
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: '0 10px 25px -5px rgba(24, 82, 74, 0.15)'
+            }}>
+              {/* Icon */}
+              <div style={{ position: 'absolute', top: 20, right: 20, color: 'var(--color-primary)', opacity: 0.8 }}>
+                <span className="material-icons-round" style={{ fontSize: 28 }}>account_balance</span>
+              </div>
+
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                {/* Label */}
+                <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-secondary)', margin: 0 }}>
+                  Gestion du Patrimoine
+                </p>
+                {/* Total */}
+                <h1 style={{ fontSize: 36, fontWeight: 900, color: 'var(--color-text-primary)', margin: '8px 0 16px', letterSpacing: '-0.02em' }}>
+                  {totalPatrimoine.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
+                </h1>
+
+                {/* Progress bar: accounts vs savings */}
+                <div style={{ display: 'flex', height: 6, borderRadius: 100, overflow: 'hidden', background: 'rgba(0,0,0,0.08)', marginBottom: 14 }}>
+                  <div style={{ width: `${accountsRatio}%`, background: 'var(--color-primary)', transition: 'width 0.5s ease' }} />
+                  <div style={{ width: `${savingsRatio}%`, background: 'rgba(24,82,74,0.35)', transition: 'width 0.5s ease' }} />
+                </div>
+
+                {/* Breakdown */}
+                <div style={{ display: 'flex', gap: 16 }}>
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: 3, background: 'var(--color-primary)', flexShrink: 0 }} />
+                    <div>
+                      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-tertiary)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Comptes courants
+                      </p>
+                      <p style={{ fontSize: 15, fontWeight: 900, color: 'var(--color-text-primary)', margin: '2px 0 0' }}>
+                        {totalAccounts.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
+                      </p>
+                    </div>
                   </div>
-                  <span style={{ color: 'var(--color-text-tertiary)', fontSize: 13, fontWeight: 600 }}>ce mois-ci</span>
-                </>
-              ) : (
-                <span style={{ color: 'var(--color-text-tertiary)', fontSize: 12, fontWeight: 600, fontStyle: 'italic' }}>
-                  {selectedPeriod === new Date().toISOString().substring(0, 7) ? 'Mois en cours' : 'Fin du mois sélectionné'}
-                </span>
-              )}
+                  <div style={{ width: 1, background: 'rgba(0,0,0,0.08)' }} />
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: 3, background: 'rgba(24,82,74,0.35)', flexShrink: 0 }} />
+                    <div>
+                      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-tertiary)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Épargne
+                      </p>
+                      <p style={{ fontSize: 15, fontWeight: 900, color: 'var(--color-text-primary)', margin: '2px 0 0' }}>
+                        {totalSavings.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </section>
+          );
+        })()}
+        </section>
 
       {showInstallBtn && (
         <section style={{ padding: '16px 24px 0' }} className="dashboard-max-width">
