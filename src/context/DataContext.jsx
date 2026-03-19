@@ -539,7 +539,23 @@ export const DataProvider = ({ children }) => {
         }
       });
 
-      // Delete all existing forecasts for this user first, then re-insert clean
+      // Delete all existing categories for this user first, then re-insert clean
+      const syncCategories = async () => {
+        if (categoriesToSync.length === 0) return { error: null };
+        const { error: delError } = await supabase
+          .from('categories')
+          .delete()
+          .eq('user_id', userId);
+        if (delError) return { error: delError };
+        return supabase.from('categories').insert(categoriesToSync.map(c => ({
+          id: c.id,
+          name: c.name,
+          icon: c.icon,
+          color: c.color,
+          user_id: userId
+        })));
+      };
+
       const syncForecasts = async () => {
         if (forecastsToSync.length === 0) return { error: null };
         const { error: delError } = await supabase
@@ -555,7 +571,7 @@ export const DataProvider = ({ children }) => {
           { key: 'globalRecurrences', value: globalRecurrences, user_id: userId },
           { key: 'forecasts_detail', value: targetMonthsState, user_id: userId }
         ]),
-        categoriesToSync.length > 0 && supabase.from('categories').upsert(categoriesToSync.map(c => ({ ...c, user_id: userId }))),
+        syncCategories(),
         syncForecasts(),
         supabase.from('accounts').upsert(accountsToUpsert.map(a => ({
           id: a.id,
