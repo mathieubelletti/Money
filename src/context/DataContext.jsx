@@ -518,25 +518,24 @@ export const DataProvider = ({ children }) => {
         };
       });
 
-      // Also ensure we sync categories if we have unique labels from recurrences
-      // Use deterministic IDs to avoid duplicates in Supabase
-      let categoriesToSync = [...categories];
+      // Sync categories: strictly derived from unique labels in globalRecurrences
+      // This enforces "Previsions as single source of truth" and cleans up old data
       const labels = new Set();
       Object.values(globalRecurrences).forEach(sect => {
         sect.forEach(r => { if (r.label) labels.add(r.label); });
       });
 
-      labels.forEach(l => {
+      const categoriesToSync = Array.from(labels).map(l => {
         const detId = `cat_${l.toLowerCase().trim().replace(/[^a-z0-0]/g, '_')}`;
-        if (!categoriesToSync.some(c => c.name === l || c.id === detId)) {
-          categoriesToSync.push({
-            id: detId,
-            name: l,
-            icon: 'category',
-            color: 'var(--color-primary)',
-            user_id: userId
-          });
-        }
+        // Try to find existing category info (icon, color) else use defaults
+        const existing = categories.find(c => c.name === l || c.id === detId);
+        return {
+          id: detId,
+          name: l,
+          icon: existing?.icon || 'category',
+          color: existing?.color || 'var(--color-primary)',
+          user_id: userId
+        };
       });
 
       // Delete all existing categories for this user first, then re-insert clean

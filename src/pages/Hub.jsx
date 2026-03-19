@@ -1,6 +1,11 @@
 import { supabase } from '../supabase';
+import { useData } from '../context/DataContext';
 
 const Hub = ({ onEnterBudget }) => {
+  const { session } = useData();
+  const user = session?.user;
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Utilisateur';
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
   };
@@ -10,8 +15,8 @@ const Hub = ({ onEnterBudget }) => {
       name: 'Budget',
       desc: 'Gérez vos finances personnelles',
       icon: 'insights',
-      color: '#22c55e',
-      bg: 'rgba(34, 197, 94, 0.12)',
+      color: '#18524a',
+      bg: 'rgba(24, 82, 74, 0.12)',
       onClick: onEnterBudget
     },
     {
@@ -45,13 +50,13 @@ const Hub = ({ onEnterBudget }) => {
       <header className="hub-header">
         <div className="hub-user">
           <img 
-            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Marc" 
+            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} 
             alt="User" 
             className="hub-avatar" 
           />
           <div className="hub-greeting">
-            <span className="hub-app-title">Linxo Lab Hub</span>
-            <span className="hub-user-name">Bonjour, Marc</span>
+            <span className="hub-app-title">Money Hub</span>
+            <span className="hub-user-name">Bonjour, {userName}</span>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
@@ -61,8 +66,8 @@ const Hub = ({ onEnterBudget }) => {
           <button 
             onClick={handleLogout}
             style={{ 
-              width: 40, height: 40, borderRadius: '50%', background: 'var(--color-danger-light)', 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-danger)',
+              width: 40, height: 40, borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444',
               border: 'none', cursor: 'pointer'
             }}
           >
@@ -74,7 +79,7 @@ const Hub = ({ onEnterBudget }) => {
       <main className="hub-content">
         <div className="hub-title-section">
           <h1 className="hub-main-title">Vos applications</h1>
-          <p className="hub-subtitle">Gérez votre quotidien avec la suite Linxo Lab</p>
+          <p className="hub-subtitle">Gérez votre quotidien avec la suite Money</p>
         </div>
 
         <div className="hub-apps-list">
@@ -102,7 +107,7 @@ const Hub = ({ onEnterBudget }) => {
         <div className="hub-help-banner">
           <h3 className="hub-help-title">Besoin d'aide ?</h3>
           <p className="hub-help-text">
-            Consultez notre guide d'utilisation ou contactez le support Linxo Lab.
+            Consultez notre guide d'utilisation ou contactez le support Money.
           </p>
         </div>
       </main>
