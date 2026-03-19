@@ -69,13 +69,29 @@ const Previsions = () => {
     
     setMonthsState(prev => {
       const newState = { ...prev };
+      
+      // Helper to sort and avoid mutating the original globalRecurrences
+      const getSortedSection = (sect) => {
+        return [...globalRecurrences[sect]].sort((a, b) => {
+          const dayA = parseInt(a.day, 10) || 0;
+          const dayB = parseInt(b.day, 10) || 0;
+          return dayA - dayB;
+        });
+      };
+
+      const sortedSectData = {
+        revenus: getSortedSection('revenus'),
+        fixes: getSortedSection('fixes'),
+        variables: getSortedSection('variables')
+      };
+
       forecasts.forEach(f => {
         const currentData = prev[f.id] || { manualReport: 0, revenus: [], fixes: [], variables: [] };
         newState[f.id] = {
           ...currentData,
-          revenus: globalRecurrences.revenus.map(r => ({ ...r, isLinked: true, day: r.day || '01' })),
-          fixes: globalRecurrences.fixes.map(r => ({ ...r, isLinked: true, day: r.day || '01' })),
-          variables: globalRecurrences.variables.map(r => ({ ...r, isLinked: true, day: r.day || '01' }))
+          revenus: sortedSectData.revenus.map(r => ({ ...r, isLinked: true, day: r.day })),
+          fixes: sortedSectData.fixes.map(r => ({ ...r, isLinked: true, day: r.day })),
+          variables: sortedSectData.variables.map(r => ({ ...r, isLinked: true, day: r.day }))
         };
       });
       finalMonthsState = newState;
@@ -139,7 +155,7 @@ const Previsions = () => {
     const newId = Date.now() + Math.random();
     setGlobalRecurrences(prev => ({
       ...prev,
-      [section]: [...prev[section], { id: newId, label: '', amount: '', day: '15', isLinked: true }]
+      [section]: [...prev[section], { id: newId, label: '', amount: '', day: '', isLinked: true }]
     }));
   }, [setGlobalRecurrences]);
 
@@ -380,7 +396,7 @@ const Previsions = () => {
                         {data[sect.key].length > 0 ? data[sect.key].map(line => (
                           <div key={line.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                             <div style={{ flex: 1, minWidth: 120, height: 36, borderRadius: 8, border: '1px solid var(--color-border-light)', padding: '0 10px', fontSize: 13, background: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600 }}>
-                              <span style={{ fontSize: 11, opacity: 0.6, fontWeight: 800 }}>{line.day || '15'}</span>
+                              <span style={{ fontSize: 11, opacity: 0.6, fontWeight: 800 }}>{line.day}</span>
                               <span style={{ flex: 1 }}>{line.label}</span>
                             </div>
                             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -571,6 +587,30 @@ const Previsions = () => {
                   >
                     <span className="material-icons-round" style={{ fontSize: 18 }}>add</span>
                   </button>
+                  <button 
+                    onClick={() => {
+                      setGlobalRecurrences(prev => ({
+                        ...prev,
+                        [sect]: [...prev[sect]].sort((a, b) => (parseInt(a.day, 10) || 0) - (parseInt(b.day, 10) || 0))
+                      }));
+                    }}
+                    style={{ 
+                      background: 'white', 
+                      border: '1px solid #e2e8f0', 
+                      width: 28, height: 28, 
+                      borderRadius: 8, 
+                      color: '#64748b', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                      marginLeft: 8
+                    }}
+                    title="Trier par jour"
+                  >
+                    <span className="material-icons-round" style={{ fontSize: 18 }}>sort</span>
+                  </button>
                 </div>
                 {globalRecurrences[sect].length > 0 ? globalRecurrences[sect].map((line, idx) => (
                   <div key={line.id} className="recurrence-grid-item" style={{ 
@@ -586,9 +626,10 @@ const Previsions = () => {
                       <button 
                         onClick={() => {
                           const nextIdx = (COMMON_ICONS.indexOf(line.icon || COMMON_ICONS[0]) + 1) % COMMON_ICONS.length;
-                          const newR = [...globalRecurrences[sect]];
-                          newR[idx].icon = COMMON_ICONS[nextIdx];
-                          setGlobalRecurrences({...globalRecurrences, [sect]: newR});
+                          setGlobalRecurrences(prev => ({
+                            ...prev,
+                            [sect]: prev[sect].map(item => item.id === line.id ? { ...item, icon: COMMON_ICONS[nextIdx] } : item)
+                          }));
                         }}
                         style={{ width: 40, height: 40, borderRadius: 10, border: '1px solid #e2e8f0', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--color-primary)' }}
                         title="Changer l'icône"
@@ -599,9 +640,10 @@ const Previsions = () => {
                     <input 
                       value={line.label}
                       onChange={(e) => {
-                        const newR = [...globalRecurrences[sect]];
-                        newR[idx].label = e.target.value;
-                        setGlobalRecurrences({...globalRecurrences, [sect]: newR});
+                        setGlobalRecurrences(prev => ({
+                          ...prev,
+                          [sect]: prev[sect].map(item => item.id === line.id ? { ...item, label: e.target.value } : item)
+                        }));
                       }}
                       placeholder={sect === 'revenus' ? "Libellé..." : "Loyer, Netflix..."}
                       style={{ height: 40, borderRadius: 10, border: '1px solid #e2e8f0', padding: '0 12px', fontSize: 13, fontWeight: 600, width: '100%', minWidth: 0 }}
@@ -612,9 +654,10 @@ const Previsions = () => {
                       max="31"
                       value={line.day || ''}
                       onChange={(e) => {
-                        const newR = [...globalRecurrences[sect]];
-                        newR[idx].day = e.target.value;
-                        setGlobalRecurrences({...globalRecurrences, [sect]: newR});
+                        setGlobalRecurrences(prev => ({
+                          ...prev,
+                          [sect]: prev[sect].map(item => item.id === line.id ? { ...item, day: e.target.value } : item)
+                        }));
                       }}
                       placeholder="Jour"
                       style={{ height: 40, borderRadius: 10, border: '1px solid #e2e8f0', padding: '0 4px', fontSize: 13, fontWeight: 700, textAlign: 'center', width: '100%' }}
@@ -623,18 +666,20 @@ const Previsions = () => {
                       type="number"
                       value={line.amount}
                       onChange={(e) => {
-                        const newR = [...globalRecurrences[sect]];
-                        newR[idx].amount = e.target.value;
-                        setGlobalRecurrences({...globalRecurrences, [sect]: newR});
+                        setGlobalRecurrences(prev => ({
+                          ...prev,
+                          [sect]: prev[sect].map(item => item.id === line.id ? { ...item, amount: e.target.value } : item)
+                        }));
                       }}
                       placeholder="0.00"
                       style={{ height: 40, borderRadius: 10, border: '1px solid #e2e8f0', padding: '0 8px', fontSize: 13, fontWeight: 800, textAlign: 'right', width: '100%' }}
                     />
                     <button 
                       onClick={() => {
-                        const newR = [...globalRecurrences[sect]];
-                        newR.splice(idx, 1);
-                        setGlobalRecurrences({...globalRecurrences, [sect]: newR});
+                        setGlobalRecurrences(prev => ({
+                          ...prev,
+                          [sect]: prev[sect].filter(item => item.id !== line.id)
+                        }));
                       }}
                       style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', padding: 4 }}
                     >

@@ -527,14 +527,34 @@ export const DataProvider = ({ children }) => {
       isInitialMount.current = false;
       return;
     }
-    
-    // Clear previous timeout
-    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
 
-    if (usingSupabase && session?.user?.id) {
+    // Always clear previous timeout first
+    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+    
+    // Validation logic for auto-sync
+    const isValid = () => {
+      // Check globalRecurrences: all items should have label and amount if they are present
+      for (const sect in globalRecurrences) {
+        if (globalRecurrences[sect].some(line => {
+          // If label or amount or day is partially filled, consider the whole state "dirty/invalid" for sync
+          // unless it's a completely new empty line (which is handled by addGlobalRecurrence)
+          const hasLabel = line.label && line.label.trim().length > 0;
+          const hasAmount = line.amount !== '' && !isNaN(parseFloat(line.amount));
+          const hasDay = line.day !== '' && !isNaN(parseInt(line.day, 10));
+          
+          // An item is "in progress" and thus invalid for sync if some fields are filled but not all
+          const isStarted = hasLabel || hasAmount || hasDay;
+          const isComplete = hasLabel && hasAmount && hasDay;
+          return isStarted && !isComplete;
+        })) return false;
+      }
+      return true;
+    };
+
+    if (usingSupabase && session?.user?.id && isValid()) {
       syncTimeoutRef.current = setTimeout(() => {
         saveGlobalConfig();
-      }, 2000); // 2s debounce
+      }, 5000); // Increased debounce to 5s for smoother typing experience
     }
 
     return () => {
