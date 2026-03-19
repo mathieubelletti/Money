@@ -114,6 +114,7 @@ export const DataProvider = ({ children }) => {
   const [fetchingPrevisions, setFetchingPrevisions] = useState(false);
   const syncTimeoutRef = useRef(null);
   const isSyncingFromServerRef = useRef(false);
+  const lastLocalWriteRef = useRef(0);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: sess } }) => {
@@ -346,8 +347,13 @@ export const DataProvider = ({ children }) => {
         'postgres_changes',
         { event: '*', schema: 'public' },
         (payload) => {
-          // Only sync if the change belongs to the current user (RLS usually handles this, 
-          // but we check payload just in case if user_id is present)
+          // Guard: Ignore changes we just made ourselves (temporal echo cancellation)
+          if (Date.now() - lastLocalWriteRef.current < 4000) {
+            console.log('Ignoring self-triggered realtime change');
+            return;
+          }
+
+          // Only sync if the change belongs to the current user
           if (!payload.new || payload.new.user_id === session.user.id || !payload.new.user_id) {
             triggerSync();
           }
@@ -378,6 +384,7 @@ export const DataProvider = ({ children }) => {
       return updated;
     });
     if (usingSupabase) {
+      lastLocalWriteRef.current = Date.now();
       const inserts = txs.map(tx => ({ ...tx, dateLabel: tx.dateLabel || "Aujourd'hui", user_id: session?.user?.id }));
       supabase.from('transactions').insert(inserts).then(({ error }) => { if (error) console.error(error); });
     }
@@ -395,6 +402,7 @@ export const DataProvider = ({ children }) => {
       })).filter(group => group.items.length > 0);
     });
     if (usingSupabase) {
+      lastLocalWriteRef.current = Date.now();
       supabase.from('transactions').delete().eq('id', id).then(({ error }) => { if (error) console.error(error); });
     }
   }, [usingSupabase]);
@@ -407,18 +415,23 @@ export const DataProvider = ({ children }) => {
       }));
     });
     if (usingSupabase) {
+      lastLocalWriteRef.current = Date.now();
       supabase.from('transactions').upsert([{ ...tx, user_id: session?.user?.id }]).then(({ error }) => { if (error) console.error(error); });
     }
   }, [usingSupabase, session]);
 
   const deleteAccount = React.useCallback((id) => {
     setAccounts(prev => prev.filter(a => String(a.id) !== String(id)));
-    if (usingSupabase) supabase.from('accounts').delete().eq('id', String(id)).then(({ error }) => { if (error) console.error(error); });
+    if (usingSupabase) {
+      lastLocalWriteRef.current = Date.now();
+      supabase.from('accounts').delete().eq('id', String(id)).then(({ error }) => { if (error) console.error(error); });
+    }
   }, [usingSupabase]);
 
   const updateMonthForecast = React.useCallback((id, income, expenses) => {
     setForecasts(prev => prev.map(f => String(f.id) === String(id) ? { ...f, income, expenses } : f));
     if (usingSupabase) {
+      lastLocalWriteRef.current = Date.now();
       const f = forecasts.find(i => String(i.id) === String(id));
       if (f) supabase.from('forecasts').upsert([{ ...f, user_id: session.user.id, income, expenses }]).then(({ error }) => { if (error) console.error(error); });
     }
@@ -433,7 +446,10 @@ export const DataProvider = ({ children }) => {
       initialBalanceDate: acc.initialBalanceDate || today
     };
     setAccounts(prev => [...prev, newAcc]);
-    if (usingSupabase) supabase.from('accounts').insert([newAcc]).then(({ error }) => { if (error) console.error(error); });
+    if (usingSupabase) {
+      lastLocalWriteRef.current = Date.now();
+      supabase.from('accounts').insert([newAcc]).then(({ error }) => { if (error) console.error(error); });
+    }
   }, [usingSupabase, session?.user?.id]);
 
   const updateAccount = React.useCallback((acc) => {
@@ -451,7 +467,10 @@ export const DataProvider = ({ children }) => {
       });
     }
 
-    if (usingSupabase) supabase.from('accounts').upsert([{ ...acc, user_id: session?.user?.id }]).then(({ error }) => { if (error) console.error(error); });
+    if (usingSupabase) {
+      lastLocalWriteRef.current = Date.now();
+      supabase.from('accounts').upsert([{ ...acc, user_id: session?.user?.id }]).then(({ error }) => { if (error) console.error(error); });
+    }
   }, [usingSupabase, session?.user?.id, accounts, forecasts]);
 
   const addSaving = React.useCallback((sav) => {
@@ -463,6 +482,7 @@ export const DataProvider = ({ children }) => {
     };
     setSavingsItems(prev => [...prev, newSav]);
     if (usingSupabase && userId) {
+      lastLocalWriteRef.current = Date.now();
       setSyncStatus('syncing');
       supabase.from('savings')
         .insert([{ 
@@ -489,6 +509,7 @@ export const DataProvider = ({ children }) => {
     const userId = session?.user?.id;
     setSavingsItems(prev => prev.map(s => String(s.id) === String(sav.id) ? { ...sav, user_id: userId } : s));
     if (usingSupabase && userId) {
+      lastLocalWriteRef.current = Date.now();
       setSyncStatus('syncing');
       supabase.from('savings')
         .upsert([{ 
@@ -514,6 +535,7 @@ export const DataProvider = ({ children }) => {
   const deleteSaving = React.useCallback((id) => {
     setSavingsItems(prev => prev.filter(s => String(s.id) !== String(id)));
     if (usingSupabase && session?.user?.id) {
+      lastLocalWriteRef.current = Date.now();
       setSyncStatus('syncing');
       supabase.from('savings')
         .delete()
@@ -539,6 +561,7 @@ export const DataProvider = ({ children }) => {
 
     const today = new Date().toISOString().split('T')[0];
     setSyncStatus('syncing');
+    lastLocalWriteRef.current = Date.now(); // Mark this push to avoid echo
     try {
       const firstForecastId = forecasts[0]?.id;
       const startBalance = firstForecastId ? parseFloat(targetMonthsState[firstForecastId]?.manualReport || 0) : 0;
@@ -749,6 +772,7 @@ export const DataProvider = ({ children }) => {
     if (!session?.user?.id) return;
     const monthSlug = String(monthId).split('_').pop(); // Get '2026-03' from 'uuid_2026-03'
     const currentYear = new Date().getFullYear();
+    lastLocalWriteRef.current = Date.now(); // Mark local write
     try {
       const { error } = await supabase
         .from('previsions')
