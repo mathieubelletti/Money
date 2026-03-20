@@ -230,10 +230,10 @@ const Budget = () => {
                       </div>
                       <div className="budget-cat-name">{cat.label}</div>
                       <div className="budget-cat-amounts">
-                        <div className="budget-cat-spent" style={{ color: isOver ? 'var(--color-danger)' : (cat.spent >= limit && limit > 0 ? 'var(--color-success)' : 'var(--color-text-primary)') }}>
+                        <div className="budget-cat-spent" style={{ color: isOver ? 'var(--color-danger)' : (cat.spent >= limit && limit > 0 ? 'var(--color-primary)' : 'var(--color-text-primary)') }}>
                           {cat.spent.toLocaleString('fr-FR')} €
                           {cat.spent >= limit && limit > 0 && !isOver && (
-                            <span style={{ fontSize: 10, marginLeft: 6, fontWeight: 900, color: 'var(--color-success)', textTransform: 'uppercase' }}>Payé</span>
+                            <span style={{ fontSize: 10, marginLeft: 6, fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase' }}>Payé</span>
                           )}
                         </div>
                         <div className="budget-cat-limit">/ {limit} €</div>
@@ -247,10 +247,10 @@ const Budget = () => {
                           background: isOver
                             ? 'var(--color-danger)'
                             : cat.spent >= limit && limit > 0
-                              ? 'var(--color-success)'
+                              ? 'var(--color-primary)'
                               : pct > 80
                                 ? 'var(--color-warning)'
-                                : 'var(--color-primary)',
+                                : 'rgba(24, 82, 74, 0.4)',
                         }}
                       />
                     </div>
@@ -281,10 +281,10 @@ const Budget = () => {
                       </div>
                       <div className="budget-cat-name">{cat.label}</div>
                       <div className="budget-cat-amounts">
-                        <div className="budget-cat-spent" style={{ color: isOver ? 'var(--color-danger)' : (cat.spent >= limit && limit > 0 ? 'var(--color-success)' : 'var(--color-text-primary)') }}>
+                        <div className="budget-cat-spent" style={{ color: isOver ? 'var(--color-danger)' : (cat.spent >= limit && limit > 0 ? 'var(--color-primary)' : 'var(--color-text-primary)') }}>
                           {cat.spent.toLocaleString('fr-FR')} €
                           {cat.spent >= limit && limit > 0 && !isOver && (
-                            <span style={{ fontSize: 10, marginLeft: 6, fontWeight: 900, color: 'var(--color-success)', textTransform: 'uppercase' }}>Payé</span>
+                            <span style={{ fontSize: 10, marginLeft: 6, fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase' }}>Payé</span>
                           )}
                         </div>
                         <div className="budget-cat-limit">/ {limit} €</div>
@@ -298,10 +298,10 @@ const Budget = () => {
                           background: isOver
                             ? 'var(--color-danger)'
                             : cat.spent >= limit && limit > 0
-                              ? 'var(--color-success)'
+                              ? 'var(--color-primary)'
                               : pct > 80
                                 ? 'var(--color-warning)'
-                                : 'var(--color-primary)',
+                                : 'rgba(24, 82, 74, 0.4)',
                         }}
                       />
                     </div>
