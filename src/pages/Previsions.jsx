@@ -43,35 +43,9 @@ const Previsions = () => {
   const [expandedMonthId, setExpandedMonthId] = useState(null);
   const [isGlobalModalOpen, setIsGlobalModalOpen] = useState(false);
 
-  // Auto-scroll to current month or last viewed month logic
   const now = new Date();
   const currentYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-  useEffect(() => {
-    if (activeTab === 'Mois' && forecasts.length > 0) {
-      const savedMonth = sessionStorage.getItem('lastViewedMonth');
-      const savedExpansion = sessionStorage.getItem('lastExpandedMonthId');
-      const targetId = savedMonth || `month-${currentYM}`;
-      
-      // Auto-expand if nothing is expanded yet
-      if (!expandedMonthId) {
-        if (savedExpansion) {
-          setExpandedMonthId(savedExpansion);
-        } else {
-          const found = forecasts.find(f => (f.date || f.id.split('_').pop()) === currentYM);
-          if (found) setExpandedMonthId(found.id);
-        }
-      }
-
-      const timer = setTimeout(() => {
-        const element = document.getElementById(targetId);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 600);
-      return () => clearTimeout(timer);
-    }
-  }, [activeTab, forecasts.length, currentYM]);
 
   React.useEffect(() => {
     fetchPrevisions();
@@ -109,19 +83,7 @@ const Previsions = () => {
   };
 
   const handleToggleMonth = (id) => {
-    const nextId = expandedMonthId === id ? null : id;
-    setExpandedMonthId(nextId);
-    
-    // Remember last viewed month in session
-    const f = forecasts.find(i => i.id === id);
-    if (f) {
-      const ym = f.date || f.id.split('_').pop();
-      if (ym && ym.includes('-')) {
-        sessionStorage.setItem('lastViewedMonth', `month-${ym}`);
-        if (nextId) sessionStorage.setItem('lastExpandedMonthId', nextId);
-        else sessionStorage.removeItem('lastExpandedMonthId');
-      }
-    }
+    setExpandedMonthId(expandedMonthId === id ? null : id);
   };
 
   // Propagation Logic
