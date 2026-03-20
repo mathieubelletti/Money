@@ -404,11 +404,12 @@ const Dashboard = () => {
         </div>
         <div className="tablet-grid" style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 12, margin: '0 -24px', paddingLeft: 24, paddingRight: 24 }}>
           {accounts.length > 0 ? accounts.map(acc => (
-            <div key={acc.id} style={{ 
+          <div key={acc.id} style={{ 
               minWidth: 140, background: 'white', padding: 16, borderRadius: 18, 
-              border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-sm)'
+              border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-sm)',
+              display: 'flex', flexDirection: 'column'
             }}>
-              <CompanyLogo domain={acc.domain} name={acc.name} color={acc.color} size={32} style={{ marginBottom: 12 }} />
+              <CompanyLogo domain={acc.domain} name={acc.name} size={32} noBorder style={{ marginBottom: 12 }} />
               <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>{acc.name}</p>
               <p style={{ 
                 fontSize: 10, 
@@ -422,7 +423,7 @@ const Dashboard = () => {
               }} title={acc.accountNumber}>
                 {acc.accountNumber}
               </p>
-              <p style={{ fontSize: 14, fontWeight: 900, color: 'var(--color-text-primary)', marginTop: 12 }}>{acc.balance.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</p>
+              <p style={{ fontSize: 14, fontWeight: 900, color: 'var(--color-text-primary)', marginTop: 'auto', paddingTop: 12 }}>{acc.balance.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</p>
             </div>
           )) : (
             <div style={{ flex: 1, padding: '32px', background: 'white', borderRadius: 20, border: '2px dashed var(--color-border)', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>

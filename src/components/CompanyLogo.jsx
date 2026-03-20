@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 const LOGO_DEV_PUBLIC_KEY = 'pk_GEGUfLZ8RieM9553Wee70A';
 
-const CompanyLogo = ({ domain, name, size = 40, bg, icon, color, style }) => {
+const CompanyLogo = ({ domain, name, size = 40, bg, icon, color, style, noBorder = false }) => {
   const [error, setError] = useState(false);
 
   // Guess domain from name for common French banks if domain is missing
@@ -20,6 +20,7 @@ const CompanyLogo = ({ domain, name, size = 40, bg, icon, color, style }) => {
     if (lower.includes('n26')) return 'n26.com';
     if (lower.includes('fortuneo')) return 'fortuneo.fr';
     if (lower.includes('hello bank')) return 'hellobank.fr';
+    if (lower.includes('cic')) return 'cic.fr';
     return null;
   };
 
@@ -32,8 +33,8 @@ const CompanyLogo = ({ domain, name, size = 40, bg, icon, color, style }) => {
   const fallbackInitial = name ? name.charAt(0).toUpperCase() : '?';
 
   // Compute uniform styling based on color if provided
-  const backgroundStyle = bg || (color ? `${color}15` : '#f1f5f9');
-  const borderStyle = color ? `1px solid ${color}40` : '1px solid var(--color-border-light)';
+  const backgroundStyle = noBorder ? 'transparent' : (bg || (color ? `${color}15` : '#f1f5f9'));
+  const borderStyle = noBorder ? 'none' : (color ? `1px solid ${color}40` : '1px solid var(--color-border-light)');
 
   return (
     <div
