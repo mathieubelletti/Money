@@ -41,6 +41,7 @@ const Previsions = () => {
   };
   const [activeTab, setActiveTab] = useState('Mois'); // 'Mois', 'Trimestre', 'Annee'
   const [expandedMonthId, setExpandedMonthId] = useState(null);
+  const [isGlobalModalOpen, setIsGlobalModalOpen] = useState(false);
 
   // Auto-scroll to current month or last viewed month logic
   const now = new Date();
