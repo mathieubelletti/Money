@@ -451,17 +451,22 @@ const Dashboard = () => {
         <div className="tablet-grid" style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 12, margin: '0 -24px', paddingLeft: 24, paddingRight: 24 }}>
           {savingsItems.length > 0 ? savingsItems.map(save => (
             <div key={save.id} style={{ 
-              minWidth: 160, background: 'white', padding: 16, borderRadius: 18, 
-              border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-sm)'
+              minWidth: 180, background: 'white', padding: 20, borderRadius: 18, 
+              border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-sm)',
+              display: 'flex', flexDirection: 'column'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                <CompanyLogo domain={save.domain} name={save.bank} color={save.color} size={28} />
-                <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--color-success)', background: 'var(--color-success-light)', padding: '2px 6px', borderRadius: 4 }}>{save.rate}%</span>
+              {/* Top row: name left, logo right */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, flex: 1, paddingRight: 8 }}>{save.name}</p>
+                <CompanyLogo domain={save.domain} name={save.bank} size={32} noBorder />
               </div>
-              <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>{save.name}</p>
-              <p style={{ fontSize: 11, color: 'var(--color-text-tertiary)', fontWeight: 600, marginTop: 2 }}>{save.bank}</p>
-              <p style={{ fontSize: 14, fontWeight: 900, color: 'var(--color-primary-dark)', marginTop: 12 }}>{save.balance.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</p>
+              <p style={{ fontSize: 11, color: 'var(--color-text-tertiary)', fontWeight: 600, margin: 0 }}>{save.bank}</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 'auto', paddingTop: 12 }}>
+                <p style={{ fontSize: 15, fontWeight: 900, color: 'var(--color-primary-dark)', margin: 0 }}>{save.balance.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</p>
+                {save.rate > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--color-success)', background: 'var(--color-success-light)', padding: '2px 7px', borderRadius: 6 }}>{save.rate}%</span>}
+              </div>
             </div>
+
           )) : (
             <div style={{ flex: 1, padding: '24px', background: 'white', borderRadius: 20, border: '2px dashed var(--color-border)', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
               <p style={{ margin: 0, fontSize: 12, fontWeight: 700 }}>Aucun contrat d'épargne</p>
