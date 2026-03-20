@@ -184,6 +184,7 @@ export const DataProvider = ({ children }) => {
         // User changed or logged out
         hasFetchedRef.current = false;
         lastUserIdRef.current = newUserId;
+        setSyncStatus('idle'); // Clear any previous error indicator during transition
         
         // Reset state to initial or user-specific local storage
         setCategories(getLocal('money_categories', initialCategories, newUserId));
@@ -198,6 +199,7 @@ export const DataProvider = ({ children }) => {
         if (!newUserId) {
           setUsingSupabase(false);
           setLoading(false);
+          setSyncStatus('idle');
         }
       }
     });
@@ -315,6 +317,7 @@ export const DataProvider = ({ children }) => {
       }
     } catch (e) {
       console.error('Fetch error:', e);
+      setSyncStatus('error');
     } finally {
       setTimeout(() => { isSyncingFromServerRef.current = false; }, 500); // Guard ends
       setLoading(false);
@@ -579,7 +582,9 @@ export const DataProvider = ({ children }) => {
 
   const saveGlobalConfig = React.useCallback(async (specificMonthsState) => {
     const userId = session?.user?.id;
-    if (!usingSupabase || !userId) return;
+    // CRITICAL GUARD: Never sync if we hasn't finished pulling initial data for this user.
+    // This prevents "reset-to-defaults" from wiping remote data or causing RLS errors on switch.
+    if (!usingSupabase || !userId || !hasFetchedRef.current) return;
 
     const targetMonthsState = specificMonthsState || monthsState;
     if (Object.keys(targetMonthsState).length === 0 && categories.length === 0 && forecasts.length === 0) return;
