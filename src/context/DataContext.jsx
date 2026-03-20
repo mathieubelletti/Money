@@ -626,6 +626,7 @@ export const DataProvider = ({ children }) => {
         
         // Return only the columns that exist in Supabase to avoid 400 errors
         return { 
+          id: crypto.randomUUID(),
           month: f.month, 
           income, 
           expenses, 
