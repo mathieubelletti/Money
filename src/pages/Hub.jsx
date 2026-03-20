@@ -5,7 +5,8 @@ const Hub = ({ onEnterBudget, onEnterSharedExpenses }) => {
   const { session } = useData();
   const user = session?.user;
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Utilisateur';
-  const avatarUrl = user?.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`;
+  const avatarUrl = user?.user_metadata?.avatar_url;
+  const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -15,18 +16,18 @@ const Hub = ({ onEnterBudget, onEnterSharedExpenses }) => {
       id: 'budget',
       name: 'Budget',
       desc: 'Gérez vos finances personnelles',
-      icon: 'insights',
-      color: 'var(--color-primary)',
-      bg: 'var(--color-primary-glass)',
+      icon: 'account_balance',
+      color: '#6366f1',
+      bg: 'rgba(99, 102, 241, 0.1)',
       onClick: onEnterBudget
     },
     {
       id: 'commun',
       name: 'Commun',
       desc: 'Dépenses partagées à deux',
-      icon: 'groups',
-      color: 'var(--color-primary)',
-      bg: 'var(--color-primary-glass)',
+      icon: 'hub',
+      color: '#10b981',
+      bg: 'rgba(16, 185, 129, 0.1)',
       onClick: onEnterSharedExpenses
     },
     {
@@ -51,11 +52,15 @@ const Hub = ({ onEnterBudget, onEnterSharedExpenses }) => {
     <div className="hub-container">
       <header className="hub-header">
         <div className="hub-user">
-          <img 
-            src={avatarUrl} 
-            alt="User" 
-            className="hub-avatar" 
-          />
+          <div className="hub-avatar" style={{ overflow: 'hidden' }}>
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <div style={{ width: '100%', height: '100%', background: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: 13 }}>
+                {initials}
+              </div>
+            )}
+          </div>
           <div className="hub-greeting">
             <span className="hub-app-title">Money Hub</span>
             <span className="hub-user-name">Bonjour, {userName}</span>
