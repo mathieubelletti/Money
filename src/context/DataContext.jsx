@@ -35,16 +35,29 @@ export const DataProvider = ({ children }) => {
   const [categories, setCategories] = useState(() => getLocal('money_categories', initialCategories));
   const [transactions, setTransactions] = useState(() => {
     const local = getLocal('money_transactions', initialTransactions);
-    // Migration: If the first item is a group (has 'items'), flatten it
-    if (local.length > 0 && local[0].items) {
-      return local.reduce((acc, group) => [...acc, ...group.items], []);
+    
+    // Migration: Handle case where local might be grouped or invalid
+    if (Array.isArray(local) && local.length > 0 && local[0] && typeof local[0] === 'object' && 'items' in local[0]) {
+      return local.reduce((acc, group) => {
+        if (group && Array.isArray(group.items)) {
+          return [...acc, ...group.items];
+        }
+        return acc;
+      }, []);
     }
-    return local;
+    return Array.isArray(local) ? local : [];
   });
 
   // Reactive grouping and sorting logic
   const groupedTransactions = React.useMemo(() => {
-    const sorted = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+    if (!Array.isArray(transactions)) return [];
+    
+    const sorted = [...transactions].sort((a, b) => {
+      const da = a?.date ? new Date(a.date) : new Date(0);
+      const db = b?.date ? new Date(b.date) : new Date(0);
+      return db - da;
+    });
+    
     const grouped = [];
     const today = new Date().toISOString().split('T')[0];
     const yesterdayOpen = new Date();
@@ -52,6 +65,7 @@ export const DataProvider = ({ children }) => {
     const yesterday = yesterdayOpen.toISOString().split('T')[0];
 
     sorted.forEach(tx => {
+      if (!tx) return;
       const dateKey = tx.date || today;
       let g = grouped.find(gr => gr.date === dateKey);
       if (!g) { 
@@ -60,7 +74,7 @@ export const DataProvider = ({ children }) => {
         else if (dateKey === yesterday) label = "Hier";
         else {
           const d = new Date(dateKey);
-          label = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+          label = isNaN(d.getTime()) ? dateKey : d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
         }
         g = { 
           id: `g_${dateKey}`, 
@@ -121,12 +135,12 @@ export const DataProvider = ({ children }) => {
   
   // Dynamic balance calculation
   const accountsWithBalances = React.useMemo(() => {
-    // 1. Flatten all transactions across groups
-    const flatTxs = transactions.reduce((acc, group) => [...acc, ...group.items], []);
+    // 1. Transactions are now already flat in the state
+    const flatTxs = Array.isArray(transactions) ? transactions : [];
     
     // 2. Map and compute balance for each account
-    return accounts.map(acc => {
-      const startDate = acc.initialBalanceDate || '1970-01-01';
+    return (Array.isArray(accounts) ? accounts : []).map(acc => {
+      const startDate = acc?.initialBalanceDate || '1970-01-01';
       
       const txSum = flatTxs
         .filter(tx => {
@@ -308,8 +322,7 @@ export const DataProvider = ({ children }) => {
   };
 
   const migrateFromLocal = async () => {
-    const flatTxs = [];
-    transactions.forEach(g => g.items.forEach(tx => flatTxs.push({ ...tx, dateLabel: g.dateLabel, user_id: session?.user?.id })));
+    const flatTxs = transactions.map(tx => ({ ...tx, user_id: session?.user?.id }));
     // Filter categories: don't migrate if it's just the default mock set and nothing else is being migrated
     const isDefaultCategories = categories.length === 6 && categories.every(c => typeof c.id === 'number' && c.id >= 1 && c.id <= 6);
     const hasOtherData = flatTxs.length > 0 || accounts.length > 0 || savingsItems.length > 0;
