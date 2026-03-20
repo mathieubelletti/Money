@@ -172,23 +172,48 @@ const Transactions = () => {
       dateLabel = txDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
     }
 
-    const createTxItem = (name, amount, accId, icon, cat) => ({
-      id: Math.random(),
-      name: name,
-      category: cat || newTx.category,
-      categoryIcon: icon || (newTx.category === 'Alimentation' ? 'shopping_basket' : 
-                    newTx.category === 'Loisirs' ? 'movie' : 
-                    newTx.category === 'Revenus' ? 'attach_money' : 
-                    newTx.category === 'Logement' ? 'home' : 
-                    newTx.category === 'Transport' ? 'directions_transit' : 'category'),
-      amount: amount,
-      account: getAccountName(accId),
-      account_id: accId,
-      color: 'var(--color-text-primary)',
-      domain: '',
-      bg: 'rgba(0,0,0,0.05)',
-      budget_month: newTx.budget_month || newTx.date.substring(0, 7) + '-01'
-    });
+    const createTxItem = (name, amount, accId, icon, cat) => {
+      const categoryName = cat || newTx.category;
+      
+      // Find icon from globalRecurrences or categories
+      let categoryIcon = icon;
+      if (!categoryIcon) {
+        // Search in globalRecurrences first (revenus, fixes, variables)
+        const allRecs = [
+          ...globalRecurrences.revenus,
+          ...globalRecurrences.fixes,
+          ...globalRecurrences.variables
+        ];
+        const found = allRecs.find(r => r.label === categoryName);
+        if (found?.icon) {
+          categoryIcon = found.icon;
+        } else {
+          // Fallback to categories state
+          const foundCat = categories.find(c => c.name === categoryName);
+          categoryIcon = foundCat?.icon || (
+            categoryName === 'Alimentation' ? 'shopping_basket' : 
+            categoryName === 'Loisirs' ? 'movie' : 
+            categoryName === 'Revenus' ? 'attach_money' : 
+            categoryName === 'Logement' ? 'home' : 
+            categoryName === 'Transport' ? 'directions_transit' : 'category'
+          );
+        }
+      }
+
+      return {
+        id: Math.random(),
+        name: name,
+        category: categoryName,
+        categoryIcon: categoryIcon,
+        amount: amount,
+        account: getAccountName(accId),
+        account_id: accId,
+        color: 'var(--color-text-primary)',
+        domain: '',
+        bg: 'rgba(0,0,0,0.05)',
+        budget_month: newTx.budget_month || newTx.date.substring(0, 7) + '-01'
+      };
+    };
 
     const newItems = [];
     if (isTransfer) {

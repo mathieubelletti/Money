@@ -735,6 +735,10 @@ export const DataProvider = ({ children }) => {
       if (accounts.length !== accountsToUpsert.length || accounts[0]?.initialBalance !== startBalance) {
         setAccounts(accountsToUpsert);
       }
+
+      if (JSON.stringify(categories) !== JSON.stringify(categoriesToSync)) {
+        setCategories(categoriesToSync);
+      }
       
       setSyncStatus('success');
       setTimeout(() => setSyncStatus('idle'), 3000);
