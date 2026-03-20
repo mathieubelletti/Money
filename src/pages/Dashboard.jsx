@@ -6,8 +6,10 @@ import { useData } from '../context/DataContext';
 
 const Dashboard = () => {
   const { 
-    accounts, 
-    savingsItems, 
+    accounts,
+    setAccounts,
+    savingsItems,
+    setSavingsItems,
     transactions, 
     deleteAccount,
     deleteSaving,
@@ -29,6 +31,45 @@ const Dashboard = () => {
   const [showInstallBtn, setShowInstallBtn] = useState(false);
 
   const [isFiltering, setIsFiltering] = useState(false);
+
+  // Drag and drop state
+  const dragSrcRef = React.useRef(null); // { section: 'accounts'|'savings', index: number }
+  const [dragOverIdx, setDragOverIdx] = useState(null); // { section, index }
+
+  const handleDragStart = React.useCallback((section, index) => {
+    dragSrcRef.current = { section, index };
+  }, []);
+
+  const handleDragOver = React.useCallback((e, section, index) => {
+    e.preventDefault();
+    if (!dragSrcRef.current || dragSrcRef.current.section !== section) return;
+    setDragOverIdx({ section, index });
+  }, []);
+
+  const handleDrop = React.useCallback((e, section, toIndex) => {
+    e.preventDefault();
+    if (!dragSrcRef.current || dragSrcRef.current.section !== section) return;
+    const fromIndex = dragSrcRef.current.index;
+    if (fromIndex === toIndex) { dragSrcRef.current = null; setDragOverIdx(null); return; }
+
+    const reorder = (list) => {
+      const copy = [...list];
+      const [moved] = copy.splice(fromIndex, 1);
+      copy.splice(toIndex, 0, moved);
+      return copy;
+    };
+
+    if (section === 'accounts') setAccounts(reorder(accounts));
+    else setSavingsItems(reorder(savingsItems));
+
+    dragSrcRef.current = null;
+    setDragOverIdx(null);
+  }, [accounts, savingsItems, setAccounts, setSavingsItems]);
+
+  const handleDragEnd = React.useCallback(() => {
+    dragSrcRef.current = null;
+    setDragOverIdx(null);
+  }, []);
 
   const handlePeriodChange = (val) => {
     setIsFiltering(true);
@@ -404,32 +445,38 @@ const Dashboard = () => {
           }}>Gérer</button>
         </div>
         <div className="tablet-grid" style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 12, margin: '0 -24px', paddingLeft: 24, paddingRight: 24 }}>
-          {accounts.length > 0 ? accounts.map(acc => (
-          <div key={acc.id} style={{ 
-              minWidth: 140, background: 'white', padding: 16, borderRadius: 18, 
-              border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-sm)',
-              display: 'flex', flexDirection: 'column'
-            }}>
-              {/* Top row: name left, logo right */}
+          {accounts.length > 0 ? accounts.map((acc, idx) => {
+            const isDragging = dragSrcRef.current?.section === 'accounts' && dragSrcRef.current?.index === idx;
+            const isOver = dragOverIdx?.section === 'accounts' && dragOverIdx?.index === idx;
+            return (
+            <div
+              key={acc.id}
+              draggable
+              onDragStart={() => handleDragStart('accounts', idx)}
+              onDragOver={(e) => handleDragOver(e, 'accounts', idx)}
+              onDrop={(e) => handleDrop(e, 'accounts', idx)}
+              onDragEnd={handleDragEnd}
+              style={{ 
+                minWidth: 140, background: 'white', padding: 16, borderRadius: 18, 
+                border: isOver ? '2px dashed var(--color-primary)' : '1px solid var(--color-border-light)',
+                boxShadow: 'var(--shadow-sm)',
+                display: 'flex', flexDirection: 'column',
+                opacity: isDragging ? 0.4 : 1,
+                cursor: 'grab',
+                transition: 'opacity 0.15s, border 0.15s, transform 0.15s',
+                transform: isOver ? 'scale(1.02)' : 'scale(1)',
+              }}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                 <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, flex: 1, paddingRight: 8 }}>{acc.name}</p>
                 <CompanyLogo domain={acc.domain} name={acc.name} size={32} noBorder />
               </div>
-              <p style={{ 
-                fontSize: 10, 
-                color: 'var(--color-text-tertiary)', 
-                fontWeight: 700, 
-                margin: 0,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxWidth: '100%'
-              }} title={acc.accountNumber}>
+              <p style={{ fontSize: 10, color: 'var(--color-text-tertiary)', fontWeight: 700, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }} title={acc.accountNumber}>
                 {acc.accountNumber}
               </p>
               <p style={{ fontSize: 14, fontWeight: 900, color: 'var(--color-text-primary)', marginTop: 'auto', paddingTop: 12 }}>{acc.balance.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</p>
             </div>
-          )) : (
+          );}) : (
             <div style={{ flex: 1, padding: '32px', background: 'white', borderRadius: 20, border: '2px dashed var(--color-border)', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
               <span className="material-icons-round" style={{ fontSize: 32, marginBottom: 8, opacity: 0.5 }}>account_balance</span>
               <p style={{ margin: 0, fontSize: 13, fontWeight: 700 }}>Aucun compte configuré</p>
@@ -450,13 +497,28 @@ const Dashboard = () => {
           }}>Gérer</button>
         </div>
         <div className="tablet-grid" style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 12, margin: '0 -24px', paddingLeft: 24, paddingRight: 24 }}>
-          {savingsItems.length > 0 ? savingsItems.map(save => (
-            <div key={save.id} style={{ 
-              minWidth: 180, background: 'white', padding: 20, borderRadius: 18, 
-              border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-sm)',
-              display: 'flex', flexDirection: 'column'
-            }}>
-              {/* Top row: name left, logo right */}
+          {savingsItems.length > 0 ? savingsItems.map((save, idx) => {
+            const isDragging = dragSrcRef.current?.section === 'savings' && dragSrcRef.current?.index === idx;
+            const isOver = dragOverIdx?.section === 'savings' && dragOverIdx?.index === idx;
+            return (
+            <div
+              key={save.id}
+              draggable
+              onDragStart={() => handleDragStart('savings', idx)}
+              onDragOver={(e) => handleDragOver(e, 'savings', idx)}
+              onDrop={(e) => handleDrop(e, 'savings', idx)}
+              onDragEnd={handleDragEnd}
+              style={{ 
+                minWidth: 180, background: 'white', padding: 20, borderRadius: 18, 
+                border: isOver ? '2px dashed var(--color-primary)' : '1px solid var(--color-border-light)',
+                boxShadow: 'var(--shadow-sm)',
+                display: 'flex', flexDirection: 'column',
+                opacity: isDragging ? 0.4 : 1,
+                cursor: 'grab',
+                transition: 'opacity 0.15s, border 0.15s, transform 0.15s',
+                transform: isOver ? 'scale(1.02)' : 'scale(1)',
+              }}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                 <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, flex: 1, paddingRight: 8 }}>{save.name}</p>
                 <CompanyLogo domain={save.domain} name={save.bank} size={32} noBorder />
@@ -467,8 +529,7 @@ const Dashboard = () => {
                 {save.rate > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--color-success)', background: 'var(--color-success-light)', padding: '2px 7px', borderRadius: 6 }}>{save.rate}%</span>}
               </div>
             </div>
-
-          )) : (
+          );}) : (
             <div style={{ flex: 1, padding: '24px', background: 'white', borderRadius: 20, border: '2px dashed var(--color-border)', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
               <p style={{ margin: 0, fontSize: 12, fontWeight: 700 }}>Aucun contrat d'épargne</p>
             </div>
