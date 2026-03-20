@@ -581,11 +581,20 @@ const Dashboard = () => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: 1 }}>
                         <div className="form-group">
                           <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 6, display: 'block' }}>
-                            NOM DE LA BANQUE
+                            {manageType === 'accounts' ? 'NOM DU COMPTE' : 'NOM DU LIVRET'}
+                          </label>
+                          <div style={{ position: 'relative' }}>
+                            <span className="material-icons-round" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', fontSize: 16 }}>label</span>
+                            <input name="name" defaultValue={editingItem.name} placeholder={manageType === 'accounts' ? "ex: Crédit Agricole Principale" : "ex: Livret A"} required style={{ width: '100%', padding: '10px 10px 10px 36px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 600, background: 'white' }} />
+                          </div>
+                        </div>
+                        <div className="form-group">
+                          <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 6, display: 'block' }}>
+                            {manageType === 'accounts' ? 'NOM DE LA BANQUE' : 'BANQUE / ÉTABLISSEMENT'}
                           </label>
                           <div style={{ position: 'relative' }}>
                             <span className="material-icons-round" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', fontSize: 16 }}>account_balance</span>
-                            <input name="bank" defaultValue={editingItem.bank && editingItem.bank !== 'Non spécifié' ? editingItem.bank : ''} placeholder="ex: Crédit Agricole" style={{ width: '100%', padding: '10px 10px 10px 36px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 600, background: 'white' }} />
+                            <input name="bank" defaultValue={editingItem.bank && editingItem.bank !== 'Non spécifié' ? editingItem.bank : ''} placeholder={manageType === 'accounts' ? "ex: Crédit Agricole" : "ex: Société Générale"} style={{ width: '100%', padding: '10px 10px 10px 36px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 600, background: 'white' }} />
                           </div>
                         </div>
                         <div className="form-group">
