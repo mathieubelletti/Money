@@ -50,8 +50,19 @@ const Previsions = () => {
   useEffect(() => {
     if (activeTab === 'Mois' && forecasts.length > 0) {
       const savedMonth = sessionStorage.getItem('lastViewedMonth');
+      const savedExpansion = sessionStorage.getItem('lastExpandedMonthId');
       const targetId = savedMonth || `month-${currentYM}`;
       
+      // Auto-expand if nothing is expanded yet
+      if (!expandedMonthId) {
+        if (savedExpansion) {
+          setExpandedMonthId(savedExpansion);
+        } else {
+          const found = forecasts.find(f => (f.date || f.id.split('_').pop()) === currentYM);
+          if (found) setExpandedMonthId(found.id);
+        }
+      }
+
       const timer = setTimeout(() => {
         const element = document.getElementById(targetId);
         if (element) {
@@ -98,7 +109,19 @@ const Previsions = () => {
   };
 
   const handleToggleMonth = (id) => {
-    setExpandedMonthId(expandedMonthId === id ? null : id);
+    const nextId = expandedMonthId === id ? null : id;
+    setExpandedMonthId(nextId);
+    
+    // Remember last viewed month in session
+    const f = forecasts.find(i => i.id === id);
+    if (f) {
+      const ym = f.date || f.id.split('_').pop();
+      if (ym && ym.includes('-')) {
+        sessionStorage.setItem('lastViewedMonth', `month-${ym}`);
+        if (nextId) sessionStorage.setItem('lastExpandedMonthId', nextId);
+        else sessionStorage.removeItem('lastExpandedMonthId');
+      }
+    }
   };
 
   // Propagation Logic

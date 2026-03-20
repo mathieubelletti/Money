@@ -204,7 +204,7 @@ const Transactions = () => {
       }
 
       return {
-        id: Math.random(),
+        id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Math.random(),
         name: name,
         category: categoryName,
         categoryIcon: categoryIcon,
