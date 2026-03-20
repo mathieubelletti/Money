@@ -47,6 +47,19 @@ const Previsions = () => {
   const currentYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
 
+  useEffect(() => {
+    if (activeTab === 'Mois' && forecasts.length > 0) {
+      const targetId = `month-${currentYM}`;
+      const timer = setTimeout(() => {
+        const element = document.getElementById(targetId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab, forecasts.length, currentYM]);
+
   React.useEffect(() => {
     fetchPrevisions();
   }, [fetchPrevisions]);
@@ -345,7 +358,7 @@ const Previsions = () => {
             const data = getMonthData(f.id);
             const { rev, fix, varTotal, reportBalance, final } = calculatedResults[f.id];
             const totalOps = data.revenus.length + data.fixes.length + data.variables.length;
-            const ym = f.date || f.id.split('_').pop();
+            const ym = f.date || (String(f.id || '').split('_').pop() || '');
             const isCurrentMonth = ym === currentYM;
 
             return (
@@ -482,7 +495,7 @@ const Previsions = () => {
                         {data[sect.key].length > 0 && (
                           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12, paddingTop: 12, borderTop: `1px dashed ${sect.color}40` }}>
                             <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-primary)', background: 'rgba(16, 185, 129, 0.1)', padding: '6px 16px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <span style={{ fontSize: 12, opacity: 0.8 }}>Sous-total {sect.title.split(' ').pop()} :</span>
+                              <span style={{ fontSize: 12, opacity: 0.8 }}>Sous-total {String(sect.title || '').split(' ').pop()} :</span>
                               <span>{sect.total.toLocaleString('fr-FR')} €</span>
                             </div>
                           </div>

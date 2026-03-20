@@ -25,7 +25,7 @@ const Budget = () => {
   const currentMonthTransactions = React.useMemo(() => {
     if (!selectedPeriod) return [];
     // Extract YYYY-MM from the end of the selectedPeriod ID (e.g. "uuid_2026-03")
-    const periodParts = selectedPeriod.split('_');
+    const periodParts = String(selectedPeriod || '').split('_');
     const targetSlug = periodParts[periodParts.length - 1]; // "2026-03"
 
     const flat = [];
@@ -36,7 +36,7 @@ const Budget = () => {
         const budgetAttr = tx.budget_month || tx.date;
         if (!budgetAttr) return;
 
-        const attrParts = budgetAttr.split('_');
+        const attrParts = String(budgetAttr || '').split('_');
         const slug = attrParts[attrParts.length - 1].substring(0, 7); // Always "YYYY-MM"
 
         if (slug === targetSlug) {

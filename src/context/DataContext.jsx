@@ -707,7 +707,7 @@ export const DataProvider = ({ children }) => {
             const final = income - expenses + (reportBalance || 0);
             runningBalance = final; // Carry over for next month
 
-            const monthSlug = f.id.split('_').pop();
+            const monthSlug = String(f.id || '').split('_').pop();
 
             return {
               user_id: userId,

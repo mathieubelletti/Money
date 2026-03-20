@@ -35,6 +35,19 @@ const Dashboard = () => {
   // Drag and drop state
   const dragSrcRef = React.useRef(null); // { section: 'accounts'|'savings', index: number }
   const [dragOverIdx, setDragOverIdx] = useState(null); // { section, index }
+  const scrollRef = React.useRef(null);
+
+  useEffect(() => {
+    if (selectedPeriod && scrollRef.current) {
+      const timer = setTimeout(() => {
+        const activeBtn = scrollRef.current?.querySelector('[data-selected="true"]');
+        if (activeBtn) {
+          activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedPeriod, forecasts]);
 
   const handleDragStart = React.useCallback((section, index) => {
     dragSrcRef.current = { section, index };
@@ -78,7 +91,7 @@ const Dashboard = () => {
   };
 
   const historicalBalance = React.useMemo(() => {
-    const monthSlug = selectedPeriod.split('_').pop(); 
+    const monthSlug = String(selectedPeriod || '').split('_').pop(); 
     if (!monthSlug || !monthSlug.includes('-')) return 0;
     const [yearStr, monthStr] = monthSlug.split('-');
     const endOfSelectedMonth = new Date(yearStr, monthStr, 0).toISOString().split('T')[0];
@@ -102,7 +115,7 @@ const Dashboard = () => {
   // Calculate monthly totals from transactions safely, filtering for selected period
   const { monthlyRevenus, monthlyDepenses } = React.useMemo(() => {
     if (!selectedPeriod) return { monthlyRevenus: 0, monthlyDepenses: 0 };
-    const monthSlug = selectedPeriod.split('_').pop();
+    const monthSlug = String(selectedPeriod || '').split('_').pop();
     if (!monthSlug || !monthSlug.includes('-')) return { monthlyRevenus: 0, monthlyDepenses: 0 };
     const [yearStr, monthStr] = monthSlug.split('-');
     const pYear = parseInt(yearStr, 10);
@@ -256,6 +269,7 @@ const Dashboard = () => {
       {/* Interactive Month Selector */}
       <section style={{ padding: '0 24px 16px' }} className="dashboard-max-width">
         <div 
+          ref={scrollRef}
           className="scrollbar-hide"
           style={{
             display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8, scrollBehavior: 'smooth'
@@ -267,6 +281,7 @@ const Dashboard = () => {
             return (
               <button
                 key={f.id}
+                data-selected={isSelected}
                 onClick={() => handlePeriodChange(periodValue)}
                 style={{
                   flexShrink: 0,
@@ -540,7 +555,7 @@ const Dashboard = () => {
       {/* Evolution Chart Section */}
       {(() => {
         // --- Build chart data from transactions ---
-        const monthSlug = selectedPeriod.split('_').pop(); // "2026-03"
+        const monthSlug = String(selectedPeriod || '').split('_').pop(); // "2026-03"
         if (!monthSlug || !monthSlug.includes('-')) return null;
 
         const [yStr, mStr] = monthSlug.split('-');
