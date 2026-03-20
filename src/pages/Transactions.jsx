@@ -49,7 +49,8 @@ const Transactions = () => {
     toAccount: accounts?.[1]?.id || accounts?.[0]?.id || '',
     date: new Date().toISOString().split('T')[0],
     budget_month: new Date().toISOString().substring(0, 7) + '-01',
-    type: 'Dépenses'
+    type: 'Dépenses',
+    method: 'CB'
   });
 
   // Helper for display
@@ -85,7 +86,8 @@ const Transactions = () => {
       toAccount: accounts?.[1]?.id || accounts?.[0]?.id || '',
       date: new Date().toISOString().split('T')[0],
       budget_month: new Date().toISOString().substring(0, 7),
-      type: 'Dépenses'
+      type: 'Dépenses',
+      method: 'CB'
     });
   };
 
@@ -109,7 +111,8 @@ const Transactions = () => {
       toAccount: 'Revolut', // Transfers handle separate
       date: tx.date || new Date().toISOString().split('T')[0],
       budget_month: tx.budget_month || (tx.date ? tx.date.substring(0, 7) + '-01' : new Date().toISOString().substring(0, 7) + '-01'),
-      type: tx.amount > 0 ? 'Revenus' : tx.category === 'Transferts' ? 'Virement' : 'Dépenses'
+      type: tx.amount > 0 ? 'Revenus' : tx.category === 'Transferts' ? 'Virement' : 'Dépenses',
+      method: tx.method || 'CB'
     });
     setEditId(tx.id);
     setIsEditing(true);
@@ -211,7 +214,8 @@ const Transactions = () => {
         color: 'var(--color-text-primary)',
         domain: '',
         bg: 'rgba(0,0,0,0.05)',
-        budget_month: newTx.budget_month || newTx.date.substring(0, 7) + '-01'
+        budget_month: newTx.budget_month || newTx.date.substring(0, 7) + '-01',
+        method: newTx.method || 'CB'
       };
     };
 
@@ -386,7 +390,10 @@ const Transactions = () => {
                       }}>
                         {tx.amount > 0 ? '+ ' : '- '}{Math.abs(tx.amount).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €
                       </p>
-                      <p style={{ fontSize: 11, color: 'var(--color-text-tertiary)', fontWeight: 600, marginTop: 4 }}>{getAccountName(tx.account_id || tx.account)}</p>
+                      <p style={{ fontSize: 11, color: 'var(--color-text-tertiary)', fontWeight: 600, marginTop: 4 }}>
+                        {getAccountName(tx.account_id || tx.account)}
+                        {tx.type !== 'Virement' && tx.category !== 'Transferts' && ` • ${tx.method || 'CB'}`}
+                      </p>
                     </div>
                   </div>
                 </SwipeAction>
@@ -604,6 +611,36 @@ const Transactions = () => {
                     )}
                     <option value="Divers">Divers</option>
                   </select>
+                </div>
+              )}
+
+              {newTx.type !== 'Virement' && (
+                <div>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: 'var(--color-text-tertiary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mode de règlement</label>
+                  <div style={{ display: 'flex', background: 'var(--color-bg)', padding: 4, borderRadius: 14 }}>
+                    {['CB', 'Chèque', 'Espèces'].map(m => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setNewTx({...newTx, method: m})}
+                        style={{
+                          flex: 1,
+                          height: 40,
+                          borderRadius: 10,
+                          border: 'none',
+                          fontSize: 14,
+                          fontWeight: 700,
+                          background: newTx.method === m ? 'white' : 'transparent',
+                          color: newTx.method === m ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                          boxShadow: newTx.method === m ? 'var(--shadow-sm)' : 'none',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 

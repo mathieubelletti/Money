@@ -499,39 +499,134 @@ const Previsions = () => {
             );
           })}
 
-          {activeTab === 'Trimestre' && [
-            { id: 't1', label: '1er Trimestre', amount: forecasts.slice(0, 3).reduce((acc, curr) => acc + calculatedResults[curr.id].final, 0), months: 'Jan - Mar' },
-            { id: 't2', label: '2ème Trimestre', amount: forecasts.slice(3, 6).reduce((acc, curr) => acc + calculatedResults[curr.id].final, 0), months: 'Avr - Juin' },
-            { id: 't3', label: '3ème Trimestre', amount: forecasts.slice(6, 9).reduce((acc, curr) => acc + calculatedResults[curr.id].final, 0), months: 'Juil - Sept' },
-            { id: 't4', label: '4ème Trimestre', amount: forecasts.slice(9, 12).reduce((acc, curr) => acc + calculatedResults[curr.id].final, 0), months: 'Oct - Déc' },
-          ].map(t => (
-            <div key={t.id} className="month-forecast-card">
-              <div className="month-forecast-inner">
-                <div className="month-forecast-badge" style={{ background: 'var(--color-primary)', fontSize: 14 }}>{t.id.toUpperCase()}</div>
-                <div className="month-forecast-info">
-                  <div className="month-forecast-month" style={{ fontWeight: 800 }}>{t.label}</div>
-                  <div className="month-forecast-ops">{t.months}</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div className="month-forecast-amount" style={{ color: t.amount >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
-                    {formatMonthAmount(t.amount)}
+          {activeTab === 'Trimestre' && (() => {
+            const quarters = [
+              { id: 't1', label: '1er Trimestre', months: forecasts.slice(0, 3), period: 'Jan – Mar' },
+              { id: 't2', label: '2ème Trimestre', months: forecasts.slice(3, 6), period: 'Avr – Juin' },
+              { id: 't3', label: '3ème Trimestre', months: forecasts.slice(6, 9), period: 'Juil – Sep' },
+              { id: 't4', label: '4ème Trimestre', months: forecasts.slice(9, 12), period: 'Oct – Déc' },
+            ].map(q => {
+              const totalRev = q.months.reduce((s, f) => s + (calculatedResults[f.id]?.rev || 0), 0);
+              const totalFix = q.months.reduce((s, f) => s + (calculatedResults[f.id]?.fix || 0), 0);
+              const totalVar = q.months.reduce((s, f) => s + (calculatedResults[f.id]?.varTotal || 0), 0);
+              const net = q.months.reduce((s, f) => s + (calculatedResults[f.id]?.final || 0), 0);
+              return { ...q, totalRev, totalFix, totalVar, net };
+            });
+
+            return quarters.map(q => {
+              const isExpanded = expandedMonthId === q.id;
+              return (
+                <div key={q.id} style={{ borderBottom: '1px solid var(--color-border-light)' }}>
+                  <div
+                    className="month-forecast-card"
+                    onClick={() => handleToggleMonth(q.id)}
+                    style={{ cursor: 'pointer', background: isExpanded ? '#f8fafc' : 'white' }}
+                  >
+                    <div className="month-forecast-inner">
+                      <div className="month-forecast-badge" style={{ background: q.net >= 0 ? 'var(--color-primary)' : 'linear-gradient(135deg,#ef4444,#dc2626)', fontSize: 11 }}>
+                        {q.id.toUpperCase()}
+                      </div>
+                      <div className="month-forecast-info">
+                        <div className="month-forecast-month">{q.label}</div>
+                        <div className="month-forecast-ops">{q.period}</div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div className="month-forecast-amount" style={{ color: q.net >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                          {formatMonthAmount(q.net)}
+                        </div>
+                        <span className={`month-forecast-tag ${q.net >= 0 ? 'tag-excedent' : 'tag-deficit'}`}>
+                          {q.net >= 0 ? 'Excédent' : 'Déficit'}
+                        </span>
+                      </div>
+                      <span className="material-icons-round" style={{ marginLeft: 12, color: 'var(--color-text-tertiary)', transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s' }}>
+                        expand_more
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ maxHeight: isExpanded ? '800px' : '0', overflow: 'hidden', transition: 'all 0.4s cubic-bezier(0.4,0,0.2,1)', background: '#f9fafb' }}>
+                    <div style={{ padding: '20px 24px', borderTop: '1px solid var(--color-border-light)' }}>
+                      {/* Monthly sub-rows */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+                        {q.months.map(f => {
+                          const r = calculatedResults[f.id] || {};
+                          return (
+                            <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'white', borderRadius: 10, border: '1px solid var(--color-border-light)' }}>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-secondary)' }}>{f.month}</span>
+                              <div style={{ display: 'flex', gap: 16, fontSize: 12 }}>
+                                <span style={{ color: 'var(--color-success)', fontWeight: 700 }}>+{(r.rev || 0).toLocaleString('fr-FR')} €</span>
+                                <span style={{ color: 'var(--color-danger)', fontWeight: 700 }}>-{((r.fix || 0) + (r.varTotal || 0)).toLocaleString('fr-FR')} €</span>
+                                <span style={{ color: (r.final || 0) >= 0 ? 'var(--color-success)' : 'var(--color-danger)', fontWeight: 900 }}>{formatMonthAmount(r.final || 0)}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {/* Quarter totals */}
+                      <div style={{ padding: 16, background: 'white', borderRadius: 12, border: '1px solid var(--color-border-light)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
+                          <span style={{ fontWeight: 600 }}>REVENUS</span>
+                          <span style={{ fontWeight: 800, color: 'var(--color-success)' }}>+ {q.totalRev.toLocaleString('fr-FR')} €</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
+                          <span style={{ fontWeight: 600 }}>DÉPENSES</span>
+                          <span style={{ fontWeight: 800, color: 'var(--color-danger)' }}>- {(q.totalFix + q.totalVar).toLocaleString('fr-FR')} €</span>
+                        </div>
+                        <div style={{ height: 1, background: '#eee', margin: '10px 0' }} />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                          <span style={{ fontWeight: 800 }}>RÉSULTAT</span>
+                          <span style={{ fontWeight: 900, color: q.net >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>{formatMonthAmount(q.net)}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              );
+            });
+          })()}
 
-          {activeTab === 'Année' && (
-            <div className="month-forecast-card" style={{ padding: '24px 0' }}>
-              <div className="month-forecast-inner" style={{ justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-tertiary)', textTransform: 'uppercase' }}>Résultat annuel estimé</div>
-                <div style={{ fontSize: 32, fontWeight: 900, color: (calculatedResults[lastForecast.id]?.final || 0) >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
-                  {formatMonthAmount(calculatedResults[lastForecast.id]?.final || 0)}
+          {activeTab === 'Année' && (() => {
+            const totalRev = forecasts.reduce((s, f) => s + (calculatedResults[f.id]?.rev || 0), 0);
+            const totalFix = forecasts.reduce((s, f) => s + (calculatedResults[f.id]?.fix || 0), 0);
+            const totalVar = forecasts.reduce((s, f) => s + (calculatedResults[f.id]?.varTotal || 0), 0);
+            const annualNet = calculatedResults[lastForecast.id]?.final || 0;
+            const avgMonthly = totalRev / 12;
+
+            return (
+              <>
+                {/* Annual KPI cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, padding: '20px 0 8px' }}>
+                  {[
+                    { label: 'Revenus annuels', value: totalRev, icon: 'trending_up', color: 'var(--color-success)', sign: '+' },
+                    { label: 'Dépenses fixes', value: totalFix, icon: 'lock', color: 'var(--color-primary)', sign: '-' },
+                    { label: 'Dépenses variables', value: totalVar, icon: 'shopping_bag', color: '#f59e0b', sign: '-' },
+                    { label: 'Moyenne mensuelle', value: avgMonthly, icon: 'calendar_today', color: 'var(--color-text-secondary)', sign: '+' },
+                  ].map(k => (
+                    <div key={k.label} style={{ background: 'white', borderRadius: 14, border: '1px solid var(--color-border-light)', padding: '16px 14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontWeight: 700, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', marginBottom: 8 }}>
+                        <span className="material-icons-round" style={{ fontSize: 14, color: k.color }}>{k.icon}</span>
+                        {k.label}
+                      </div>
+                      <div style={{ fontSize: 18, fontWeight: 900, color: k.color }}>{k.sign}{k.value.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €</div>
+                    </div>
+                  ))}
                 </div>
-                <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', fontWeight: 500 }}>Basé sur 12 mois glissants</div>
-              </div>
-            </div>
-          )}
+                {/* Annual result */}
+                <div className="month-forecast-card" style={{ padding: '24px 0', marginTop: 8 }}>
+                  <div className="month-forecast-inner" style={{ justifyContent: 'center', flexDirection: 'column', gap: 4 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Résultat annuel estimé</div>
+                    <div style={{ fontSize: 36, fontWeight: 900, color: annualNet >= 0 ? 'var(--color-success)' : 'var(--color-danger)', margin: '4px 0' }}>
+                      {formatMonthAmount(annualNet)}
+                    </div>
+                    <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'var(--color-text-secondary)' }}>
+                      <span>Revenus : <strong style={{ color: 'var(--color-success)' }}>{totalRev.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €</strong></span>
+                      <span>Dépenses : <strong style={{ color: 'var(--color-danger)' }}>{(totalFix + totalVar).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €</strong></span>
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', marginTop: 4 }}>Basé sur 12 mois glissants</div>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
         </div>
 
         {/* Alerte conseil */}
