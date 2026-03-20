@@ -57,16 +57,25 @@ const SharedExpenses = ({ onBack }) => {
   ];
 
   // --- Calculations ---
-  const groupTotal = transactions.reduce((sum, tx) => sum + Math.abs(tx.amount || 0), 0);
+  // 1. Calculate how much each *active* member paid, trimming names to prevent space-typos
+  const computedMemberStats = members.map(m => {
+    const paid = transactions
+      .filter(tx => tx.paid_by?.trim() === m.name?.trim())
+      .reduce((sum, tx) => sum + Math.abs(tx.amount || 0), 0);
+    return { ...m, paid };
+  });
+
+  // 2. The group total should be the sum of what active members paid (ignores orphan transactions)
+  const groupTotal = computedMemberStats.reduce((sum, ms) => sum + ms.paid, 0);
+  
+  // 3. Each member's share is the total divided by the number of active participants
   const individualShare = members.length > 0 ? groupTotal / members.length : 0;
 
-  const memberStats = members.map(m => {
-    const paid = transactions
-      .filter(tx => tx.paid_by === m.name)
-      .reduce((sum, tx) => sum + Math.abs(tx.amount || 0), 0);
-    const balance = paid - individualShare;
-    return { ...m, paid, balance };
-  });
+  // 4. Final stats with balance (paid - share)
+  const memberStats = computedMemberStats.map(ms => ({
+    ...ms,
+    balance: ms.paid - individualShare
+  }));
 
   // --- Handlers ---
   const addMember = async (name) => {
