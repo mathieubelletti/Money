@@ -3,58 +3,55 @@ import PageHeader from '../components/PageHeader';
 import { useData } from '../context/DataContext';
 
 const Budget = () => {
-  const { forecasts, monthsState, transactions: txGroups, goal, setGoal, loading } = useData();
+  const { forecasts, monthsState, transactions: txGroups, goal, setGoal, loading, selectedPeriod } = useData();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
-  // 1. Identify the current month (e.g., "Mars 2026")
-  const currentMonthLabel = React.useMemo(() => {
-    const now = new Date();
-    const formatter = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' });
-    const label = formatter.format(now);
-    return label.charAt(0).toUpperCase() + label.slice(1);
-  }, []);
 
   // 2. Find the forecast for the current month
   const currentForecast = React.useMemo(() => {
-    return forecasts?.find(f => f.month === currentMonthLabel);
-  }, [forecasts, currentMonthLabel]);
+    if (!selectedPeriod) return forecasts?.[0];
+    return forecasts?.find(f => f.id === selectedPeriod);
+  }, [forecasts, selectedPeriod]);
+
+  // 1. Identify the current month (e.g., "Mars 2026")
+  const currentMonthLabel = React.useMemo(() => {
+    return currentForecast?.month || "---";
+  }, [currentForecast]);
 
   const monthData = React.useMemo(() => {
     return currentForecast ? (monthsState[currentForecast.id] || { fixes: [], variables: [] }) : null;
   }, [currentForecast, monthsState]);
 
-  // 3. Filter transactions for the current month/year
+  // 3. Filter transactions for the selected month/year
   const currentMonthTransactions = React.useMemo(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+    if (!selectedPeriod) return [];
+    // Extract YYYY-MM from the end of the selectedPeriod ID (e.g. "uuid_2026-03")
+    const periodParts = selectedPeriod.split('_');
+    const targetSlug = periodParts[periodParts.length - 1]; // "2026-03"
 
     const flat = [];
     (txGroups || []).forEach(group => {
       (group?.items || []).forEach(tx => {
-        let txMonth, txYear;
-        if (tx.budget_month) {
-          const parts = tx.budget_month.split('-');
-          txYear = parseInt(parts[0], 10);
-          txMonth = parseInt(parts[1], 10) - 1; // 0-indexed month
-        } else {
-          const txDate = new Date(tx.date);
-          txYear = txDate.getFullYear();
-          txMonth = txDate.getMonth();
-        }
-        
-        if (txMonth === currentMonth && txYear === currentYear) {
+        // Handle budget_month if present, else fallback to date
+        // budget_month can be "2026-03-01" or "uuid_2026-03"
+        const budgetAttr = tx.budget_month || tx.date;
+        if (!budgetAttr) return;
+
+        const attrParts = budgetAttr.split('_');
+        const slug = attrParts[attrParts.length - 1].substring(0, 7); // Always "YYYY-MM"
+
+        if (slug === targetSlug) {
           flat.push(tx);
         }
       });
     });
     return flat;
-  }, [txGroups]);
+  }, [txGroups, selectedPeriod]);
 
   // 4. Calculate actual spending per budget item
   const getSpentForLabel = React.useCallback((label) => {
+    const target = label?.toLowerCase().trim();
     return currentMonthTransactions
-      .filter(tx => tx.category === label && tx.amount < 0)
+      .filter(tx => tx.category?.toLowerCase().trim() === target && tx.amount < 0)
       .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
   }, [currentMonthTransactions]);
 
