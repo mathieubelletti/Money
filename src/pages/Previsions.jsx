@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PageHeader from '../components/PageHeader';
 import { previsionsTabs } from '../data/mockData';
 import { formatBalance } from '../utils/helpers';
