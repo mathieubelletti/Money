@@ -5,6 +5,7 @@ import Budget from './pages/Budget';
 import Previsions from './pages/Previsions';
 import Auth from './pages/Auth';
 import Hub from './pages/Hub';
+import SharedExpenses from './pages/SharedExpenses';
 import BottomNav from './components/BottomNav';
 import SyncIndicator from './components/SyncIndicator';
 import { useData } from './context/DataContext';
@@ -20,7 +21,7 @@ const BUDGET_SCREENS = {
 
 function App() {
   const { session, loading } = useData();
-  const [appMode, setAppMode] = useState('hub'); // 'hub' or 'budget'
+  const [appMode, setAppMode] = useState('hub'); // 'hub', 'budget', 'shared-expenses'
   const [activeTab, setActiveTab] = useState('dashboard');
 
   useEffect(() => {
@@ -38,8 +39,21 @@ function App() {
     return (
       <div className="app-container">
         <SyncIndicator />
-        <Hub onEnterBudget={() => setAppMode('budget')} />
+        <Hub 
+          onEnterBudget={() => setAppMode('budget')} 
+          onEnterSharedExpenses={() => setAppMode('shared-expenses')}
+        />
         <BottomNav mode="hub" activeTab="accueil" setActiveTab={() => {}} />
+      </div>
+    );
+  }
+
+  if (appMode === 'shared-expenses') {
+    return (
+      <div className="app-container">
+        <SyncIndicator />
+        <SharedExpenses onBack={() => setAppMode('hub')} />
+        {/* No BottomNav here as per user request */}
       </div>
     );
   }
