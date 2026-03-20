@@ -480,11 +480,15 @@ const Transactions = () => {
               background: 'white',
               borderRadius: 32,
               padding: '32px',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
+              boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+              maxHeight: 'calc(100vh - 80px)', // Added max height
+              overflowY: 'auto', // Added vertical scroll
+              display: 'flex',
+              flexDirection: 'column'
             }}
             onClick={e => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+            <div style={{ position: 'sticky', top: 0, background: 'white', zIndex: 10, paddingBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <h3 style={{ fontSize: 20, fontWeight: 900, color: 'var(--color-text-primary)', margin: 0 }}>
                 {isEditing ? 'Modifier la transaction' : 'Nouvelle transaction'}
               </h3>
@@ -624,8 +628,9 @@ const Transactions = () => {
                         type="button"
                         onClick={() => setNewTx({...newTx, method: m})}
                         style={{
-                          flex: 1,
+                          flex: '0 0 auto',
                           height: 40,
+                          padding: '0 16px',
                           borderRadius: 10,
                           border: 'none',
                           fontSize: 14,
@@ -634,7 +639,8 @@ const Transactions = () => {
                           color: newTx.method === m ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
                           boxShadow: newTx.method === m ? 'var(--shadow-sm)' : 'none',
                           cursor: 'pointer',
-                          transition: 'all 0.2s'
+                          transition: 'all 0.2s',
+                          whiteSpace: 'nowrap'
                         }}
                       >
                         {m}
