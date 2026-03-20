@@ -617,8 +617,8 @@ const Transactions = () => {
               {newTx.type !== 'Virement' && (
                 <div>
                   <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: 'var(--color-text-tertiary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mode de règlement</label>
-                  <div style={{ display: 'flex', background: 'var(--color-bg)', padding: 4, borderRadius: 14 }}>
-                    {['CB', 'Chèque', 'Espèces'].map(m => (
+                  <div style={{ display: 'flex', background: 'var(--color-bg)', padding: 4, borderRadius: 14, overflowX: 'auto' }} className="scrollbar-hide">
+                    {['CB', 'Prélèvement', 'Virement', 'Chèque', 'Espèces'].map(m => (
                       <button
                         key={m}
                         type="button"
