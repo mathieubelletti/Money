@@ -254,23 +254,20 @@ export const DataProvider = ({ children }) => {
           const userId = session?.user?.id;
           const year = new Date().getFullYear();
           
-          // Helper to extract index from ID (handles numeric and prefixed IDs)
-          const getIdx = (id) => {
-            const parts = String(id).split('_');
-            const slug = parts[parts.length - 1];
-            if (slug.includes('-')) {
-              return parseInt(slug.split('-')[1], 10) - 1;
-            }
-            return parseInt(slug, 10) - 1;
+          const monthOrder = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+          const getIdx = (item) => {
+            if (!item || !item.month) return -1;
+            const mName = String(item.month).toLowerCase().split(' ')[0];
+            return monthOrder.indexOf(mName);
           };
 
-          const sortedFcs = [...safeFcs].sort((a, b) => getIdx(a.id) - getIdx(b.id));
+          const sortedFcs = [...safeFcs].sort((a, b) => getIdx(a) - getIdx(b));
 
           // Deduplicate: keep only one forecast per month position (0–11)
           const deduplicatedFcs = [];
           const seenMonths = new Set();
           for (const f of sortedFcs) {
-            const idx = getIdx(f.id);
+            const idx = getIdx(f);
             if (idx >= 0 && idx < 12 && !seenMonths.has(idx)) {
               seenMonths.add(idx);
               deduplicatedFcs.push({ ...f, _monthIdx: idx });
@@ -629,7 +626,6 @@ export const DataProvider = ({ children }) => {
         
         // Return only the columns that exist in Supabase to avoid 400 errors
         return { 
-          id: f.id, 
           month: f.month, 
           income, 
           expenses, 
