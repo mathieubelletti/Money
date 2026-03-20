@@ -106,11 +106,29 @@ const Previsions = () => {
 
       forecasts.forEach(f => {
         const currentData = prev[f.id] || { manualReport: 0, revenus: [], fixes: [], variables: [] };
+        
+        // Helper to merge global and local data
+        const mergeSection = (sectName) => {
+          return sortedSectData[sectName].map(gi => {
+            const local = (currentData[sectName] || []).find(li => li.id === gi.id);
+            if (local && local.isLinked === false) {
+              // Preserve local amount and link status, but take other fields from global (in case label/icon/day changed)
+              return { 
+                ...gi, 
+                amount: local.amount, 
+                isLinked: false 
+              };
+            }
+            // Otherwise, use global values and ensure it's linked
+            return { ...gi, isLinked: true };
+          });
+        };
+
         newState[f.id] = {
           ...currentData,
-          revenus: sortedSectData.revenus.map(r => ({ ...r, isLinked: true, day: r.day })),
-          fixes: sortedSectData.fixes.map(r => ({ ...r, isLinked: true, day: r.day })),
-          variables: sortedSectData.variables.map(r => ({ ...r, isLinked: true, day: r.day }))
+          revenus: mergeSection('revenus'),
+          fixes: mergeSection('fixes'),
+          variables: mergeSection('variables')
         };
       });
       finalMonthsState = newState;
