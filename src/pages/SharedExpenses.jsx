@@ -1,67 +1,106 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '../supabase';
+import { useData } from '../context/DataContext';
 
 const SharedExpenses = ({ onBack }) => {
-  // --- Persistent State ---
-  const [members, setMembers] = useState(() => {
-    const saved = localStorage.getItem('money_shared_members');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const { session } = useData();
+  const userId = session?.user?.id;
 
-  const [transactions, setTransactions] = useState(() => {
-    const saved = localStorage.getItem('money_shared_transactions');
-    return saved ? JSON.parse(saved) : [];
-  });
-
+  const [members, setMembers] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
 
-  // --- Persistence ---
+  // --- Supabase Fetch ---
   useEffect(() => {
-    localStorage.setItem('money_shared_members', JSON.stringify(members));
-  }, [members]);
+    if (userId) fetchData();
+  }, [userId]);
 
-  useEffect(() => {
-    localStorage.setItem('money_shared_transactions', JSON.stringify(transactions));
-  }, [transactions]);
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [membersRes, transactionsRes] = await Promise.all([
+        supabase.from('shared_members').select('*').eq('user_id', userId),
+        supabase.from('shared_transactions').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+      ]);
+
+      if (membersRes.data) setMembers(membersRes.data);
+      if (transactionsRes.data) setTransactions(transactionsRes.data);
+    } catch (err) {
+      console.error('Error fetching shared data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // --- Calculations ---
-  const groupTotal = transactions.reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+  const groupTotal = transactions.reduce((sum, tx) => sum + Math.abs(tx.amount || 0), 0);
   const individualShare = members.length > 0 ? groupTotal / members.length : 0;
 
   const memberStats = members.map(m => {
     const paid = transactions
-      .filter(tx => tx.paidBy === m.name)
-      .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+      .filter(tx => tx.paid_by === m.name)
+      .reduce((sum, tx) => sum + Math.abs(tx.amount || 0), 0);
     const balance = paid - individualShare;
     return { ...m, paid, balance };
   });
 
   // --- Handlers ---
-  const addMember = (name) => {
-    if (!name) return;
+  const addMember = async (name) => {
+    if (!name || !userId) return;
     const newMember = {
-      id: Date.now(),
+      user_id: userId,
       name,
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}${Date.now()}`
     };
-    setMembers([...members, newMember]);
+    
+    const { data, error } = await supabase.from('shared_members').insert([newMember]).select();
+    if (error) {
+      console.error('Error adding member:', error);
+    } else if (data) {
+      setMembers([...members, data[0]]);
+    }
     setIsMemberModalOpen(false);
   };
 
-  const addExpense = (data) => {
+  const addExpense = async (formData) => {
+    if (!userId) return;
     const newTx = {
-      id: Date.now(),
-      ...data,
-      date: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
-      amount: -Math.abs(data.amount) // Always negative for expenses display
+      user_id: userId,
+      name: formData.name,
+      amount: -Math.abs(formData.amount),
+      paid_by: formData.paidBy,
+      category: 'receipt',
+      date: new Date().toISOString().split('T')[0]
     };
-    setTransactions([newTx, ...transactions]);
+
+    const { data, error } = await supabase.from('shared_transactions').insert([newTx]).select();
+    if (error) {
+      console.error('Error adding transaction:', error);
+    } else if (data) {
+      setTransactions([data[0], ...transactions]);
+    }
     setIsExpenseModalOpen(false);
   };
 
-  const deleteTransaction = (id) => {
-    setTransactions(transactions.filter(tx => tx.id !== id));
+  const deleteTransaction = async (id) => {
+    const { error } = await supabase.from('shared_transactions').delete().eq('id', id);
+    if (!error) {
+      setTransactions(transactions.filter(tx => tx.id !== id));
+    } else {
+      console.error('Error deleting transaction:', error);
+    }
   };
+
+  if (loading) {
+     return (
+       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f8fafc' }}>
+         <div className="spinner"></div>
+         <style>{`.spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top: 4px solid var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite; } @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+       </div>
+     );
+  }
 
   return (
     <div className="screen shared-expenses-view" style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: 120, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
@@ -101,9 +140,7 @@ const SharedExpenses = ({ onBack }) => {
           position: 'relative',
           overflow: 'hidden'
         }}>
-          {/* Decorative background circle */}
           <div style={{ position: 'absolute', top: -40, right: -40, width: 140, height: 140, borderRadius: 70, background: 'rgba(255,255,255,0.1)' }}></div>
-          
           <p style={{ fontSize: 12, fontWeight: 700, opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
             Total du Groupe - Mars
           </p>
@@ -121,13 +158,13 @@ const SharedExpenses = ({ onBack }) => {
             fontWeight: 700,
             marginTop: 8
           }}>
-            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>trending_up</span>
-            Stable par rapport au mois dernier
+            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>sync</span>
+            Synchronisé Cloud
           </div>
         </div>
       </section>
 
-      {/* Distribution Section */}
+      {/* Distribution Section (RESPONSIVE) */}
       <section style={{ padding: '0 20px 24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, padding: '0 4px' }}>
           <h3 style={{ fontSize: 18, fontWeight: 800, color: '#1e293b', margin: 0 }}>Répartition</h3>
@@ -140,41 +177,17 @@ const SharedExpenses = ({ onBack }) => {
             textAlign: 'center', color: '#64748b' 
           }}>
             <span className="material-icons-round" style={{ fontSize: 32, marginBottom: 12, opacity: 0.5 }}>group_add</span>
-            <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>Ajoutez des amis pour commencer</p>
-            <button 
-              onClick={() => setIsMemberModalOpen(true)}
-              style={{ marginTop: 12, background: 'var(--color-primary)', border: 'none', color: 'white', padding: '8px 16px', borderRadius: 12, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
-            >
-              Créer un profil
-            </button>
+            <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>Ajoutez des membres</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
+          <div className="members-grid">
             {memberStats.map(u => (
-              <div key={u.id} style={{ 
-                background: 'white', 
-                borderRadius: 24, 
-                padding: '16px', 
-                border: '1px solid rgba(0,0,0,0.03)',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 12
-              }}>
-                <img src={u.avatar} alt={u.name} style={{ width: 44, height: 44, borderRadius: 14, background: '#f1f5f9' }} />
-                <div>
-                  <h4 style={{ fontSize: 15, fontWeight: 800, margin: 0, color: '#1e293b' }}>{u.name}</h4>
-                  <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-primary)', margin: '2px 0 0' }}>{u.paid.toLocaleString('fr-FR')} € payés</p>
-                  <div style={{ 
-                    marginTop: 8,
-                    fontSize: 11, 
-                    fontWeight: 800, 
-                    color: u.balance >= 0 ? '#10b981' : '#f97316',
-                    background: u.balance >= 0 ? 'rgba(16, 185, 129, 0.08)' : 'rgba(249, 115, 22, 0.08)',
-                    padding: '4px 8px',
-                    borderRadius: 6,
-                    display: 'inline-block'
-                  }}>
+              <div key={u.id} className="member-card">
+                <img src={u.avatar} alt={u.name} className="member-avatar" />
+                <div className="member-info">
+                  <h4 className="member-name">{u.name}</h4>
+                  <p className="member-paid">{u.paid.toLocaleString('fr-FR')} € payés</p>
+                  <div className={`member-balance ${u.balance >= 0 ? 'is-positive' : 'is-negative'}`}>
                     {u.balance >= 0 ? `+${u.balance.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} € à recevoir` : `Doit ${Math.abs(u.balance).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €`}
                   </div>
                 </div>
@@ -184,6 +197,68 @@ const SharedExpenses = ({ onBack }) => {
         )}
       </section>
 
+      {/* Style for responsiveness */}
+      <style>{`
+        .members-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 16px;
+        }
+        @media (max-width: 600px) {
+          .members-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+          }
+        }
+        .member-card {
+          background: white;
+          border-radius: 24px;
+          padding: 20px;
+          border: 1px solid rgba(0,0,0,0.03);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+          display: flex;
+          align-items: center;
+          gap: 20px;
+        }
+        .member-avatar {
+          width: 56px;
+          height: 56px;
+          border-radius: 18px;
+          background: #f1f5f9;
+        }
+        .member-info {
+           flex: 1;
+        }
+        .member-name {
+          font-size: 16px;
+          fontWeight: 800;
+          margin: 0;
+          color: #1e293b;
+        }
+        .member-paid {
+          font-size: 13px;
+          font-weight: 700;
+          color: var(--color-primary);
+          margin: 2px 0 0;
+        }
+        .member-balance {
+          margin-top: 10px;
+          font-size: 12px;
+          font-weight: 800;
+          padding: 6px 10px;
+          border-radius: 8px;
+          display: inline-block;
+        }
+        .member-balance.is-positive {
+          color: #10b981;
+          background: rgba(16, 185, 129, 0.08);
+        }
+        .member-balance.is-negative {
+          color: #f97316;
+          background: rgba(249, 115, 22, 0.08);
+        }
+      `}</style>
+
       {/* Transactions */}
       <section style={{ padding: '0 20px' }}>
         <h3 style={{ fontSize: 18, fontWeight: 800, color: '#1e293b', margin: '0 0 16px 4px' }}>Dépenses récentes</h3>
@@ -191,7 +266,7 @@ const SharedExpenses = ({ onBack }) => {
         {transactions.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 0', opacity: 0.5 }}>
             <span className="material-icons-round" style={{ fontSize: 40, marginBottom: 8 }}>receipt_long</span>
-            <p style={{ fontSize: 14, margin: 0 }}>Aucune dépense enregistrée</p>
+            <p style={{ fontSize: 14, margin: 0 }}>Aucune dépense</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -216,7 +291,7 @@ const SharedExpenses = ({ onBack }) => {
                 </div>
                 <div style={{ flex: 1 }}>
                   <h4 style={{ fontSize: 14, fontWeight: 800, margin: 0, color: '#1e293b' }}>{tx.name}</h4>
-                  <p style={{ fontSize: 12, color: '#94a3b8', margin: '2px 0 0' }}>{tx.paidBy} • {tx.date}</p>
+                  <p style={{ fontSize: 12, color: '#94a3b8', margin: '2px 0 0' }}>{tx.paid_by} • {new Date(tx.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <p style={{ fontSize: 15, fontWeight: 900, margin: 0, color: '#1e293b' }}>
