@@ -9,7 +9,7 @@ const SharedExpenses = ({ onBack }) => {
   const [members, setMembers] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
+  const [isManageMembersOpen, setIsManageMembersOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
 
   // --- Supabase Fetch ---
@@ -21,7 +21,7 @@ const SharedExpenses = ({ onBack }) => {
     setLoading(true);
     try {
       const [membersRes, transactionsRes] = await Promise.all([
-        supabase.from('shared_members').select('*').eq('user_id', userId),
+        supabase.from('shared_members').select('*').eq('user_id', userId).order('name', { ascending: true }),
         supabase.from('shared_transactions').select('*').eq('user_id', userId).order('created_at', { ascending: false })
       ]);
 
@@ -56,12 +56,16 @@ const SharedExpenses = ({ onBack }) => {
     };
     
     const { data, error } = await supabase.from('shared_members').insert([newMember]).select();
-    if (error) {
-      console.error('Error adding member:', error);
-    } else if (data) {
-      setMembers([...members, data[0]]);
+    if (!error && data) {
+      setMembers(prev => [...prev, data[0]].sort((a,b) => a.name.localeCompare(b.name)));
     }
-    setIsMemberModalOpen(false);
+  };
+
+  const deleteMember = async (memberId) => {
+    const { error } = await supabase.from('shared_members').delete().eq('id', memberId);
+    if (!error) {
+       setMembers(prev => prev.filter(m => m.id !== memberId));
+    }
   };
 
   const addExpense = async (formData) => {
@@ -76,9 +80,7 @@ const SharedExpenses = ({ onBack }) => {
     };
 
     const { data, error } = await supabase.from('shared_transactions').insert([newTx]).select();
-    if (error) {
-      console.error('Error adding transaction:', error);
-    } else if (data) {
+    if (!error && data) {
       setTransactions([data[0], ...transactions]);
     }
     setIsExpenseModalOpen(false);
@@ -88,8 +90,6 @@ const SharedExpenses = ({ onBack }) => {
     const { error } = await supabase.from('shared_transactions').delete().eq('id', id);
     if (!error) {
       setTransactions(transactions.filter(tx => tx.id !== id));
-    } else {
-      console.error('Error deleting transaction:', error);
     }
   };
 
@@ -122,10 +122,10 @@ const SharedExpenses = ({ onBack }) => {
         </button>
         <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1e293b', margin: 0 }}>Dépenses Communes</h2>
         <button 
-          onClick={() => setIsMemberModalOpen(true)}
+          onClick={() => setIsManageMembersOpen(true)}
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, display: 'flex', color: 'var(--color-primary)' }}
         >
-          <span className="material-icons-round">person_add</span>
+          <span className="material-icons-round">manage_accounts</span>
         </button>
       </header>
 
@@ -158,17 +158,22 @@ const SharedExpenses = ({ onBack }) => {
             fontWeight: 700,
             marginTop: 8
           }}>
-            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>sync</span>
-            Synchronisé Cloud
+            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>account_balance</span>
+            {members.length} membres actifs
           </div>
         </div>
       </section>
 
-      {/* Distribution Section (RESPONSIVE) */}
+      {/* Distribution (RESPONSIVE) */}
       <section style={{ padding: '0 20px 24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, padding: '0 4px' }}>
           <h3 style={{ fontSize: 18, fontWeight: 800, color: '#1e293b', margin: 0 }}>Répartition</h3>
-          <span style={{ fontSize: 13, color: '#64748b', fontWeight: 600 }}>{members.length} membres</span>
+          <button 
+             onClick={() => setIsManageMembersOpen(true)}
+             style={{ border: 'none', background: 'none', color: 'var(--color-primary)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+          >
+            Modifier
+          </button>
         </div>
         
         {members.length === 0 ? (
@@ -177,7 +182,13 @@ const SharedExpenses = ({ onBack }) => {
             textAlign: 'center', color: '#64748b' 
           }}>
             <span className="material-icons-round" style={{ fontSize: 32, marginBottom: 12, opacity: 0.5 }}>group_add</span>
-            <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>Ajoutez des membres</p>
+            <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>Aucun membre</p>
+            <button 
+               onClick={() => setIsManageMembersOpen(true)}
+               style={{ marginTop: 12, background: 'var(--color-primary)', border: 'none', color: 'white', padding: '8px 16px', borderRadius: 12, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+            >
+               Gérer les membres
+            </button>
           </div>
         ) : (
           <div className="members-grid">
@@ -197,69 +208,24 @@ const SharedExpenses = ({ onBack }) => {
         )}
       </section>
 
-      {/* Style for responsiveness */}
       <style>{`
         .members-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
           gap: 16px;
         }
-        @media (max-width: 600px) {
-          .members-grid {
-            grid-template-columns: 1fr;
-            gap: 12px;
-          }
-        }
-        .member-card {
-          background: white;
-          border-radius: 24px;
-          padding: 20px;
-          border: 1px solid rgba(0,0,0,0.03);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-          display: flex;
-          align-items: center;
-          gap: 20px;
-        }
-        .member-avatar {
-          width: 56px;
-          height: 56px;
-          border-radius: 18px;
-          background: #f1f5f9;
-        }
-        .member-info {
-           flex: 1;
-        }
-        .member-name {
-          font-size: 16px;
-          fontWeight: 800;
-          margin: 0;
-          color: #1e293b;
-        }
-        .member-paid {
-          font-size: 13px;
-          font-weight: 700;
-          color: var(--color-primary);
-          margin: 2px 0 0;
-        }
-        .member-balance {
-          margin-top: 10px;
-          font-size: 12px;
-          font-weight: 800;
-          padding: 6px 10px;
-          border-radius: 8px;
-          display: inline-block;
-        }
-        .member-balance.is-positive {
-          color: #10b981;
-          background: rgba(16, 185, 129, 0.08);
-        }
-        .member-balance.is-negative {
-          color: #f97316;
-          background: rgba(249, 115, 22, 0.08);
-        }
+        @media (max-width: 600px) { .members-grid { grid-template-columns: 1fr; gap: 12px; } }
+        .member-card { background: white; border-radius: 24px; padding: 20px; border: 1px solid rgba(0,0,0,0.03); boxShadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; align-items: center; gap: 20px; }
+        .member-avatar { width: 56px; height: 56px; border-radius: 18px; background: #f1f5f9; }
+        .member-info { flex: 1; }
+        .member-name { font-size: 16px; fontWeight: 800; margin: 0; color: #1e293b; }
+        .member-paid { font-size: 13px; font-weight: 700; color: var(--color-primary); margin: 2px 0 0; }
+        .member-balance { margin-top: 10px; font-size: 12px; font-weight: 800; padding: 6px 10px; border-radius: 8px; display: inline-block; }
+        .member-balance.is-positive { color: #10b981; background: rgba(16, 185, 129, 0.08); }
+        .member-balance.is-negative { color: #f97316; background: rgba(249, 115, 22, 0.08); }
       `}</style>
 
-      {/* Transactions */}
+      {/* Recent Transactions */}
       <section style={{ padding: '0 20px' }}>
         <h3 style={{ fontSize: 18, fontWeight: 800, color: '#1e293b', margin: '0 0 16px 4px' }}>Dépenses récentes</h3>
         
@@ -272,21 +238,9 @@ const SharedExpenses = ({ onBack }) => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {transactions.map(tx => (
               <div key={tx.id} style={{ 
-                background: 'white', 
-                padding: '14px 16px', 
-                borderRadius: 20,
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 14,
-                boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-                border: '1px solid rgba(0,0,0,0.01)'
+                background: 'white', padding: '14px 16px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 14, boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.01)'
               }}>
-                <div style={{ 
-                  width: 44, height: 44, borderRadius: 22, 
-                  background: 'rgba(16, 185, 129, 0.08)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'var(--color-primary)'
-                }}>
+                <div style={{ width: 44, height: 44, borderRadius: 22, background: 'rgba(16, 185, 129, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-primary)' }}>
                   <span className="material-icons-round" style={{ fontSize: 20 }}>{tx.category || 'receipt'}</span>
                 </div>
                 <div style={{ flex: 1 }}>
@@ -297,10 +251,7 @@ const SharedExpenses = ({ onBack }) => {
                   <p style={{ fontSize: 15, fontWeight: 900, margin: 0, color: '#1e293b' }}>
                     {tx.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €
                   </p>
-                  <button 
-                    onClick={() => deleteTransaction(tx.id)}
-                    style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', padding: '4px 0 0' }}
-                  >
+                  <button onClick={() => deleteTransaction(tx.id)} style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', padding: '4px 0 0' }}>
                     <span className="material-icons-round" style={{ fontSize: 16 }}>delete</span>
                   </button>
                 </div>
@@ -314,53 +265,65 @@ const SharedExpenses = ({ onBack }) => {
       {members.length > 0 && (
         <button 
           onClick={() => setIsExpenseModalOpen(true)}
-          style={{ 
-            position: 'fixed', 
-            bottom: 30, 
-            right: 20, 
-            width: 60, height: 60, 
-            borderRadius: 30, 
-            background: 'var(--color-primary)', 
-            color: 'white',
-            border: 'none',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 12px 24px rgba(16, 185, 129, 0.4)',
-            cursor: 'pointer',
-            zIndex: 1000,
-            transition: 'transform 0.2s'
-          }}
+          style={{ position: 'fixed', bottom: 30, right: 20, width: 60, height: 60, borderRadius: 30, background: 'var(--color-primary)', color: 'white', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 12px 24px rgba(16, 185, 129, 0.4)', cursor: 'pointer', zIndex: 1000 }}
         >
           <span className="material-icons-round" style={{ fontSize: 32 }}>add</span>
         </button>
       )}
 
-      {/* --- ADD MEMBER MODAL --- */}
-      {isMemberModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: 'white', borderRadius: 28, width: '100%', maxWidth: 360, padding: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: 20, fontWeight: 900 }}>Nouveau profil</h3>
-            <label style={{ fontSize: 13, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 8 }}>PRÉNOM</label>
-            <input 
-              id="member-name-input"
-              type="text" 
-              placeholder="Ex: Marc, Julie..." 
-              autoFocus
-              onKeyDown={(e) => { if (e.key === 'Enter') addMember(e.target.value); }}
-              style={{ width: '100%', padding: '14px 16px', borderRadius: 14, border: '2px solid #f1f5f9', outline: 'none', fontSize: 15, fontWeight: 600, marginBottom: 20 }}
-            />
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button 
-                onClick={() => setIsMemberModalOpen(false)}
-                style={{ flex: 1, padding: 14, borderRadius: 14, background: '#f1f5f9', border: 'none', color: '#64748b', fontWeight: 700, cursor: 'pointer' }}
-              >
-                Annuler
+      {/* --- MANAGE MEMBERS MODAL --- */}
+      {isManageMembersOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: 'white', borderRadius: 28, width: '100%', maxWidth: 400, padding: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <h3 style={{ margin: 0, fontSize: 20, fontWeight: 900 }}>Gérer les membres</h3>
+              <button onClick={() => setIsManageMembersOpen(false)} style={{ border: 'none', background: 'none', color: '#64748b', cursor: 'pointer' }}>
+                <span className="material-icons-round">close</span>
               </button>
-              <button 
-                onClick={() => addMember(document.getElementById('member-name-input').value)}
-                style={{ flex: 1, padding: 14, borderRadius: 14, background: 'var(--color-primary)', border: 'none', color: 'white', fontWeight: 700, cursor: 'pointer' }}
-              >
-                Créer
-              </button>
+            </div>
+            
+            <div style={{ flex: 1, overflowY: 'auto', marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 12, padding: '4px' }}>
+              {members.length === 0 ? (
+                 <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: 14 }}>Aucun membre</p>
+              ) : (
+                members.map(m => (
+                  <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: '#f8fafc', borderRadius: 16 }}>
+                    <img src={m.avatar} alt="" style={{ width: 36, height: 36, borderRadius: 10 }} />
+                    <span style={{ flex: 1, fontWeight: 700, fontSize: 14 }}>{m.name}</span>
+                    <button onClick={() => deleteMember(m.id)} style={{ border: 'none', background: 'none', color: '#f87171', cursor: 'pointer', padding: 4 }}>
+                      <span className="material-icons-round" style={{ fontSize: 20 }}>delete_outline</span>
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 20 }}>
+              <label style={{ fontSize: 12, fontWeight: 800, color: '#64748b', display: 'block', marginBottom: 8 }}>AJOUTER UN MEMBRE</label>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <input 
+                  id="new-member-input"
+                  type="text" 
+                  placeholder="Prénom..." 
+                  style={{ flex: 1, padding: '12px 14px', borderRadius: 14, border: '2px solid #f1f5f9', outline: 'none', fontSize: 14, fontWeight: 600 }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                       addMember(e.target.value);
+                       e.target.value = '';
+                    }
+                  }}
+                />
+                <button 
+                   onClick={() => {
+                     const input = document.getElementById('new-member-input');
+                     addMember(input.value);
+                     input.value = '';
+                   }}
+                   style={{ background: 'var(--color-primary)', border: 'none', color: 'white', padding: '0 16px', borderRadius: 14, fontWeight: 700, cursor: 'pointer' }}
+                >
+                   Ajouter
+                </button>
+              </div>
             </div>
           </div>
         </div>
