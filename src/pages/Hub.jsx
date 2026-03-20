@@ -16,16 +16,16 @@ const Hub = ({ onEnterBudget, onEnterSharedExpenses }) => {
       id: 'budget',
       name: 'Budget',
       desc: 'Gérez vos finances personnelles',
-      icon: 'account_balance',
-      color: '#6366f1',
-      bg: 'rgba(99, 102, 241, 0.1)',
+      icon: 'insights',
+      color: 'var(--color-primary)',
+      bg: 'var(--color-primary-glass)',
       onClick: onEnterBudget
     },
     {
       id: 'commun',
       name: 'Commun',
       desc: 'Dépenses partagées à deux',
-      icon: 'hub',
+      icon: 'groups',
       color: '#10b981',
       bg: 'rgba(16, 185, 129, 0.1)',
       onClick: onEnterSharedExpenses
