@@ -538,35 +538,120 @@ const Dashboard = () => {
       </section>
 
       {/* Evolution Chart Section */}
-      <section style={{ padding: '0 24px 24px' }} className="dashboard-max-width">
-        <div style={{ background: 'white', padding: 24, borderRadius: 24, border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-sm)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div>
-                <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'nowrap' }}>Évolution du patrimoine</h3>
-                <p style={{ fontSize: 12, color: 'var(--color-text-tertiary)', margin: '4px 0 0' }}>6 derniers mois</p>
+      {(() => {
+        // --- Build chart data from transactions ---
+        const monthSlug = selectedPeriod.split('_').pop(); // "2026-03"
+        if (!monthSlug || !monthSlug.includes('-')) return null;
+
+        const [yStr, mStr] = monthSlug.split('-');
+        const endYear = parseInt(yStr, 10);
+        const endMonth = parseInt(mStr, 10); // 1-indexed
+
+        // Generate last 6 months ending at selectedPeriod
+        const months = Array.from({ length: 6 }, (_, i) => {
+          let m = endMonth - (5 - i);
+          let y = endYear;
+          while (m <= 0) { m += 12; y -= 1; }
+          const mm = String(m).padStart(2, '0');
+          const endOfMonth = new Date(y, m, 0).toISOString().split('T')[0]; // last day
+          const shortNames = ['JAN','FÉV','MAR','AVR','MAI','JUIN','JUIL','AOÛT','SEP','OCT','NOV','DÉC'];
+          return { year: y, month: m, label: shortNames[m - 1], endOfMonth, slug: `${y}-${mm}` };
+        });
+
+        // Calculate balance at end of each month
+        const initialTotal = (accounts || []).reduce((s, a) => s + (parseFloat(a.initialBalance) || 0), 0);
+
+        const flatTxs = (transactions || []).flatMap(g => g?.items || g ? (g.items ? g.items : [g]) : []);
+
+        const chartPoints = months.map(({ endOfMonth, label, slug }) => {
+          const txSum = flatTxs.reduce((sum, tx) => {
+            const txDate = tx.date || '';
+            if (txDate <= endOfMonth) return sum + (parseFloat(tx.amount) || 0);
+            return sum;
+          }, 0);
+          return { label, slug, value: initialTotal + txSum };
+        });
+
+        const values = chartPoints.map(p => p.value);
+        const minVal = Math.min(...values);
+        const maxVal = Math.max(...values);
+        const range = maxVal - minVal || 1;
+
+        // SVG dimensions
+        const W = 400; const H = 120; const PAD = { t: 10, b: 10, l: 8, r: 8 };
+        const points = chartPoints.map((p, i) => {
+          const x = PAD.l + (i / (chartPoints.length - 1)) * (W - PAD.l - PAD.r);
+          const y = PAD.t + (1 - (p.value - minVal) / range) * (H - PAD.t - PAD.b);
+          return { x, y, ...p };
+        });
+
+        const polyline = points.map(p => `${p.x},${p.y}`).join(' ');
+        const areaPath = `M${points[0].x},${H} ` + points.map(p => `L${p.x},${p.y}`).join(' ') + ` L${points[points.length-1].x},${H} Z`;
+
+        const selectedLabel = months[months.length - 1].label;
+        const currentMonthSlug = new Date().toISOString().substring(0, 7);
+
+        return (
+          <section style={{ padding: '0 24px 24px' }} className="dashboard-max-width">
+            <div style={{ background: 'white', padding: 24, borderRadius: 24, border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <div>
+                    <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'nowrap' }}>Évolution du patrimoine</h3>
+                    <p style={{ fontSize: 12, color: 'var(--color-text-tertiary)', margin: '4px 0 0' }}>6 derniers mois</p>
+                  </div>
+                  <div style={{ flex: 1, height: 1.5, background: '#000000', marginTop: -20, opacity: 0.2 }}></div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--color-primary-glass)', color: 'var(--color-primary-dark)', padding: '6px 12px', borderRadius: 12, fontSize: 12, fontWeight: 800, marginLeft: 16 }}>
+                  <span className="material-icons-round" style={{ fontSize: 16 }}>calendar_today</span>
+                  {selectedLabel}
+                </div>
               </div>
-              <div style={{ flex: 1, height: 1.5, background: '#000000', marginTop: -20, opacity: 0.2 }}></div>
+
+              <div style={{ height: 140, width: '100%', position: 'relative' }}>
+                <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+                  <defs>
+                    <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.15" />
+                      <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  {/* horizontal guides */}
+                  {[0.25, 0.5, 0.75].map(r => (
+                    <line key={r} x1={PAD.l} x2={W - PAD.r} y1={PAD.t + r * (H - PAD.t - PAD.b)} y2={PAD.t + r * (H - PAD.t - PAD.b)} stroke="#e2e8f0" strokeWidth="1" />
+                  ))}
+                  {/* area fill */}
+                  <path d={areaPath} fill="url(#areaGrad)" />
+                  {/* line */}
+                  <polyline points={polyline} fill="none" stroke="var(--color-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  {/* dots + value labels */}
+                  {points.map((p, i) => {
+                    const isSelected = p.slug === monthSlug;
+                    return (
+                      <g key={i}>
+                        <circle cx={p.x} cy={p.y} r={isSelected ? 5 : 3.5} fill={isSelected ? 'var(--color-primary)' : 'white'} stroke="var(--color-primary)" strokeWidth="2" />
+                        {isSelected && (
+                          <text x={p.x} y={p.y - 10} textAnchor="middle" fontSize="9" fontWeight="800" fill="var(--color-primary-dark)">
+                            {p.value.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })}
+                          </text>
+                        )}
+                      </g>
+                    );
+                  })}
+                </svg>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, padding: '0 4px' }}>
+                {chartPoints.map((p, i) => (
+                  <span key={i} style={{ fontSize: 10, fontWeight: 800, color: p.slug === monthSlug ? 'var(--color-primary-dark)' : 'var(--color-text-tertiary)' }}>
+                    {p.label}
+                  </span>
+                ))}
+              </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--color-primary-glass)', color: 'var(--color-primary-dark)', padding: '6px 12px', borderRadius: 12, fontSize: 12, fontWeight: 800, marginLeft: 16 }}>
-              <span className="material-icons-round" style={{ fontSize: 16 }}>calendar_today</span>
-              Juin
-            </div>
-          </div>
-          
-          <div style={{ height: 160, width: '100%', position: 'relative', marginTop: 12 }}>
-            <svg viewBox="0 0 400 150" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
-              <text x="50%" y="50%" textAnchor="middle" fill="var(--color-text-tertiary)" fontSize="12" fontWeight="700">En attente de données historiques</text>
-            </svg>
-          </div>
-          
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16, padding: '0 4px' }}>
-            {(patrimonyChart || []).map(data => (
-              <span key={data.month} style={{ fontSize: 10, fontWeight: 800, color: data.month === 'JUIN' ? 'var(--color-primary-dark)' : 'var(--color-text-tertiary)' }}>{data.month}</span>
-            ))}
-          </div>
-        </div>
-      </section>
+          </section>
+        );
+      })()}
 
       {/* Insights */}
       <section style={{ padding: '0 24px 24px' }} className="dashboard-max-width">
