@@ -85,7 +85,7 @@ const Transactions = () => {
       account: accounts?.[0]?.id || '',
       toAccount: accounts?.[1]?.id || accounts?.[0]?.id || '',
       date: new Date().toISOString().split('T')[0],
-      budget_month: new Date().toISOString().substring(0, 7),
+      budget_month: new Date().toISOString().substring(0, 7) + '-01',
       type: 'Dépenses',
       method: 'CB'
     });
@@ -229,9 +229,19 @@ const Transactions = () => {
 
     try {
       if (isEditing) {
-        // Simple update for non-transfer edits
-        // If it was a transfer, editing it manually might be complex, so we just update the one ID
-        updateTransaction({ ...newItems[0], id: editId, dateLabel, date: newTx.date });
+        // Find the original transaction to preserve fields like domain, bg, recurring info, etc.
+        const allTransactions = txData.flatMap(group => group.items);
+        const originalTx = allTransactions.find(t => String(t.id) === String(editId));
+        
+        const updatedTx = {
+          ...originalTx,
+          ...newItems[0],
+          id: editId,
+          dateLabel,
+          date: newTx.date,
+          budget_month: newTx.budget_month || (originalTx?.budget_month)
+        };
+        updateTransaction(updatedTx);
       } else {
         if (addTransactions) {
           addTransactions(newItems.map(item => ({ ...item, dateLabel, date: newTx.date })));

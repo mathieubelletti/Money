@@ -856,6 +856,29 @@ body {
   background: var(--color-bg);
 }
 
+/* Custom highlight for current month */
+.month-forecast-card.is-current-month {
+  border-left: 4px solid var(--color-primary);
+  background-color: var(--color-primary-bg) !important;
+}
+
+.month-forecast-card.is-current-month::after {
+  content: 'MOIS ACTUEL';
+  position: absolute;
+  top: 14px;
+  right: 50px;
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--color-primary);
+  background: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--color-primary);
+  box-shadow: var(--shadow-sm);
+  letter-spacing: 0.05em;
+  z-index: 2;
+}
+
 .month-forecast-inner {
   padding: var(--space-4) var(--space-5);
   display: flex;

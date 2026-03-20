@@ -39,9 +39,27 @@ const Previsions = () => {
     'coiffeur': 'content_cut', 'cadeau': 'redeem', 'donation': 'favorite', 'boulangerie': 'bakery_dining', 'pain': 'bakery_dining', 'cafe': 'coffee', 'café': 'coffee', 'bar': 'local_bar',
     'ecole': 'school', 'école': 'school', 'fac': 'school', 'amazon': 'shopping_bag', 'transport': 'commute', 'train': 'train', 'sncf': 'train', 'ter': 'train'
   };
-  const [activeTab, setActiveTab] = useState('Mois');
+  const [activeTab, setActiveTab] = useState('Mois'); // 'Mois', 'Trimestre', 'Annee'
   const [expandedMonthId, setExpandedMonthId] = useState(null);
-  const [isGlobalModalOpen, setIsGlobalModalOpen] = useState(false);
+
+  // Auto-scroll to current month or last viewed month logic
+  const now = new Date();
+  const currentYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+  useEffect(() => {
+    if (activeTab === 'Mois' && forecasts.length > 0) {
+      const savedMonth = sessionStorage.getItem('lastViewedMonth');
+      const targetId = savedMonth || `month-${currentYM}`;
+      
+      const timer = setTimeout(() => {
+        const element = document.getElementById(targetId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab, forecasts.length, currentYM]);
 
   React.useEffect(() => {
     fetchPrevisions();
@@ -341,14 +359,25 @@ const Previsions = () => {
             const data = getMonthData(f.id);
             const { rev, fix, varTotal, reportBalance, final } = calculatedResults[f.id];
             const totalOps = data.revenus.length + data.fixes.length + data.variables.length;
+            const ym = f.date || f.id.split('_').pop();
+            const isCurrentMonth = ym === currentYM;
 
             return (
-              <div key={f.id} style={{ borderBottom: '1px solid var(--color-border-light)' }}>
+              <div 
+                key={f.id} 
+                id={`month-${ym}`}
+                style={{ borderBottom: '1px solid var(--color-border-light)' }}
+              >
                 {/* Month Row */}
                 <div 
-                  className="month-forecast-card" 
+                  className={`month-forecast-card ${isCurrentMonth ? 'is-current-month' : ''}`} 
                   onClick={() => handleToggleMonth(f.id)}
-                  style={{ cursor: 'pointer', transition: 'all 0.2s', background: isExpanded ? '#f8fafc' : 'white' }}
+                  style={{ 
+                    cursor: 'pointer', 
+                    transition: 'all 0.2s', 
+                    background: isExpanded ? '#f8fafc' : 'white',
+                    position: 'relative'
+                  }}
                 >
                   <div className="month-forecast-inner">
                     <div className="month-forecast-badge" style={{ background: final >= 0 ? 'var(--color-primary)' : 'linear-gradient(135deg, #ef4444, #dc2626)' }}>

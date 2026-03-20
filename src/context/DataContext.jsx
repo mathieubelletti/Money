@@ -395,11 +395,33 @@ export const DataProvider = ({ children }) => {
   useEffect(() => { if (session) fetchAllData(); }, [session]);
 
   const addTransactions = React.useCallback((txs) => {
+    const localIds = txs.map(tx => tx.id);
     setTransactions(prev => [...txs, ...prev]);
-    if (usingSupabase) {
+    if (usingSupabase && session?.user?.id) {
       lastLocalWriteRef.current = Date.now();
-      const inserts = txs.map(tx => ({ ...tx, dateLabel: tx.dateLabel || "Aujourd'hui", user_id: session?.user?.id }));
-      supabase.from('transactions').insert(inserts).then(({ error }) => { if (error) console.error(error); });
+      const inserts = txs.map(tx => ({ 
+        ...tx, 
+        dateLabel: tx.dateLabel || "Aujourd'hui", 
+        user_id: session?.user?.id 
+      }));
+      supabase
+        .from('transactions')
+        .insert(inserts)
+        .select()
+        .then(({ data, error }) => { 
+          if (error) {
+            console.error('Supabase Insert Error:', error);
+          } else if (data && data.length > 0) {
+            // Synchronize Supabase IDs back to local state
+            setTransactions(prev => prev.map(item => {
+              const idx = localIds.indexOf(item.id);
+              if (idx !== -1 && data[idx]) {
+                return { ...item, ...data[idx] };
+              }
+              return item;
+            }));
+          }
+        });
     }
   }, [usingSupabase, session]);
 
@@ -416,8 +438,8 @@ export const DataProvider = ({ children }) => {
   }, [usingSupabase]);
 
   const updateTransaction = React.useCallback((tx) => {
-    setTransactions(prev => prev.map(item => String(item.id) === String(tx.id) ? { ...tx, user_id: session?.user?.id } : item));
-    if (usingSupabase) {
+    setTransactions(prev => prev.map(item => String(item.id) === String(tx.id) ? { ...item, ...tx, user_id: session?.user?.id } : item));
+    if (usingSupabase && session?.user?.id) {
       lastLocalWriteRef.current = Date.now();
       supabase.from('transactions').upsert([{ ...tx, user_id: session?.user?.id }]).then(({ error }) => { if (error) console.error(error); });
     }
@@ -824,12 +846,13 @@ export const DataProvider = ({ children }) => {
     };
   }, [categories, goal, globalRecurrences, monthsState, usingSupabase, session?.user?.id, saveGlobalConfig]);
 
-  // Persist to user-specific  // Auto-Sync Effect (Debounced)
+  // Persist to local storage (Debounced)
   useEffect(() => {
-    // 1. Guard: Don't sync back if we just loaded this data FROM the server
-    if (!usingSupabase || !session?.user?.id || loading || isSyncingFromServerRef.current) return;
+    // Don't persist if we are currently loading or syncing from server
+    if (loading || isSyncingFromServerRef.current) return;
     
-    const userId = session.user.id;
+    // User-specific prefix
+    const userId = session?.user?.id || 'local';
 
     setLocal('money_categories', categories, userId);
     setLocal('money_transactions', transactions, userId);
