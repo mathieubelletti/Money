@@ -33,7 +33,47 @@ const setLocal = (key, value, userId = null) => {
 
 export const DataProvider = ({ children }) => {
   const [categories, setCategories] = useState(() => getLocal('money_categories', initialCategories));
-  const [transactions, setTransactions] = useState(() => getLocal('money_transactions', initialTransactions));
+  const [transactions, setTransactions] = useState(() => {
+    const local = getLocal('money_transactions', initialTransactions);
+    // Migration: If the first item is a group (has 'items'), flatten it
+    if (local.length > 0 && local[0].items) {
+      return local.reduce((acc, group) => [...acc, ...group.items], []);
+    }
+    return local;
+  });
+
+  // Reactive grouping and sorting logic
+  const groupedTransactions = React.useMemo(() => {
+    const sorted = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const grouped = [];
+    const today = new Date().toISOString().split('T')[0];
+    const yesterdayOpen = new Date();
+    yesterdayOpen.setDate(yesterdayOpen.getDate() - 1);
+    const yesterday = yesterdayOpen.toISOString().split('T')[0];
+
+    sorted.forEach(tx => {
+      const dateKey = tx.date || today;
+      let g = grouped.find(gr => gr.date === dateKey);
+      if (!g) { 
+        let label = dateKey;
+        if (dateKey === today) label = "Aujourd'hui";
+        else if (dateKey === yesterday) label = "Hier";
+        else {
+          const d = new Date(dateKey);
+          label = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+        }
+        g = { 
+          id: `g_${dateKey}`, 
+          date: dateKey, 
+          dateLabel: label, 
+          items: [] 
+        }; 
+        grouped.push(g); 
+      }
+      g.items.push(tx);
+    });
+    return grouped;
+  }, [transactions]);
   const [accounts, setAccounts] = useState(() => getLocal('money_accounts', initialAccounts));
   const [savingsItems, setSavingsItems] = useState(() => getLocal('money_savings', initialSavings));
   const [monthsState, setMonthsState] = useState(() => {
@@ -191,35 +231,7 @@ export const DataProvider = ({ children }) => {
           // Sort by actual date descending
           const sorted = [...safeTxs].sort((a, b) => new Date(b.date) - new Date(a.date));
           
-          const today = new Date().toISOString().split('T')[0];
-          const yesterdayOpen = new Date();
-          yesterdayOpen.setDate(yesterdayOpen.getDate() - 1);
-          const yesterday = yesterdayOpen.toISOString().split('T')[0];
-
-          const grouped = [];
-          sorted.forEach(tx => {
-            const dateKey = tx.date || today;
-            let g = grouped.find(gr => gr.date === dateKey);
-            if (!g) { 
-              let label = dateKey;
-              if (dateKey === today) label = "Aujourd'hui";
-              else if (dateKey === yesterday) label = "Hier";
-              else {
-                const d = new Date(dateKey);
-                label = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
-              }
-              
-              g = { 
-                id: `g_${dateKey}`, 
-                date: dateKey, 
-                dateLabel: label, 
-                items: [] 
-              }; 
-              grouped.push(g); 
-            }
-            g.items.push(tx);
-          });
-          if (JSON.stringify(transactions) !== JSON.stringify(grouped)) setTransactions(grouped);
+          if (JSON.stringify(transactions) !== JSON.stringify(sorted)) setTransactions(sorted);
         }
 
         if (safeFcs.length) {
@@ -370,19 +382,7 @@ export const DataProvider = ({ children }) => {
   useEffect(() => { if (session) fetchAllData(); }, [session]);
 
   const addTransactions = React.useCallback((txs) => {
-    setTransactions(prev => {
-      const updated = [...prev];
-      txs.forEach(tx => {
-        const label = tx.dateLabel || "Aujourd'hui";
-        const idx = updated.findIndex(g => g.dateLabel === label);
-        if (idx > -1) {
-          updated[idx] = { ...updated[idx], items: [tx, ...updated[idx].items] };
-        } else {
-          updated.push({ id: `g_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, dateLabel: label, items: [tx] });
-        }
-      });
-      return updated;
-    });
+    setTransactions(prev => [...txs, ...prev]);
     if (usingSupabase) {
       lastLocalWriteRef.current = Date.now();
       const inserts = txs.map(tx => ({ ...tx, dateLabel: tx.dateLabel || "Aujourd'hui", user_id: session?.user?.id }));
@@ -395,12 +395,7 @@ export const DataProvider = ({ children }) => {
   }, [addTransactions]);
 
   const deleteTransaction = React.useCallback((id) => {
-    setTransactions(prev => {
-      return prev.map(group => ({
-        ...group,
-        items: group.items.filter(item => String(item.id) !== String(id))
-      })).filter(group => group.items.length > 0);
-    });
+    setTransactions(prev => prev.filter(item => String(item.id) !== String(id)));
     if (usingSupabase) {
       lastLocalWriteRef.current = Date.now();
       supabase.from('transactions').delete().eq('id', id).then(({ error }) => { if (error) console.error(error); });
@@ -408,12 +403,7 @@ export const DataProvider = ({ children }) => {
   }, [usingSupabase]);
 
   const updateTransaction = React.useCallback((tx) => {
-    setTransactions(prev => {
-      return prev.map(group => ({
-        ...group,
-        items: group.items.map(item => String(item.id) === String(tx.id) ? { ...tx, user_id: session?.user?.id } : item)
-      }));
-    });
+    setTransactions(prev => prev.map(item => String(item.id) === String(tx.id) ? { ...tx, user_id: session?.user?.id } : item));
     if (usingSupabase) {
       lastLocalWriteRef.current = Date.now();
       supabase.from('transactions').upsert([{ ...tx, user_id: session?.user?.id }]).then(({ error }) => { if (error) console.error(error); });
@@ -840,7 +830,7 @@ export const DataProvider = ({ children }) => {
 
   const value = React.useMemo(() => ({
     categories,
-    transactions,
+    transactions: groupedTransactions,
     accounts: accountsWithBalances,
     savingsItems,
     setCategories,
