@@ -163,6 +163,7 @@ const Dashboard = () => {
       const updatedAccount = {
         ...editingItem,
         name: formData.get('name'),
+        bank: formData.get('bank') || editingItem.bank || '',
         domain: formData.get('domain'),
         accountNumber: formData.get('accountNumber'),
         // balance is computed in DataContext, we don't save it here
@@ -580,29 +581,20 @@ const Dashboard = () => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: 1 }}>
                         <div className="form-group">
                           <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 6, display: 'block' }}>
-                            {manageType === 'accounts' ? 'NOM DE LA BANQUE' : 'NOM DU LIVRET'}
+                            NOM DE LA BANQUE
                           </label>
                           <div style={{ position: 'relative' }}>
-                            <span className="material-icons-round" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', fontSize: 16 }}>label</span>
-                            <input name="name" defaultValue={editingItem.name} placeholder={manageType === 'accounts' ? "ex: BNP" : "ex: Livret A"} required style={{ width: '100%', padding: '10px 10px 10px 36px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 600, background: 'white' }} />
+                            <span className="material-icons-round" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', fontSize: 16 }}>account_balance</span>
+                            <input name="bank" defaultValue={editingItem.bank && editingItem.bank !== 'Non spécifié' ? editingItem.bank : ''} placeholder="ex: Crédit Agricole" style={{ width: '100%', padding: '10px 10px 10px 36px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 600, background: 'white' }} />
                           </div>
                         </div>
-
                         <div className="form-group">
                           <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 6, display: 'block' }}>
-                            {manageType === 'accounts' ? 'DOMAINE WEB' : 'BANQUE / ÉTABLISSEMENT'}
+                            DOMAINE WEB (ICÔNE)
                           </label>
                           <div style={{ position: 'relative' }}>
-                            <span className="material-icons-round" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', fontSize: 16 }}>
-                              {manageType === 'accounts' ? 'language' : 'account_balance'}
-                            </span>
-                            <input 
-                              name={manageType === 'accounts' ? "domain" : "bank"} 
-                              defaultValue={manageType === 'accounts' ? editingItem.domain : editingItem.bank} 
-                              placeholder={manageType === 'accounts' ? "ex: bnp.fr" : "ex: Société Générale"} 
-                              required 
-                              style={{ width: '100%', padding: '10px 10px 10px 36px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 600, background: 'white' }} 
-                            />
+                            <span className="material-icons-round" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', fontSize: 16 }}>language</span>
+                            <input name="domain" defaultValue={editingItem.domain} placeholder="ex: credit-agricole.fr" style={{ width: '100%', padding: '10px 10px 10px 36px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 600, background: 'white' }} />
                           </div>
                         </div>
                         {manageType === 'savings' && (
