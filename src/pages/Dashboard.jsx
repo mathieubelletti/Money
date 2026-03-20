@@ -409,13 +409,16 @@ const Dashboard = () => {
               border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-sm)',
               display: 'flex', flexDirection: 'column'
             }}>
-              <CompanyLogo domain={acc.domain} name={acc.name} size={32} noBorder style={{ marginBottom: 12 }} />
-              <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>{acc.name}</p>
+              {/* Top row: name left, logo right */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, flex: 1, paddingRight: 8 }}>{acc.name}</p>
+                <CompanyLogo domain={acc.domain} name={acc.name} size={32} noBorder />
+              </div>
               <p style={{ 
                 fontSize: 10, 
                 color: 'var(--color-text-tertiary)', 
                 fontWeight: 700, 
-                marginTop: 4,
+                margin: 0,
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
