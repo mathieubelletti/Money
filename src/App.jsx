@@ -43,7 +43,6 @@ function App() {
           onEnterBudget={() => setAppMode('budget')} 
           onEnterSharedExpenses={() => setAppMode('shared-expenses')}
         />
-        <BottomNav mode="hub" activeTab="accueil" setActiveTab={() => {}} />
       </div>
     );
   }
