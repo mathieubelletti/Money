@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '../supabase';
 import { useData } from '../context/DataContext';
 
 const SharedExpenses = ({ onBack }) => {
-  const { session } = useData();
+  const { session, selectedPeriod, setSelectedPeriod, forecasts } = useData();
   const userId = session?.user?.id;
 
   const [members, setMembers] = useState([]);
@@ -11,8 +11,41 @@ const SharedExpenses = ({ onBack }) => {
   const [loading, setLoading] = useState(true);
   const [isManageMembersOpen, setIsManageMembersOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [isFiltering, setIsFiltering] = useState(false);
 
   const [modalCategory, setModalCategory] = useState('receipt');
+  const scrollRef = useRef(null);
+
+  // --- Auto-scroll to selected month ---
+  useEffect(() => {
+    if (selectedPeriod && scrollRef.current) {
+      const timer = setTimeout(() => {
+        const activeBtn = scrollRef.current?.querySelector('[data-selected="true"]');
+        if (activeBtn) {
+          activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedPeriod, forecasts]);
+
+  const handlePeriodChange = (val) => {
+    setIsFiltering(true);
+    setSelectedPeriod(val);
+    setTimeout(() => setIsFiltering(false), 300);
+  };
+
+  // --- Filtered Transactions for logic ---
+  const currentMonthSlug = (selectedPeriod || '').split('_').pop(); // "2026-03"
+  
+  const filteredTransactions = useMemo(() => {
+    if (!currentMonthSlug) return transactions;
+    return transactions.filter(tx => {
+      // Prioritize accounting_period, fallback to date prefix
+      if (tx.accounting_period) return tx.accounting_period === currentMonthSlug;
+      return (tx.date || '').startsWith(currentMonthSlug);
+    });
+  }, [transactions, currentMonthSlug]);
 
   // --- Supabase Fetch ---
   useEffect(() => {
@@ -59,21 +92,17 @@ const SharedExpenses = ({ onBack }) => {
   ];
 
   // --- Calculations ---
-  // 1. Calculate how much each *active* member paid, trimming names to prevent space-typos
+  // 1. Using filteredTransactions instead of all transactions
   const computedMemberStats = members.map(m => {
-    const paid = transactions
+    const paid = filteredTransactions
       .filter(tx => tx.paid_by?.trim() === m.name?.trim())
       .reduce((sum, tx) => sum + Math.abs(tx.amount || 0), 0);
     return { ...m, paid };
   });
 
-  // 2. The group total should be the sum of what active members paid (ignores orphan transactions)
   const groupTotal = computedMemberStats.reduce((sum, ms) => sum + ms.paid, 0);
-  
-  // 3. Each member's share is the total divided by the number of active participants
   const individualShare = members.length > 0 ? groupTotal / members.length : 0;
 
-  // 4. Final stats with balance (paid - share)
   const memberStats = computedMemberStats.map(ms => ({
     ...ms,
     balance: ms.paid - individualShare
@@ -102,7 +131,8 @@ const SharedExpenses = ({ onBack }) => {
       amount: -Math.abs(formData.amount),
       paid_by: formData.paidBy,
       category: formData.category,
-      date: new Date().toISOString().split('T')[0]
+      date: formData.date || new Date().toISOString().split('T')[0],
+      accounting_period: formData.accountingPeriod || currentMonthSlug
     };
     const { data, error } = await supabase.from('shared_transactions').insert([newTx]).select();
     if (!error && data) setTransactions([data[0], ...transactions]);
@@ -146,6 +176,36 @@ const SharedExpenses = ({ onBack }) => {
           <span className="material-icons-round">settings</span>
         </button>
       </header>
+
+      {/* Month Selector Section */}
+      <section style={{ padding: '16px 0 0', background: 'white', borderBottom: '1px solid var(--color-border-light)' }}>
+        <div 
+          ref={scrollRef}
+          style={{ display: 'flex', gap: 12, overflowX: 'auto', padding: '0 20px 16px', msOverflowStyle: 'none', scrollbarWidth: 'none' }}
+        >
+          {forecasts.map((f) => {
+            const isSelected = selectedPeriod === f.id;
+            return (
+              <button
+                key={f.id}
+                data-selected={isSelected}
+                onClick={() => handlePeriodChange(f.id)}
+                style={{ 
+                  padding: '10px 20px', borderRadius: 20, whiteSpace: 'nowrap', border: 'none', fontSize: 13, fontWeight: 800,
+                  background: isSelected ? 'var(--color-primary)' : 'var(--color-bg)',
+                  color: isSelected ? 'white' : 'var(--color-text-secondary)',
+                  boxShadow: isSelected ? '0 4px 12px rgba(16, 185, 129, 0.25)' : 'none',
+                  transition: 'all 0.2s', cursor: 'pointer'
+                }}
+              >
+                {f.month.toUpperCase()}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <div style={{ opacity: isFiltering ? 0.4 : 1, transition: 'opacity 0.2s ease-in-out' }}>
 
       {/* Hero Section - Matching Budget Summary Card */}
       <section style={{ padding: '24px 20px' }} className="dashboard-max-width">
@@ -225,7 +285,7 @@ const SharedExpenses = ({ onBack }) => {
       <section style={{ padding: '0 20px' }}>
         <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', margin: '0 0 16px 4px' }}>Dépenses récentes</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {transactions.map(tx => (
+          {filteredTransactions.map(tx => (
             <div key={tx.id} style={{ 
               background: 'white', padding: '14px 16px', borderRadius: 16, display: 'flex', alignItems: 'center', gap: 14, border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-xs)'
             }}>
@@ -246,6 +306,7 @@ const SharedExpenses = ({ onBack }) => {
           ))}
         </div>
       </section>
+      </div>
 
       {/* FAB - Using material-icons-round */}
       {members.length > 0 && (
@@ -290,7 +351,19 @@ const SharedExpenses = ({ onBack }) => {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div style={{ background: 'white', borderRadius: 24, width: '100%', maxWidth: 440, padding: 24, boxShadow: 'var(--shadow-lg)' }}>
             <h3 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 900 }}>Dépense Commune</h3>
-            <form onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.target); addExpense({ name: fd.get('name'), amount: parseFloat(fd.get('amount')), paidBy: fd.get('paidBy'), category: fd.get('category') }); }}>
+            <form onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.target); addExpense({ name: fd.get('name'), amount: parseFloat(fd.get('amount')), paidBy: fd.get('paidBy'), category: fd.get('category'), date: fd.get('date'), accountingPeriod: fd.get('accountingPeriod') }); }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 900, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 6 }}>DATE D'ACHAT</label>
+                  <input name="date" type="date" defaultValue={new Date().toISOString().split('T')[0]} required style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--color-border)', outline: 'none', fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 900, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 6 }}>MOIS COMPTABILITÉ</label>
+                  <select name="accountingPeriod" defaultValue={selectedPeriod} required style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--color-border)', background: 'white', outline: 'none', fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                    {forecasts.map(f => <option key={f.id} value={f.id}>{f.month.toUpperCase()}</option>)}
+                  </select>
+                </div>
+              </div>
               <div style={{ marginBottom: 16 }}>
                 <label style={{ fontSize: 11, fontWeight: 900, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 6 }}>INTITULÉ</label>
                 <input name="name" type="text" placeholder="Ex: Restaurant" required style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--color-border)', outline: 'none', fontSize: 14, fontWeight: 600 }} />

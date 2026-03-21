@@ -1,7 +1,7 @@
 import { supabase } from '../supabase';
 import { useData } from '../context/DataContext';
 
-const Hub = ({ onEnterBudget, onEnterSharedExpenses }) => {
+const Hub = ({ onEnterBudget, onEnterSharedExpenses, onEnterTaxes }) => {
   const { session } = useData();
   const user = session?.user;
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Utilisateur';
@@ -37,6 +37,7 @@ const Hub = ({ onEnterBudget, onEnterSharedExpenses }) => {
       icon: 'calculate',
       color: 'var(--color-primary)',
       bg: 'var(--color-primary-glass)',
+      onClick: onEnterTaxes
     },
     {
       id: 'tasks',

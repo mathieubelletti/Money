@@ -6,6 +6,7 @@ import Previsions from './pages/Previsions';
 import Auth from './pages/Auth';
 import Hub from './pages/Hub';
 import SharedExpenses from './pages/SharedExpenses';
+import Taxes from './pages/Taxes';
 import BottomNav from './components/BottomNav';
 import SyncIndicator from './components/SyncIndicator';
 import { useData } from './context/DataContext';
@@ -42,6 +43,7 @@ function App() {
         <Hub 
           onEnterBudget={() => setAppMode('budget')} 
           onEnterSharedExpenses={() => setAppMode('shared-expenses')}
+          onEnterTaxes={() => setAppMode('taxes')}
         />
       </div>
     );
@@ -53,6 +55,15 @@ function App() {
         <SyncIndicator />
         <SharedExpenses onBack={() => setAppMode('hub')} />
         {/* No BottomNav here as per user request */}
+      </div>
+    );
+  }
+
+  if (appMode === 'taxes') {
+    return (
+      <div className="app-container">
+        <SyncIndicator />
+        <Taxes onBack={() => setAppMode('hub')} />
       </div>
     );
   }
