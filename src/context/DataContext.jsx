@@ -211,18 +211,18 @@ export const DataProvider = ({ children }) => {
       setLoading(false); // Safety: ensure loading is false if we return early
       return;
     }
-    hasFetchedRef.current = true;
     setLoading(true);
 
     try {
-      const [{ data: cats }, { data: txs }, { data: accs }, { data: svs }, { data: fcs }, { data: gl }, { data: st }] = await Promise.all([
+      const [{ data: cats }, { data: txs }, { data: accs }, { data: svs }, { data: fcs }, { data: gl }, { data: st }, { data: prevs }] = await Promise.all([
         supabase.from('categories').select('*'),
         supabase.from('transactions').select('*'),
         supabase.from('accounts').select('*'),
         supabase.from('savings').select('*'),
         supabase.from('forecasts').select('*').order('id', { ascending: true }),
         supabase.from('goal').select('*').limit(1).maybeSingle(),
-        supabase.from('app_state').select('*').in('key', ['globalRecurrences', 'forecasts_detail'])
+        supabase.from('app_state').select('*').in('key', ['globalRecurrences', 'forecasts_detail']),
+        supabase.from('previsions').select('*')
       ]);
 
       const safeCats = cats || [];
@@ -308,9 +308,11 @@ export const DataProvider = ({ children }) => {
           if (gr?.value && JSON.stringify(globalRecurrences) !== JSON.stringify(gr.value)) setGlobalRecurrences(gr.value);
           if (fd?.value && JSON.stringify(monthsState) !== JSON.stringify(fd.value)) setMonthsState(fd.value);
         }
+        hasFetchedRef.current = true; // Signal completion ONLY after success
       } else {
         // Truly empty on Supabase - only then check local migration
         await migrateFromLocal();
+        hasFetchedRef.current = true;
       }
     } catch (e) {
       console.error('Fetch error:', e);
