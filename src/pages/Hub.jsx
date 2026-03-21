@@ -26,9 +26,17 @@ const Hub = ({ onEnterBudget, onEnterSharedExpenses }) => {
       name: 'Commun',
       desc: 'Dépenses partagées à deux',
       icon: 'groups',
-      color: '#10b981',
-      bg: 'rgba(16, 185, 129, 0.1)',
+      color: 'var(--color-primary)',
+      bg: 'var(--color-primary-glass)',
       onClick: onEnterSharedExpenses
+    },
+    {
+      id: 'taxes',
+      name: "Simulateur d'impôt",
+      desc: 'Estimez vos impôts 2026',
+      icon: 'calculate',
+      color: 'var(--color-primary)',
+      bg: 'var(--color-primary-glass)',
     },
     {
       id: 'tasks',

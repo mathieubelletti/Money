@@ -12,6 +12,8 @@ const SharedExpenses = ({ onBack }) => {
   const [isManageMembersOpen, setIsManageMembersOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
 
+  const [modalCategory, setModalCategory] = useState('receipt');
+
   // --- Supabase Fetch ---
   useEffect(() => {
     if (userId) fetchData();
@@ -304,10 +306,15 @@ const SharedExpenses = ({ onBack }) => {
                 <label style={{ fontSize: 11, fontWeight: 900, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 10 }}>CATÉGORIE</label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                   {CATEGORIES.map(c => (
-                    <label key={c.id} style={{ 
-                      cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '10px 4px', borderRadius: 12, border: '1.5px solid var(--color-border-light)', transition: 'all 0.2s'
+                    <label key={c.id} onClick={() => setModalCategory(c.icon)} style={{ 
+                      cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '10px 4px', borderRadius: 12, 
+                      border: '1.5px solid',
+                      borderColor: modalCategory === c.icon ? 'var(--color-primary)' : 'var(--color-border-light)',
+                      background: modalCategory === c.icon ? 'var(--color-primary-bg)' : 'transparent',
+                      color: modalCategory === c.icon ? 'var(--color-primary)' : 'inherit',
+                      transition: 'all 0.2s'
                     }}>
-                      <input type="radio" name="category" value={c.icon} defaultChecked={c.id === 'receipt'} style={{ display: 'none' }} />
+                      <input type="radio" name="category" value={c.icon} checked={modalCategory === c.icon} onChange={() => {}} style={{ display: 'none' }} />
                       <span className="material-icons-round" style={{ fontSize: 20 }}>{c.icon}</span>
                       <span style={{ fontSize: 10, fontWeight: 700 }}>{c.label}</span>
                     </label>
