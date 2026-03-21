@@ -186,6 +186,11 @@ export const DataProvider = ({ children }) => {
         lastUserIdRef.current = newUserId;
         setSyncStatus('idle'); // Clear any previous error indicator during transition
         
+        // --- Force Current Month Period on Login ---
+        const now = new Date();
+        const currentSlug = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        setSelectedPeriod(newUserId ? `${newUserId}_${currentSlug}` : currentSlug);
+        
         // Reset state to initial or user-specific local storage
         setCategories(getLocal('money_categories', initialCategories, newUserId));
         setTransactions(getLocal('money_transactions', initialTransactions, newUserId));
@@ -393,6 +398,26 @@ export const DataProvider = ({ children }) => {
       if (syncTimeout) clearTimeout(syncTimeout);
     };
   }, [session?.user?.id, usingSupabase, refreshData]);
+ 
+  // --- Date Watcher: Handle automatic month transition (on 1st of the month) ---
+  useEffect(() => {
+    const checkDate = () => {
+      const now = new Date();
+      const currentSlug = now.toISOString().substring(0, 7);
+      const expectedPeriod = session?.user?.id ? `${session.user.id}_${currentSlug}` : currentSlug;
+      
+      // If the app is open and it's now a different month than selected, 
+      // we auto-switch to the new month as requested.
+      if (selectedPeriod && !selectedPeriod.includes(currentSlug)) {
+        setSelectedPeriod(expectedPeriod);
+      }
+    };
+
+    // Check once on mount and then every hour
+    checkDate();
+    const interval = setInterval(checkDate, 3600000);
+    return () => clearInterval(interval);
+  }, [selectedPeriod, session?.user?.id]);
 
   useEffect(() => { if (session) fetchAllData(); }, [session]);
 
