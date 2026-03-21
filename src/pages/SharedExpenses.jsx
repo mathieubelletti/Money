@@ -207,12 +207,17 @@ const SharedExpenses = ({ onBack }) => {
 
       <style>{`
         .members-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
-        @media (max-width: 600px) { .members-grid { grid-template-columns: 1fr; gap: 12px; } }
+        @media (max-width: 600px) { 
+          .members-grid { grid-template-columns: 1fr 1fr; gap: 10px; } 
+          .member-card { padding: 16px 12px; flex-direction: column; text-align: center; gap: 10px; border-radius: 16px; }
+          .member-card > div:first-child { width: 44px !important; height: 44px !important; font-size: 16px !important; }
+        }
         .member-card { 
           background: white; border-radius: 20px; padding: 20px; 
           border: 1px solid var(--color-border-light); 
           box-shadow: var(--shadow-sm); 
           display: flex; align-items: center; gap: 20px;
+          transition: transform 0.2s;
         }
       `}</style>
 
