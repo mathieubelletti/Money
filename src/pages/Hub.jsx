@@ -2,7 +2,7 @@ import { supabase } from '../supabase';
 import { useData } from '../context/DataContext';
 
 const Hub = ({ onEnterBudget, onEnterSharedExpenses, onEnterTaxes, onEnterFlowTask }) => {
-  const { session } = useData();
+  const { session, isDarkMode, toggleTheme } = useData();
   const user = session?.user;
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Utilisateur';
   const avatarUrl = user?.user_metadata?.avatar_url;
@@ -44,8 +44,8 @@ const Hub = ({ onEnterBudget, onEnterSharedExpenses, onEnterTaxes, onEnterFlowTa
       name: 'FlowTask',
       desc: 'Maîtrisez votre journée (Eisenhower)',
       icon: 'task_alt',
-      color: '#10b981',
-      bg: 'rgba(16, 185, 129, 0.1)',
+      color: 'var(--color-primary)',
+      bg: 'var(--color-primary-glass)',
       onClick: onEnterFlowTask
     }
   ];
@@ -69,7 +69,18 @@ const Hub = ({ onEnterBudget, onEnterSharedExpenses, onEnterTaxes, onEnterFlowTa
           </div>
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
-          <button className="hub-notif">
+          <button 
+            onClick={toggleTheme}
+            style={{ 
+              width: 40, height: 40, borderRadius: '50%', background: 'transparent', 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-secondary)',
+              border: 'none', cursor: 'pointer'
+            }}
+            title={isDarkMode ? "Passer au thème clair" : "Passer au thème sombre"}
+          >
+            <span className="material-icons-round">{isDarkMode ? 'light_mode' : 'dark_mode'}</span>
+          </button>
+          <button className="hub-notif" style={{ background: 'var(--color-primary-glass)', color: 'var(--color-primary)' }}>
             <span className="material-icons-round">notifications</span>
           </button>
           <button 

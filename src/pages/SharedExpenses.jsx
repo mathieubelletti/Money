@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '../supabase';
 import { useData } from '../context/DataContext';
+import PageHeader from '../components/PageHeader';
 
 const SharedExpenses = ({ onBack }) => {
   const { session, selectedPeriod, setSelectedPeriod, forecasts } = useData();
@@ -163,46 +164,38 @@ const SharedExpenses = ({ onBack }) => {
   return (
     <div className="screen shared-expenses-view animate-fade" style={{ background: 'var(--color-bg)', minHeight: '100vh', paddingBottom: 120 }}>
       
-      {/* Header - Matching Budget Style */}
-      <header style={{ 
-        padding: '16px 20px', 
-        background: 'white', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'space-between',
-        borderBottom: '1.5px solid var(--color-border)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100
-      }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, display: 'flex', color: 'var(--color-primary)' }}>
-          <span className="material-icons-round" style={{ fontSize: 24 }}>home</span>
-        </button>
-        <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>Dépenses Communes</h2>
-        <button onClick={() => setIsManageMembersOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, display: 'flex', color: 'var(--color-primary)' }}>
-          <span className="material-icons-round">settings</span>
-        </button>
-      </header>
+      <PageHeader title="Dépenses Communes" onBack={onBack} />
 
-      {/* Month Selector Section */}
-      <section style={{ padding: '16px 0 0', background: 'white', borderBottom: '1px solid var(--color-border-light)' }}>
+      {/* Interactive Month Selector - Matching Dashboard */}
+      <section style={{ padding: '0 20px 16px', background: 'var(--color-bg)' }} className="dashboard-max-width">
         <div 
           ref={scrollRef}
-          style={{ display: 'flex', gap: 12, overflowX: 'auto', padding: '0 20px 16px', msOverflowStyle: 'none', scrollbarWidth: 'none' }}
+          className="scrollbar-hide"
+          style={{
+            display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8, scrollBehavior: 'smooth'
+          }}
         >
-          {forecasts.map((f) => {
-            const isSelected = selectedPeriod === f.id;
+          {forecasts?.map(f => {
+            const periodValue = f.id;
+            const isSelected = selectedPeriod === periodValue;
             return (
               <button
                 key={f.id}
                 data-selected={isSelected}
-                onClick={() => handlePeriodChange(f.id)}
-                style={{ 
-                  padding: '10px 20px', borderRadius: 20, whiteSpace: 'nowrap', border: 'none', fontSize: 13, fontWeight: 800,
-                  background: isSelected ? 'var(--color-primary)' : 'var(--color-bg)',
-                  color: isSelected ? 'white' : 'var(--color-text-secondary)',
-                  boxShadow: isSelected ? '0 4px 12px rgba(16, 185, 129, 0.25)' : 'none',
-                  transition: 'all 0.2s', cursor: 'pointer'
+                onClick={() => handlePeriodChange(periodValue)}
+                style={{
+                  flexShrink: 0,
+                  padding: '8px 20px',
+                  borderRadius: 20,
+                  background: isSelected ? 'var(--color-primary)' : 'var(--color-surface)',
+                  color: isSelected ? 'white' : 'var(--color-text-primary)',
+                  border: isSelected ? 'none' : '1px solid var(--color-border-light)',
+                  backdropFilter: 'blur(10px)',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  boxShadow: isSelected ? '0 4px 12px rgba(53, 132, 96, 0.3)' : 'var(--shadow-sm)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
                 }}
               >
                 {f.month.toUpperCase()}
@@ -212,23 +205,25 @@ const SharedExpenses = ({ onBack }) => {
         </div>
       </section>
 
+
+
       <div style={{ opacity: isFiltering ? 0.4 : 1, transition: 'opacity 0.2s ease-in-out' }}>
 
       {/* Hero Section - Matching Budget Summary Card */}
       <section style={{ padding: '24px 20px' }} className="dashboard-max-width">
         <div style={{ 
-          background: 'var(--color-primary-bg)', 
+          background: 'var(--color-primary)', 
           borderRadius: 24, 
           padding: '24px', 
-          border: '1.5px solid var(--color-border)',
+          boxShadow: '0 12px 24px rgba(53, 132, 96, 0.2)',
           position: 'relative',
           overflow: 'hidden'
         }}>
-          <p style={{ fontSize: 11, fontWeight: 900, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>RÉCAPITULATIF GROUPE</p>
-          <h1 style={{ fontSize: 42, fontWeight: 900, margin: '8px 0', color: 'var(--color-text-primary)' }}>
+          <p style={{ fontSize: 11, fontWeight: 900, color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>RÉCAPITULATIF GROUPE</p>
+          <h1 style={{ fontSize: 42, fontWeight: 900, margin: '8px 0', color: '#ffffff' }}>
             {groupTotal.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} <span style={{ fontSize: 20, opacity: 0.6 }}>€</span>
           </h1>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'white', border: '1px solid var(--color-border-light)', padding: '6px 14px', borderRadius: 100, fontSize: 12, fontWeight: 800, marginTop: 8, color: 'var(--color-primary)' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.1)', padding: '6px 14px', borderRadius: 100, fontSize: 12, fontWeight: 800, marginTop: 8, color: '#ffffff' }}>
             <span className="material-icons-round" style={{ fontSize: 16 }}>account_balance</span>
             {members.length} membres actifs
           </div>
@@ -237,8 +232,9 @@ const SharedExpenses = ({ onBack }) => {
 
       {/* Distribution Grid - Matching Budget Category Card style */}
       <section style={{ padding: '0 20px 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, padding: '0 4px' }}>
-          <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>Répartition</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, padding: '0 4px' }}>
+          <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'nowrap' }}>Répartition</h3>
+          <div style={{ flex: 1, height: 1.5, background: 'var(--color-separator)' }}></div>
           <button onClick={() => setIsManageMembersOpen(true)} style={{ border: 'none', background: 'none', color: 'var(--color-primary)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>Gérer</button>
         </div>
         
@@ -260,7 +256,7 @@ const SharedExpenses = ({ onBack }) => {
                 <div style={{ 
                   marginTop: 8, fontSize: 11, fontWeight: 900, padding: '4px 10px', borderRadius: 8,
                   display: 'inline-block',
-                  background: u.balance >= 0 ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                  background: u.balance >= 0 ? 'var(--color-success-light)' : 'var(--color-danger-light)',
                   color: u.balance >= 0 ? 'var(--color-primary)' : 'var(--color-danger)',
                   textTransform: 'uppercase'
                 }}>
@@ -280,7 +276,7 @@ const SharedExpenses = ({ onBack }) => {
           .member-card > div:first-child { width: 44px !important; height: 44px !important; font-size: 16px !important; }
         }
         .member-card { 
-          background: white; border-radius: 20px; padding: 20px; 
+          background: var(--color-surface); border-radius: 20px; padding: 20px; 
           border: 1px solid var(--color-border-light); 
           box-shadow: var(--shadow-sm); 
           display: flex; align-items: center; gap: 20px;
@@ -290,13 +286,21 @@ const SharedExpenses = ({ onBack }) => {
 
       {/* Recent Feed - Matching Budget Category List style */}
       <section style={{ padding: '0 20px' }}>
-        <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', margin: '0 0 16px 4px' }}>Dépenses récentes</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, padding: '0 4px' }}>
+          <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'nowrap' }}>Dépenses récentes</h3>
+          <div style={{ flex: 1, height: 1.5, background: 'var(--color-separator)' }}></div>
+        </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {filteredTransactions.map(tx => (
             <div key={tx.id} style={{ 
-              background: 'white', padding: '14px 16px', borderRadius: 16, display: 'flex', alignItems: 'center', gap: 14, border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-xs)'
+              background: 'var(--color-surface)', padding: '14px 16px', borderRadius: 16, display: 'flex', alignItems: 'center', gap: 14, border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-xs)'
             }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--color-primary-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-primary)' }}>
+              <div style={{ 
+                width: 44, height: 44, borderRadius: 12, 
+                background: tx.amount > 0 ? 'var(--color-success-light)' : 'var(--color-danger-light)', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                color: tx.amount > 0 ? 'var(--color-success)' : 'var(--color-danger)' 
+              }}>
                 <span className="material-icons-round" style={{ fontSize: 20 }}>{tx.category || 'receipt_long'}</span>
               </div>
               <div style={{ flex: 1 }}>
@@ -304,7 +308,7 @@ const SharedExpenses = ({ onBack }) => {
                 <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-tertiary)', margin: '2px 0 0' }}>{tx.paid_by} • {new Date(tx.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</p>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <p style={{ fontSize: 15, fontWeight: 900, margin: 0, color: 'var(--color-text-primary)' }}>{tx.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</p>
+                <p style={{ fontSize: 15, fontWeight: 900, margin: 0, color: 'var(--color-danger)' }}>{tx.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</p>
                 <button onClick={() => deleteTransaction(tx.id)} style={{ border: 'none', background: 'none', color: 'var(--color-text-tertiary)', cursor: 'pointer', marginTop: 4 }}>
                   <span className="material-icons-round" style={{ fontSize: 16 }}>delete</span>
                 </button>
@@ -317,7 +321,7 @@ const SharedExpenses = ({ onBack }) => {
 
       {/* FAB - Using material-icons-round */}
       {members.length > 0 && (
-        <button onClick={() => setIsExpenseModalOpen(true)} style={{ position: 'fixed', bottom: 30, right: 24, width: 60, height: 60, borderRadius: 30, background: 'var(--color-primary)', color: 'white', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 12px 24px rgba(24, 82, 74, 0.4)', cursor: 'pointer', zIndex: 1000 }}>
+        <button onClick={() => setIsExpenseModalOpen(true)} style={{ position: 'fixed', bottom: 30, right: 24, width: 60, height: 60, borderRadius: 30, background: 'var(--color-primary)', color: 'white', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 12px 24px rgba(53, 132, 96, 0.4)', cursor: 'pointer', zIndex: 1000 }}>
           <span className="material-icons-round" style={{ fontSize: 32 }}>add</span>
         </button>
       )}
@@ -325,7 +329,7 @@ const SharedExpenses = ({ onBack }) => {
       {/* --- MODALS --- */}
       {isManageMembersOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: 'white', borderRadius: 24, width: '100%', maxWidth: 400, padding: 24, boxShadow: 'var(--shadow-lg)', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ background: 'var(--color-surface)', borderRadius: 24, width: '100%', maxWidth: 400, padding: 24, boxShadow: 'var(--shadow-lg)', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900 }}>Membres</h3>
               <button onClick={() => setIsManageMembersOpen(false)} style={{ border: 'none', background: 'none', color: 'var(--color-text-tertiary)', cursor: 'pointer' }}><span className="material-icons-round">close</span></button>
@@ -356,7 +360,7 @@ const SharedExpenses = ({ onBack }) => {
 
       {isExpenseModalOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: 'white', borderRadius: 24, width: '100%', maxWidth: 440, padding: 24, boxShadow: 'var(--shadow-lg)' }}>
+          <div style={{ background: 'var(--color-surface)', borderRadius: 24, width: '100%', maxWidth: 440, padding: 24, boxShadow: 'var(--shadow-lg)' }}>
             <h3 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 900 }}>Dépense Commune</h3>
             <form onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.target); addExpense({ name: fd.get('name'), amount: parseFloat(fd.get('amount')), paidBy: fd.get('paidBy'), category: fd.get('category'), date: fd.get('date'), accountingPeriod: fd.get('accountingPeriod') }); }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
@@ -366,7 +370,7 @@ const SharedExpenses = ({ onBack }) => {
                 </div>
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 900, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 6 }}>MOIS COMPTABILITÉ</label>
-                  <select name="accountingPeriod" defaultValue={selectedPeriod} required style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--color-border)', background: 'white', outline: 'none', fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                  <select name="accountingPeriod" defaultValue={selectedPeriod} required style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--color-border)', background: 'var(--color-surface)', outline: 'none', fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }}>
                     {forecasts.map(f => <option key={f.id} value={f.id}>{f.month.toUpperCase()}</option>)}
                   </select>
                 </div>
@@ -382,7 +386,7 @@ const SharedExpenses = ({ onBack }) => {
                 </div>
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 900, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 6 }}>PAYEUR</label>
-                  <select name="paidBy" required style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--color-border)', background: 'white', outline: 'none', fontSize: 14, fontWeight: 600 }}>
+                  <select name="paidBy" required style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--color-border)', background: 'var(--color-surface)', outline: 'none', fontSize: 14, fontWeight: 600 }}>
                     {members.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
                   </select>
                 </div>

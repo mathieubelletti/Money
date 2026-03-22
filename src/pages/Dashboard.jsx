@@ -287,13 +287,13 @@ const Dashboard = ({ onBackToHub }) => {
                   flexShrink: 0,
                   padding: '8px 20px',
                   borderRadius: 20,
-                  background: isSelected ? 'var(--color-primary)' : 'rgba(255,255,255,0.6)',
+                  background: isSelected ? 'var(--color-primary)' : 'var(--color-surface)',
                   color: isSelected ? 'white' : 'var(--color-text-primary)',
                   border: isSelected ? 'none' : '1px solid var(--color-border-light)',
                   backdropFilter: 'blur(10px)',
                   fontSize: 14,
                   fontWeight: 700,
-                  boxShadow: isSelected ? '0 4px 12px rgba(24, 82, 74, 0.3)' : 'var(--shadow-sm)',
+                  boxShadow: isSelected ? '0 4px 12px rgba(53, 132, 96, 0.3)' : 'var(--shadow-sm)',
                   cursor: 'pointer',
                   transition: 'all 0.2s'
                 }}
@@ -316,31 +316,31 @@ const Dashboard = ({ onBackToHub }) => {
           const accountsRatio = 100 - savingsRatio;
           return (
             <div style={{ 
-              background: 'linear-gradient(135deg, var(--color-primary-bg) 0%, #e2eeec 100%)', 
+              background: 'var(--color-primary)', 
               padding: '24px', 
               borderRadius: 24, 
               border: '1px solid var(--color-border)',
               position: 'relative',
               overflow: 'hidden',
-              boxShadow: '0 10px 25px -5px rgba(24, 82, 74, 0.15)'
+              boxShadow: '0 8px 20px -5px rgba(112, 188, 132, 0.2)'
             }}>
               {/* Icon */}
-              <div style={{ position: 'absolute', top: 20, right: 20, color: 'var(--color-primary)', opacity: 0.8 }}>
+              <div style={{ position: 'absolute', top: 20, right: 20, color: 'white', opacity: 0.4 }}>
                 <span className="material-icons-round" style={{ fontSize: 28 }}>account_balance</span>
               </div>
 
               <div style={{ position: 'relative', zIndex: 1 }}>
                 {/* Label */}
-                <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-secondary)', margin: 0 }}>
+                <p style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.7)', margin: 0 }}>
                   Gestion du Patrimoine
                 </p>
                 {/* Total */}
-                <h1 style={{ fontSize: 36, fontWeight: 900, color: 'var(--color-text-primary)', margin: '8px 0 16px', letterSpacing: '-0.02em' }}>
+                <h1 style={{ fontSize: 36, fontWeight: 900, color: 'white', margin: '8px 0 16px', letterSpacing: '-0.02em' }}>
                   {totalPatrimoine.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
                 </h1>
 
                 {/* Progress bar: accounts vs savings */}
-                <div style={{ display: 'flex', height: 6, borderRadius: 100, overflow: 'hidden', background: 'rgba(0,0,0,0.08)', marginBottom: 14 }}>
+                <div style={{ display: 'flex', height: 6, borderRadius: 100, overflow: 'hidden', background: 'rgba(255,255,255,0.1)', marginBottom: 14 }}>
                   <div style={{ width: `${accountsRatio}%`, background: 'var(--color-primary)', transition: 'width 0.5s ease' }} />
                   <div style={{ width: `${savingsRatio}%`, background: 'rgba(24,82,74,0.35)', transition: 'width 0.5s ease' }} />
                 </div>
@@ -350,22 +350,22 @@ const Dashboard = ({ onBackToHub }) => {
                   <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ width: 10, height: 10, borderRadius: 3, background: 'var(--color-primary)', flexShrink: 0 }} />
                     <div>
-                      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-tertiary)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.6)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         Comptes courants
                       </p>
-                      <p style={{ fontSize: 15, fontWeight: 900, color: 'var(--color-text-primary)', margin: '2px 0 0' }}>
+                      <p style={{ fontSize: 15, fontWeight: 900, color: totalAccounts >= 0 ? 'white' : 'var(--color-danger)', margin: '2px 0 0' }}>
                         {totalAccounts.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
                       </p>
                     </div>
                   </div>
-                  <div style={{ width: 1, background: 'rgba(0,0,0,0.08)' }} />
+                  <div style={{ width: 1, background: 'rgba(255,255,255,0.1)' }} />
                   <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ width: 10, height: 10, borderRadius: 3, background: 'rgba(24,82,74,0.35)', flexShrink: 0 }} />
                     <div>
-                      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-tertiary)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.6)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         Épargne
                       </p>
-                      <p style={{ fontSize: 15, fontWeight: 900, color: 'var(--color-text-primary)', margin: '2px 0 0' }}>
+                      <p style={{ fontSize: 15, fontWeight: 900, color: totalSavings >= 0 ? 'white' : 'var(--color-danger)', margin: '2px 0 0' }}>
                         {totalSavings.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
                       </p>
                     </div>
@@ -410,17 +410,17 @@ const Dashboard = ({ onBackToHub }) => {
       <section style={{ padding: '24px' }} className="dashboard-max-width">
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
           <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'nowrap' }}>Résumé du mois</h3>
-          <div style={{ flex: 1, height: 1.5, background: '#000000', opacity: 0.2 }}></div>
+          <div style={{ flex: 1, height: 1.5, background: 'var(--color-separator)' }}></div>
         </div>
         <div className="form-tiles-responsive" style={{ display: 'flex', gap: 16 }}>
           <div style={{ 
-            flex: 1, background: 'white', padding: 20, borderRadius: 24, 
+            flex: 1, background: 'var(--color-surface)', padding: 20, borderRadius: 24, 
             border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-sm)',
             display: 'flex', alignItems: 'center', gap: 16
           }}>
             <div style={{ 
-              width: 48, height: 48, borderRadius: 16, background: 'var(--color-primary-glass)', 
-              color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' 
+              width: 48, height: 48, borderRadius: 16, background: 'var(--color-success-light)', 
+              color: 'var(--color-success)', display: 'flex', alignItems: 'center', justifyContent: 'center' 
             }}>
               <span className="material-icons-round">trending_up</span>
             </div>
@@ -431,13 +431,13 @@ const Dashboard = ({ onBackToHub }) => {
           </div>
           
           <div style={{ 
-            flex: 1, background: 'white', padding: 20, borderRadius: 24, 
+            flex: 1, background: 'var(--color-surface)', padding: 20, borderRadius: 24, 
             border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-sm)',
             display: 'flex', alignItems: 'center', gap: 16
           }}>
             <div style={{ 
-              width: 48, height: 48, borderRadius: 16, background: 'rgba(24, 82, 74, 0.05)', 
-              color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.8
+              width: 48, height: 48, borderRadius: 16, background: 'var(--color-danger-light)', 
+              color: 'var(--color-danger)', display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}>
               <span className="material-icons-round">trending_down</span>
             </div>
@@ -453,7 +453,7 @@ const Dashboard = ({ onBackToHub }) => {
       <section style={{ padding: '0 24px 24px' }} className="dashboard-max-width">
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
           <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'nowrap' }}>Comptes connectés</h3>
-          <div style={{ flex: 1, height: 1.5, background: '#000000', opacity: 0.2 }}></div>
+          <div style={{ flex: 1, height: 1.5, background: 'var(--color-separator)' }}></div>
           <button onClick={() => { setManageType('accounts'); setIsManageModalOpen(true); }} style={{ 
             background: 'none', border: 'none', color: 'var(--color-primary)', 
             fontSize: 13, fontWeight: 800, cursor: 'pointer' 
@@ -472,7 +472,7 @@ const Dashboard = ({ onBackToHub }) => {
               onDrop={(e) => handleDrop(e, 'accounts', idx)}
               onDragEnd={handleDragEnd}
               style={{ 
-                minWidth: 140, background: 'white', padding: 16, borderRadius: 18, 
+                minWidth: 140, background: 'var(--color-surface)', padding: '12px 14px', borderRadius: 18, 
                 border: isOver ? '2px dashed var(--color-primary)' : '1px solid var(--color-border-light)',
                 boxShadow: 'var(--shadow-sm)',
                 display: 'flex', flexDirection: 'column',
@@ -482,17 +482,17 @@ const Dashboard = ({ onBackToHub }) => {
                 transform: isOver ? 'scale(1.02)' : 'scale(1)',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
                 <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, flex: 1, paddingRight: 8 }}>{acc.name}</p>
                 <CompanyLogo domain={acc.domain} name={acc.name} size={32} noBorder />
               </div>
               <p style={{ fontSize: 10, color: 'var(--color-text-tertiary)', fontWeight: 700, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }} title={acc.accountNumber}>
                 {acc.accountNumber}
               </p>
-              <p style={{ fontSize: 14, fontWeight: 900, color: 'var(--color-text-primary)', marginTop: 'auto', paddingTop: 12 }}>{acc.balance.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</p>
+              <p style={{ fontSize: 14, fontWeight: 900, color: acc.balance >= 0 ? 'var(--color-success)' : 'var(--color-danger)', marginTop: 'auto', paddingTop: 8 }}>{acc.balance.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</p>
             </div>
           );}) : (
-            <div style={{ flex: 1, padding: '32px', background: 'white', borderRadius: 20, border: '2px dashed var(--color-border)', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
+            <div style={{ flex: 1, padding: '32px', background: 'var(--color-surface)', borderRadius: 20, border: '2px dashed var(--color-border)', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
               <span className="material-icons-round" style={{ fontSize: 32, marginBottom: 8, opacity: 0.5 }}>account_balance</span>
               <p style={{ margin: 0, fontSize: 13, fontWeight: 700 }}>Aucun compte configuré</p>
               <button onClick={() => { setManageType('accounts'); setIsManageModalOpen(true); handleAddItem(); }} style={{ marginTop: 12, background: 'var(--color-primary)', border: 'none', borderRadius: 8, padding: '6px 16px', color: 'white', fontWeight: 800, fontSize: 12, cursor: 'pointer' }}>Ajouter un compte</button>
@@ -505,7 +505,7 @@ const Dashboard = ({ onBackToHub }) => {
       <section style={{ padding: '0 24px 24px' }} className="dashboard-max-width">
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
           <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'nowrap' }}>Épargne</h3>
-          <div style={{ flex: 1, height: 1.5, background: '#000000', opacity: 0.2 }}></div>
+          <div style={{ flex: 1, height: 1.5, background: 'var(--color-separator)' }}></div>
           <button onClick={() => { setManageType('savings'); setIsManageModalOpen(true); }} style={{ 
             background: 'none', border: 'none', color: 'var(--color-primary)', 
             fontSize: 13, fontWeight: 800, cursor: 'pointer' 
@@ -524,7 +524,7 @@ const Dashboard = ({ onBackToHub }) => {
               onDrop={(e) => handleDrop(e, 'savings', idx)}
               onDragEnd={handleDragEnd}
               style={{ 
-                minWidth: 180, background: 'white', padding: 20, borderRadius: 18, 
+                minWidth: 180, background: 'var(--color-surface)', padding: '12px 14px', borderRadius: 18, 
                 border: isOver ? '2px dashed var(--color-primary)' : '1px solid var(--color-border-light)',
                 boxShadow: 'var(--shadow-sm)',
                 display: 'flex', flexDirection: 'column',
@@ -534,18 +534,18 @@ const Dashboard = ({ onBackToHub }) => {
                 transform: isOver ? 'scale(1.02)' : 'scale(1)',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
                 <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, flex: 1, paddingRight: 8 }}>{save.name}</p>
                 <CompanyLogo domain={save.domain} name={save.bank} size={32} noBorder />
               </div>
               <p style={{ fontSize: 11, color: 'var(--color-text-tertiary)', fontWeight: 600, margin: 0 }}>{save.bank}</p>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 'auto', paddingTop: 12 }}>
-                <p style={{ fontSize: 15, fontWeight: 900, color: 'var(--color-primary-dark)', margin: 0 }}>{save.balance.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 'auto', paddingTop: 8 }}>
+                <p style={{ fontSize: 15, fontWeight: 900, color: save.balance >= 0 ? 'var(--color-success)' : 'var(--color-danger)', margin: 0 }}>{save.balance.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</p>
                 {save.rate > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--color-success)', background: 'var(--color-success-light)', padding: '2px 7px', borderRadius: 6 }}>{save.rate}%</span>}
               </div>
             </div>
           );}) : (
-            <div style={{ flex: 1, padding: '24px', background: 'white', borderRadius: 20, border: '2px dashed var(--color-border)', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
+            <div style={{ flex: 1, padding: '24px', background: 'var(--color-surface)', borderRadius: 20, border: '2px dashed var(--color-border)', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
               <p style={{ margin: 0, fontSize: 12, fontWeight: 700 }}>Aucun contrat d'épargne</p>
             </div>
           )}
@@ -608,7 +608,7 @@ const Dashboard = ({ onBackToHub }) => {
 
         return (
           <section style={{ padding: '0 24px 24px' }} className="dashboard-max-width">
-            <div style={{ background: 'white', padding: 24, borderRadius: 24, border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-sm)' }}>
+            <div style={{ background: 'var(--color-surface)', padding: 24, borderRadius: 24, border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-sm)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 16 }}>
                   <div>
@@ -672,12 +672,12 @@ const Dashboard = ({ onBackToHub }) => {
       <section style={{ padding: '0 24px 24px' }} className="dashboard-max-width">
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
           <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'nowrap' }}>Insights Financiers</h3>
-          <div style={{ flex: 1, height: 1.5, background: '#000000', opacity: 0.2 }}></div>
+          <div style={{ flex: 1, height: 1.5, background: 'var(--color-separator)' }}></div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {(insights || []).map(insight => (
             <div key={insight.id} style={{ 
-              display: 'flex', gap: 16, background: 'white', padding: 16, borderRadius: 18, 
+              display: 'flex', gap: 16, background: 'var(--color-surface)', padding: 16, borderRadius: 18, 
               border: '1px solid var(--color-border-light)', alignItems: 'center'
             }}>
               <div style={{ width: 44, height: 44, borderRadius: '50%', background: insight.bg, color: insight.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -702,7 +702,7 @@ const Dashboard = ({ onBackToHub }) => {
           zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
         }}>
           <div style={{
-            background: 'white', width: '100%', maxWidth: 700, maxHeight: '90vh',
+            background: 'var(--color-surface)', width: '100%', maxWidth: 700, maxHeight: '90vh',
             borderRadius: 24, overflow: 'hidden', display: 'flex', flexDirection: 'column',
             boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)'
           }}>
@@ -731,7 +731,7 @@ const Dashboard = ({ onBackToHub }) => {
                   <div className="form-tiles-responsive">
                     
                     {/* Tile 1: Institution Info */}
-                    <div style={{ flex: 1, background: '#f8fafc', padding: '20px', borderRadius: 20, border: '1.5px solid var(--color-border-light)', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ flex: 1, background: 'var(--color-surface-alt)', padding: '20px', borderRadius: 20, border: '1.5px solid var(--color-border-light)', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                         <div style={{ background: 'var(--color-primary-glass)', width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <span className="material-icons-round" style={{ color: 'var(--color-primary)', fontSize: 16 }}>business</span>
@@ -746,7 +746,7 @@ const Dashboard = ({ onBackToHub }) => {
                           </label>
                           <div style={{ position: 'relative' }}>
                             <span className="material-icons-round" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', fontSize: 16 }}>label</span>
-                            <input name="name" defaultValue={editingItem.name} placeholder={manageType === 'accounts' ? "ex: Crédit Agricole Principale" : "ex: Livret A"} required style={{ width: '100%', padding: '10px 10px 10px 36px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 600, background: 'white' }} />
+                            <input name="name" defaultValue={editingItem.name} placeholder={manageType === 'accounts' ? "ex: Crédit Agricole Principale" : "ex: Livret A"} required style={{ width: '100%', padding: '10px 10px 10px 36px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 600, background: 'var(--color-surface)' }} />
                           </div>
                         </div>
                         <div className="form-group">
@@ -755,7 +755,7 @@ const Dashboard = ({ onBackToHub }) => {
                           </label>
                           <div style={{ position: 'relative' }}>
                             <span className="material-icons-round" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', fontSize: 16 }}>account_balance</span>
-                            <input name="bank" defaultValue={editingItem.bank && editingItem.bank !== 'Non spécifié' ? editingItem.bank : ''} placeholder={manageType === 'accounts' ? "ex: Crédit Agricole" : "ex: Société Générale"} style={{ width: '100%', padding: '10px 10px 10px 36px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 600, background: 'white' }} />
+                            <input name="bank" defaultValue={editingItem.bank && editingItem.bank !== 'Non spécifié' ? editingItem.bank : ''} placeholder={manageType === 'accounts' ? "ex: Crédit Agricole" : "ex: Société Générale"} style={{ width: '100%', padding: '10px 10px 10px 36px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 600, background: 'var(--color-surface)' }} />
                           </div>
                         </div>
                         <div className="form-group">
@@ -764,7 +764,7 @@ const Dashboard = ({ onBackToHub }) => {
                           </label>
                           <div style={{ position: 'relative' }}>
                             <span className="material-icons-round" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', fontSize: 16 }}>language</span>
-                            <input name="domain" defaultValue={editingItem.domain} placeholder="ex: credit-agricole.fr" style={{ width: '100%', padding: '10px 10px 10px 36px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 600, background: 'white' }} />
+                            <input name="domain" defaultValue={editingItem.domain} placeholder="ex: credit-agricole.fr" style={{ width: '100%', padding: '10px 10px 10px 36px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 600, background: 'var(--color-surface)' }} />
                           </div>
                         </div>
                         {manageType === 'savings' && (
@@ -772,7 +772,7 @@ const Dashboard = ({ onBackToHub }) => {
                              <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 6, display: 'block' }}>DOMAINE (ICÔNE)</label>
                              <div style={{ position: 'relative' }}>
                                <span className="material-icons-round" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', fontSize: 16 }}>language</span>
-                               <input name="domain" defaultValue={editingItem.domain} placeholder="ex: bnp.fr" required style={{ width: '100%', padding: '10px 10px 10px 36px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 600, background: 'white' }} />
+                               <input name="domain" defaultValue={editingItem.domain} placeholder="ex: bnp.fr" required style={{ width: '100%', padding: '10px 10px 10px 36px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 600, background: 'var(--color-surface)' }} />
                              </div>
                           </div>
                         )}
@@ -780,7 +780,7 @@ const Dashboard = ({ onBackToHub }) => {
                     </div>
 
                     {/* Tile 2: Account Details */}
-                    <div style={{ flex: 1.4, background: '#f8fafc', padding: '20px', borderRadius: 20, border: '1.5px solid var(--color-border-light)', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ flex: 1.4, background: 'var(--color-surface-alt)', padding: '20px', borderRadius: 20, border: '1.5px solid var(--color-border-light)', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                         <div style={{ background: 'var(--color-primary-glass)', width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <span className="material-icons-round" style={{ color: 'var(--color-primary)', fontSize: 16 }}>account_balance_wallet</span>
@@ -804,7 +804,7 @@ const Dashboard = ({ onBackToHub }) => {
                               defaultValue={manageType === 'accounts' ? editingItem.accountNumber : editingItem.rate} 
                               placeholder={manageType === 'accounts' ? "FR76..." : "ex: 3.0"} 
                               required 
-                              style={{ width: '100%', padding: '10px 10px 10px 36px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 600, background: 'white' }} 
+                              style={{ width: '100%', padding: '10px 10px 10px 36px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 600, background: 'var(--color-surface)' }} 
                             />
                           </div>
                         </div>
@@ -819,12 +819,12 @@ const Dashboard = ({ onBackToHub }) => {
                                 </label>
                                 <div style={{ position: 'relative' }}>
                                   <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', fontWeight: 800, fontSize: 12 }}>€</span>
-                                  <input name="initialBalance" type="number" step="0.01" defaultValue={editingItem.initialBalance} required style={{ width: '100%', padding: '10px 8px 10px 22px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 700, background: 'white' }} />
+                                  <input name="initialBalance" type="number" step="0.01" defaultValue={editingItem.initialBalance} required style={{ width: '100%', padding: '10px 8px 10px 22px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 700, background: 'var(--color-surface)' }} />
                                 </div>
                               </div>
                               <div className="form-group" style={{ flex: '1 1 45%' }}>
                                 <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 6, display: 'block' }}>DATE DU SOLDE INITIAL</label>
-                                <input name="initialBalanceDate" type="date" defaultValue={editingItem.initialBalanceDate || new Date().toISOString().split('T')[0]} required style={{ width: '100%', padding: '10px 8px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 700, background: 'white' }} />
+                                <input name="initialBalanceDate" type="date" defaultValue={editingItem.initialBalanceDate || new Date().toISOString().split('T')[0]} required style={{ width: '100%', padding: '10px 8px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 700, background: 'var(--color-surface)' }} />
                               </div>
                               <div className="form-group" style={{ flex: '1 1 100%' }}>
                                 <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 6, display: 'block' }}>SOLDE ACTUEL (CALCULÉ)</label>
@@ -839,7 +839,7 @@ const Dashboard = ({ onBackToHub }) => {
                               <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 6, display: 'block' }}>SOLDE ACTUEL</label>
                               <div style={{ position: 'relative' }}>
                                 <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', fontWeight: 800, fontSize: 12 }}>€</span>
-                                <input name="balance" type="number" step="0.01" defaultValue={editingItem.balance} required style={{ width: '100%', padding: '10px 8px 10px 22px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 700, background: 'white' }} />
+                                <input name="balance" type="number" step="0.01" defaultValue={editingItem.balance} required style={{ width: '100%', padding: '10px 8px 10px 22px', borderRadius: 10, border: '1.5px solid var(--color-border-light)', outline: 'none', fontSize: 13, fontWeight: 700, background: 'var(--color-surface)' }} />
                               </div>
                             </div>
                           )}
@@ -851,14 +851,14 @@ const Dashboard = ({ onBackToHub }) => {
                   {/* Actions */}
                   <div style={{ display: 'flex', gap: 12, borderTop: '1px solid var(--color-border-light)', paddingTop: 20 }}>
                     <button type="button" onClick={() => setEditingItem(null)} style={{ flex: 1, padding: '14px', borderRadius: 14, border: 'none', background: '#f1f5f9', color: 'var(--color-text-secondary)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Annuler</button>
-                    <button type="submit" style={{ flex: 2, padding: '14px', borderRadius: 14, border: 'none', background: 'var(--color-primary)', color: 'white', fontSize: 14, fontWeight: 800, cursor: 'pointer', boxShadow: '0 8px 16px -4px rgba(24, 82, 74, 0.3)' }}>Enregistrer les modifications</button>
+                    <button type="submit" style={{ flex: 2, padding: '14px', borderRadius: 14, border: 'none', background: 'var(--color-primary)', color: 'white', fontSize: 14, fontWeight: 800, cursor: 'pointer', boxShadow: '0 8px 16px -4px rgba(53, 132, 96, 0.3)' }}>Enregistrer les modifications</button>
                   </div>
                 </form>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {(manageType === 'accounts' ? accounts : savingsItems).map(item => (
                     <div key={item.id} style={{
-                      display: 'flex', alignItems: 'center', gap: 16, background: '#f8fafc',
+                      display: 'flex', alignItems: 'center', gap: 16, background: 'var(--color-surface-alt)',
                       padding: '16px 20px', borderRadius: 18, border: '1.5px solid var(--color-border-light)'
                     }}>
                       <CompanyLogo domain={item.domain} name={manageType === 'accounts' ? item.name : item.bank} size={40} />
@@ -869,7 +869,7 @@ const Dashboard = ({ onBackToHub }) => {
                         </p>
                       </div>
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={() => setEditingItem(item)} style={{ width: 36, height: 36, borderRadius: 10, border: 'none', background: 'white', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
+                        <button onClick={() => setEditingItem(item)} style={{ width: 36, height: 36, borderRadius: 10, border: 'none', background: 'var(--color-surface)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
                           <span className="material-icons-round" style={{ fontSize: 18 }}>edit</span>
                         </button>
                         <button 
@@ -903,7 +903,7 @@ const Dashboard = ({ onBackToHub }) => {
                   
                   <button onClick={handleAddItem} style={{
                     width: '100%', padding: '20px', borderRadius: 18, border: '2px dashed #cbd5e1',
-                    background: '#f8fafc', color: 'var(--color-text-secondary)', fontSize: 14, fontWeight: 700,
+                    background: 'var(--color-surface-alt)', color: 'var(--color-text-secondary)', fontSize: 14, fontWeight: 700,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: 'pointer',
                     marginTop: 8
                   }}>
@@ -934,7 +934,7 @@ const Dashboard = ({ onBackToHub }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 8px 16px rgba(24, 82, 74, 0.3)',
+            boxShadow: '0 8px 16px rgba(53, 132, 96, 0.3)',
             cursor: 'pointer',
             zIndex: 100,
             transition: 'all 0.3s ease'

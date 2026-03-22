@@ -153,7 +153,7 @@ const Auth = () => {
           <button 
             type="submit" 
             disabled={loading}
-            style={{ width: '100%', padding: 16, borderRadius: 30, border: 'none', background: 'white', color: '#102e2a', fontWeight: 800, fontSize: 14, cursor: 'pointer', marginTop: 16, textTransform: 'uppercase' }}
+            style={{ width: '100%', padding: 16, borderRadius: 30, border: 'none', background: 'var(--color-surface)', color: '#102e2a', fontWeight: 800, fontSize: 14, cursor: 'pointer', marginTop: 16, textTransform: 'uppercase' }}
           >
             {loading ? 'CHARGEMENT...' : (isSignUp ? 'S\'INSCRIRE' : 'SE CONNECTER')}
           </button>

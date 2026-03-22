@@ -132,6 +132,34 @@ export const DataProvider = ({ children }) => {
     const slug = new Date().toISOString().substring(0, 7);
     return userId ? `${userId}_${slug}` : slug;
   });
+
+  // Dark Mode State
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    try {
+      const local = localStorage.getItem('money_theme');
+      if (local) return local === 'dark';
+      return window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)').matches : false;
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    try {
+      localStorage.setItem('money_theme', isDarkMode ? 'dark' : 'light');
+    } catch (e) {
+      console.error('Failed to save theme setting', e);
+    }
+  }, [isDarkMode]);
+
+  const toggleTheme = React.useCallback(() => {
+    setIsDarkMode(prev => !prev);
+  }, []);
   
   // Dynamic balance calculation
   const accountsWithBalances = React.useMemo(() => {
@@ -937,6 +965,8 @@ export const DataProvider = ({ children }) => {
     syncStatus,
     user: session?.user,
     refreshData,
+    isDarkMode,
+    toggleTheme,
   }), [
     categories, transactions, accountsWithBalances, savingsItems, forecasts, updateMonthForecast, monthsState, 
     globalRecurrences, addTransaction, addTransactions, deleteTransaction, updateTransaction,
@@ -944,7 +974,9 @@ export const DataProvider = ({ children }) => {
     deleteAccount, goal, setGoal, loading, usingSupabase, session, saveGlobalConfig, syncStatus, selectedPeriod, setSelectedPeriod,
       fetchingPrevisions, fetchPrevisions, updatePrevision, isRolloverEnabled, setIsRolloverEnabled,
       refreshData,
-      syncStatus
+      syncStatus,
+      isDarkMode,
+      toggleTheme
     ]);
 
   return (

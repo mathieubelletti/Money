@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { useData } from '../context/DataContext';
+import PageHeader from '../components/PageHeader';
 
 const FlowTask = ({ onBack }) => {
   const { session, usingSupabase } = useData();
@@ -170,6 +171,19 @@ const FlowTask = ({ onBack }) => {
           margin: 0 auto;
         }
 
+        .ft-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 24px;
+        }
+
+        @media (min-width: 768px) {
+          .ft-main {
+            max-width: 800px;
+            padding: 94px 40px 40px;
+          }
+        }
+
         .ft-page-title {
           font-size: 32px;
           font-weight: 900;
@@ -185,11 +199,13 @@ const FlowTask = ({ onBack }) => {
         }
 
         .ft-quadrant {
-          background: white;
+          background: var(--color-surface);
           border-radius: 28px;
           padding: 24px;
-          margin-bottom: 24px;
           box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+          display: flex;
+          flex-direction: column;
+          height: 100%;
         }
 
         .ft-quadrant-header {
@@ -337,7 +353,7 @@ const FlowTask = ({ onBack }) => {
         .ft-modal-content {
           width: 100%;
           max-width: 500px;
-          background: white;
+          background: var(--color-surface);
           border-radius: 32px 32px 0 0;
           padding: 32px 24px;
           animation: slide-up 0.3s ease-out;
@@ -394,7 +410,7 @@ const FlowTask = ({ onBack }) => {
           padding: 12px;
           border-radius: 16px;
           border: 2px solid var(--color-border-light);
-          background: white;
+          background: var(--color-surface);
           cursor: pointer;
           font-size: 11px;
           font-weight: 800;
@@ -441,7 +457,7 @@ const FlowTask = ({ onBack }) => {
           left: 0;
           right: 0;
           height: 80px;
-          background: white;
+          background: var(--color-surface);
           display: flex;
           align-items: center;
           justify-content: space-around;
@@ -476,21 +492,7 @@ const FlowTask = ({ onBack }) => {
       `}</style>
 
       {/* Header */}
-      <header className="ft-header">
-        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, display: 'flex', color: 'var(--color-primary)' }}>
-          <span className="material-icons-round" style={{ fontSize: 24 }}>home</span>
-        </button>
-        <div className="ft-logo leading-none" style={{ marginLeft: -12 }}>FlowTask</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button className="ft-bell">
-            <span className="material-icons-round">notifications</span>
-            <div className="ft-dot"></div>
-          </button>
-          <div className="ft-avatar" style={{ width: 32, height: 32 }}>
-            <span className="material-icons-round" style={{ fontSize: 20 }}>person</span>
-          </div>
-        </div>
-      </header>
+      <PageHeader title="FlowTask" onBack={onBack} />
 
       {/* Main Content */}
       <main className="ft-main">
@@ -508,7 +510,7 @@ const FlowTask = ({ onBack }) => {
             <p>Aucune tâche pour le moment.<br/>Cliquez sur + pour commencer !</p>
           </div>
         ) : (
-          <>
+          <div className="ft-grid">
             {/* 1. URGENT */}
             <Quadrant title="À faire en priorité" icon="priority_high" label="URGENT" type="urgent">
               {tasks.filter(t => t.type === 'urgent').map(t => (
@@ -577,7 +579,7 @@ const FlowTask = ({ onBack }) => {
                 </div>
               ))}
             </Quadrant>
-          </>
+          </div>
         )}
       </main>
 

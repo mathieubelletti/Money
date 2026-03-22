@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PageHeader from '../components/PageHeader';
 
 // --- Moteur Fiscal ---
 export const calculateIncomeTax = (revenuBrut, parts, fraisReels, credits, csg, prelevementSource, autresDeductions) => {
@@ -55,7 +56,7 @@ const CustomToggle = ({ checked, onChange }) => (
     }}
   >
     <div style={{
-      width: 26, height: 26, borderRadius: 13, background: 'white',
+      width: 26, height: 26, borderRadius: 13, background: 'var(--color-surface)',
       position: 'absolute', top: 2, left: checked ? 24 : 2,
       transition: 'left 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)', 
       boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
@@ -114,25 +115,14 @@ const Taxes = ({ onBack }) => {
   return (
     <div className="screen animate-fade" style={{ background: 'var(--color-bg)', minHeight: '100vh', paddingBottom: 40 }}>
       {/* Header */}
-      <header style={{ 
-        padding: '16px 20px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        borderBottom: '1.5px solid var(--color-border)', position: 'sticky', top: 0, zIndex: 100
-      }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, display: 'flex', color: 'var(--color-primary)' }}>
-          <span className="material-icons-round" style={{ fontSize: 24 }}>home</span>
-        </button>
-        <h2 style={{ fontSize: 16, fontWeight: 900, color: 'var(--color-text-primary)', margin: 0 }}>Paramètres Fiscaux</h2>
-        <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, display: 'flex', color: 'var(--color-text-tertiary)' }}>
-          <span className="material-icons-round">notifications</span>
-        </button>
-      </header>
+      <PageHeader title="Paramètres Fiscaux" onBack={onBack} />
 
       <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 32 }} className="dashboard-max-width">
         
         {/* Vos Revenus */}
         <section>
           <SectionHeader title="Vos Revenus" />
-          <div style={{ background: 'white', borderRadius: 20, padding: 20, border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-xs)' }}>
+          <div style={{ background: 'var(--color-surface)', borderRadius: 20, padding: 20, border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-xs)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
               <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--color-primary-bg)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <span className="material-icons-round" style={{ fontSize: 22 }}>payments</span>
@@ -161,7 +151,7 @@ const Taxes = ({ onBack }) => {
         {/* Quotient Familial */}
         <section>
           <SectionHeader title="Quotient familial" />
-          <div style={{ background: 'white', borderRadius: 20, padding: 20, border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-xs)' }}>
+          <div style={{ background: 'var(--color-surface)', borderRadius: 20, padding: 20, border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-xs)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
                 <h4 style={{ margin: 0, fontSize: 15, fontWeight: 900, color: 'var(--color-text-primary)' }}>Nombre de parts</h4>
@@ -183,7 +173,7 @@ const Taxes = ({ onBack }) => {
         {/* Abattements & Déductions */}
         <section>
           <SectionHeader title="Abattements & Déductions" />
-          <div style={{ background: 'white', borderRadius: 20, padding: '8px 20px', border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-xs)', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ background: 'var(--color-surface)', borderRadius: 20, padding: '8px 20px', border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-xs)', display: 'flex', flexDirection: 'column' }}>
             
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: '1px solid var(--color-border-light)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -289,7 +279,7 @@ const Taxes = ({ onBack }) => {
             title="Barème d'imposition 2026" 
             rightAction={<button style={{ border: 'none', background: 'none', color: 'var(--color-primary)', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', cursor: 'pointer', letterSpacing: '0.05em' }}>Réinitialiser</button>} 
           />
-          <div style={{ background: 'white', borderRadius: 20, border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-xs)', overflow: 'hidden' }}>
+          <div style={{ background: 'var(--color-surface)', borderRadius: 20, border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-xs)', overflow: 'hidden' }}>
             <div style={{ display: 'flex', padding: '16px 20px', borderBottom: '1.5px solid var(--color-border-light)', background: 'rgba(248, 250, 252, 0.5)' }}>
               <span style={{ flex: 1, fontSize: 10, fontWeight: 900, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tranche (Seuil)</span>
               <span style={{ width: 60, fontSize: 10, fontWeight: 900, color: 'var(--color-text-secondary)', textTransform: 'uppercase', textAlign: 'left', letterSpacing: '0.05em' }}>Taux</span>
@@ -318,7 +308,7 @@ const Taxes = ({ onBack }) => {
           <SectionHeader title="Optimisation & Détails" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             
-            <div style={{ background: 'white', borderRadius: 20, padding: 20, border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-xs)' }}>
+            <div style={{ background: 'var(--color-surface)', borderRadius: 20, padding: 20, border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-xs)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
                 <span className="material-icons-round" style={{ color: 'var(--color-primary)', fontSize: 22 }}>eco</span>
                 <h4 style={{ margin: 0, fontSize: 14, fontWeight: 900, color: 'var(--color-text-primary)' }}>Crédits d'impôts</h4>
@@ -330,7 +320,7 @@ const Taxes = ({ onBack }) => {
               />
             </div>
 
-            <div style={{ background: 'white', borderRadius: 20, padding: 20, border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-xs)' }}>
+            <div style={{ background: 'var(--color-surface)', borderRadius: 20, padding: 20, border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-xs)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
                 <span className="material-icons-round" style={{ color: 'var(--color-primary)', fontSize: 22 }}>account_balance</span>
                 <h4 style={{ margin: 0, fontSize: 14, fontWeight: 900, color: 'var(--color-text-primary)' }}>CSG Déductible</h4>

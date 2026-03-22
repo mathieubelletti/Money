@@ -5,6 +5,7 @@ import { formatBalance } from '../utils/helpers';
 import { useData } from '../context/DataContext';
 
 const Previsions = ({ onBackToHub }) => {
+  const [activeTab, setActiveTab] = useState('Mois'); // 'Mois', 'Trimestre', 'Annee'
   const { 
     forecasts, 
     globalRecurrences, 
@@ -17,8 +18,13 @@ const Previsions = ({ onBackToHub }) => {
     fetchPrevisions,
     updatePrevision,
     isRolloverEnabled,
-    setIsRolloverEnabled
+    setIsRolloverEnabled,
+    selectedPeriod,
+    setSelectedPeriod
   } = useData();
+
+  const scrollRef = React.useRef(null);
+
 
   const COMMON_ICONS = ['category', 'payments', 'shopping_cart', 'home', 'trending_up', 'restaurant', 'local_gas_station', 'flight', 'medical_services', 'fitness_center', 'subscriptions', 'bolt', 'water_drop', 'smartphone', 'shopping_bag', 'checkroom', 'bakery_dining', 'coffee', 'local_bar', 'redeem', 'favorite', 'school', 'build', 'commute'];
 
@@ -39,8 +45,20 @@ const Previsions = ({ onBackToHub }) => {
     'coiffeur': 'content_cut', 'cadeau': 'redeem', 'donation': 'favorite', 'boulangerie': 'bakery_dining', 'pain': 'bakery_dining', 'cafe': 'coffee', 'café': 'coffee', 'bar': 'local_bar',
     'ecole': 'school', 'école': 'school', 'fac': 'school', 'amazon': 'shopping_bag', 'transport': 'commute', 'train': 'train', 'sncf': 'train', 'ter': 'train'
   };
-  const [activeTab, setActiveTab] = useState('Mois'); // 'Mois', 'Trimestre', 'Annee'
   const [expandedMonthId, setExpandedMonthId] = useState(null);
+
+  // --- Auto-scroll to active month ---
+  useEffect(() => {
+    if (selectedPeriod && scrollRef.current && activeTab === 'Mois') {
+      const timer = setTimeout(() => {
+        const activeBtn = scrollRef.current?.querySelector('[data-selected="true"]');
+        if (activeBtn) {
+          activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedPeriod, forecasts, activeTab]);
   const [isGlobalModalOpen, setIsGlobalModalOpen] = useState(false);
 
   const now = new Date();
@@ -250,7 +268,55 @@ const Previsions = ({ onBackToHub }) => {
   return (
     <div className="screen animate-fade" style={{ display: 'flex', flexDirection: 'column' }}>
       <div style={{ flexShrink: 0 }}>
-        <PageHeader title="Prévisions annuelles" />
+        <PageHeader title="Prévisions annuelles" onBack={onBackToHub} />
+        
+        {/* Interactive Month Selector - Matching Dashboard */}
+        <section style={{ padding: '0 24px 16px', background: 'var(--color-bg)' }} className="dashboard-max-width">
+          <div 
+            ref={scrollRef}
+            className="scrollbar-hide"
+            style={{
+              display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8, scrollBehavior: 'smooth'
+            }}
+          >
+            {forecasts?.map(f => {
+              const periodValue = f.id;
+              const isSelected = selectedPeriod === periodValue;
+              return (
+                <button
+                  key={f.id}
+                  data-selected={isSelected}
+                  onClick={() => {
+                    setSelectedPeriod(periodValue);
+                    setActiveTab('Mois');
+                    // Scroll to the month card in the list
+                    const targetId = `month-${periodValue.split('_').pop()}`;
+                    const element = document.getElementById(targetId);
+                    if (element) {
+                      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                  }}
+                  style={{
+                    flexShrink: 0,
+                    padding: '8px 20px',
+                    borderRadius: 20,
+                    background: isSelected ? 'var(--color-primary)' : 'var(--color-surface)',
+                    color: isSelected ? 'white' : 'var(--color-text-primary)',
+                    border: isSelected ? 'none' : '1px solid var(--color-border-light)',
+                    backdropFilter: 'blur(10px)',
+                    fontSize: 14,
+                    fontWeight: 700,
+                    boxShadow: isSelected ? '0 4px 12px rgba(53, 132, 96, 0.3)' : 'var(--shadow-sm)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {f.month.toUpperCase()}
+                </button>
+              );
+            })}
+          </div>
+        </section>
       </div>
       
       {/* Tabs & Solde Section */}
@@ -271,7 +337,7 @@ const Previsions = ({ onBackToHub }) => {
                 padding: '8px 16px',
                 borderRadius: 20,
                 border: activeTab === tab ? '1px solid var(--color-primary)' : '1px solid var(--color-border-light)',
-                background: activeTab === tab ? 'var(--color-primary-bg)' : 'white',
+                background: activeTab === tab ? 'var(--color-primary-bg)' : 'var(--color-surface)',
                 color: activeTab === tab ? 'var(--color-primary-dark)' : 'var(--color-text-secondary)',
                 fontSize: 13,
                 fontWeight: 700,
@@ -286,13 +352,13 @@ const Previsions = ({ onBackToHub }) => {
 
         <section className="dashboard-max-width" style={{ padding: 0 }}>
           <div style={{ 
-            background: 'linear-gradient(135deg, var(--color-primary-bg) 0%, #e2eeec 100%)', 
+            background: 'var(--color-primary)', 
             padding: '24px', 
             borderRadius: 24, 
             border: '1px solid var(--color-border)',
             position: 'relative',
             overflow: 'hidden',
-            boxShadow: '0 10px 25px -5px rgba(24, 82, 74, 0.15)'
+            boxShadow: '0 8px 20px -5px rgba(53, 132, 96, 0.2)'
           }}>
             <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 10 }}>
               <button 
@@ -309,7 +375,7 @@ const Previsions = ({ onBackToHub }) => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 4,
-                  boxShadow: '0 4px 12px rgba(24, 82, 74, 0.1)',
+                  boxShadow: '0 4px 12px rgba(53, 132, 96, 0.1)',
                   pointerEvents: 'auto'
                 }}
               >
@@ -318,8 +384,8 @@ const Previsions = ({ onBackToHub }) => {
               </button>
             </div>
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', paddingRight: 90 }}>Solde prévisionnel à 12 mois</div>
-              <div style={{ fontSize: 32, fontWeight: 900, color: 'var(--color-text-primary)', margin: '8px 0' }}>{formatBalance(calculatedResults[lastForecast.id]?.final || 0)}</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', paddingRight: 90 }}>Solde prévisionnel à 12 mois</div>
+              <div style={{ fontSize: 32, fontWeight: 900, color: 'white', margin: '8px 0' }}>{formatBalance(calculatedResults[lastForecast.id]?.final || 0)}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div 
                   onClick={() => setIsRolloverEnabled(!isRolloverEnabled)}
@@ -329,9 +395,9 @@ const Previsions = ({ onBackToHub }) => {
                     position: 'relative', cursor: 'pointer', transition: '0.3s'
                   }}
                 >
-                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: isRolloverEnabled ? 14 : 2, transition: '0.3s' }} />
+                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--color-surface)', position: 'absolute', top: 2, left: isRolloverEnabled ? 14 : 2, transition: '0.3s' }} />
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 600 }}>Report automatique actif</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>Report automatique actif</div>
               </div>
             </div>
           </div>
@@ -374,7 +440,7 @@ const Previsions = ({ onBackToHub }) => {
                   style={{ 
                     cursor: 'pointer', 
                     transition: 'all 0.2s', 
-                    background: isExpanded ? '#f8fafc' : 'white',
+                    background: isExpanded ? 'var(--color-surface-alt)' : 'var(--color-surface)',
                     position: 'relative'
                   }}
                 >
@@ -405,7 +471,7 @@ const Previsions = ({ onBackToHub }) => {
                   maxHeight: isExpanded ? '4000px' : '0', 
                   overflow: 'hidden', 
                   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: '#f9fafb'
+                  background: 'var(--color-bg)'
                 }}>
                   <div style={{ padding: '20px 24px', borderTop: '1px solid var(--color-border-light)' }}>
                     {/* Solde Report */}
@@ -428,7 +494,7 @@ const Previsions = ({ onBackToHub }) => {
                             }, 0);
                           }}
                           style={{ 
-                            background: (data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0) ? '#fff' : '#eee',
+                            background: (data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0) ? 'var(--color-surface)' : 'var(--color-bg)',
                             border: '1px solid',
                             borderColor: (data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0) ? 'var(--color-primary)' : 'var(--color-border)',
                             borderRadius: 8, padding: '4px 28px 4px 12px', width: 130, fontWeight: 800, fontSize: 14,
@@ -457,7 +523,7 @@ const Previsions = ({ onBackToHub }) => {
                         </div>
                         {data[sect.key].length > 0 ? data[sect.key].map(line => (
                           <div key={line.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                            <div style={{ flex: 1, minWidth: 120, height: 36, borderRadius: 8, border: '1px solid var(--color-border-light)', padding: '0 10px', fontSize: 13, background: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600 }}>
+                            <div style={{ flex: 1, minWidth: 120, height: 36, borderRadius: 8, border: '1px solid var(--color-border-light)', padding: '0 10px', fontSize: 13, background: 'var(--color-surface-alt)', display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600 }}>
                               <span style={{ fontSize: 11, opacity: 0.6, fontWeight: 800 }}>{line.day}</span>
                               <span style={{ flex: 1 }}>{line.label}</span>
                             </div>
@@ -471,7 +537,7 @@ const Previsions = ({ onBackToHub }) => {
                                   width: 110, height: 36, borderRadius: 8, 
                                   border: '1px solid var(--color-border-light)', 
                                   padding: '0 28px 0 8px', fontSize: 13, textAlign: 'right', fontWeight: 700,
-                                  background: line.isLinked ? '#fff' : '#fff9eb',
+                                  background: line.isLinked ? 'var(--color-surface)' : 'var(--color-warning-light)',
                                   borderColor: line.isLinked ? 'var(--color-border-light)' : '#f59e0b',
                                   outline: 'none'
                                 }} 
@@ -504,7 +570,7 @@ const Previsions = ({ onBackToHub }) => {
                     ))}
 
                     {/* Résumé Panneau */}
-                    <div style={{ marginTop: 24, padding: '16px', background: 'white', borderRadius: 12, border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-sm)' }}>
+                    <div style={{ marginTop: 24, padding: '16px', background: 'var(--color-surface)', borderRadius: 12, border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-sm)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 6 }}>
                         <span style={{ fontWeight: 600 }}>TOTAL REVENUS</span>
                         <span style={{ fontWeight: 800, color: '#22c55e' }}>+ {rev.toLocaleString('fr-FR')} €</span>
@@ -513,7 +579,7 @@ const Previsions = ({ onBackToHub }) => {
                         <span style={{ fontWeight: 800 }}>GRAND TOTAL PRÉVU (Fixes + Var.)</span>
                         <span style={{ fontWeight: 900 }}>- {(fix + varTotal).toLocaleString('fr-FR')} €</span>
                       </div>
-                      <div style={{ height: 1.5, background: '#eee', margin: '16px 0' }}></div>
+                      <div style={{ height: 1.5, background: 'var(--color-bg)', margin: '16px 0' }}></div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, alignItems: 'center' }}>
                         <span style={{ fontWeight: 800, color: 'var(--color-text-secondary)' }}>NOUVEAU SOLDE</span>
                         <span style={{ fontWeight: 900, color: final >= 0 ? 'var(--color-success)' : 'var(--color-danger)', fontSize: 18 }}>
@@ -548,7 +614,7 @@ const Previsions = ({ onBackToHub }) => {
                   <div
                     className="month-forecast-card"
                     onClick={() => handleToggleMonth(q.id)}
-                    style={{ cursor: 'pointer', background: isExpanded ? '#f8fafc' : 'white' }}
+                    style={{ cursor: 'pointer', background: isExpanded ? 'var(--color-surface-alt)' : 'var(--color-surface)' }}
                   >
                     <div className="month-forecast-inner">
                       <div className="month-forecast-badge" style={{ background: q.net >= 0 ? 'var(--color-primary)' : 'linear-gradient(135deg,#ef4444,#dc2626)', fontSize: 11 }}>
@@ -571,14 +637,14 @@ const Previsions = ({ onBackToHub }) => {
                       </span>
                     </div>
                   </div>
-                  <div style={{ maxHeight: isExpanded ? '800px' : '0', overflow: 'hidden', transition: 'all 0.4s cubic-bezier(0.4,0,0.2,1)', background: '#f9fafb' }}>
+                  <div style={{ maxHeight: isExpanded ? '800px' : '0', overflow: 'hidden', transition: 'all 0.4s cubic-bezier(0.4,0,0.2,1)', background: 'var(--color-bg)' }}>
                     <div style={{ padding: '20px 24px', borderTop: '1px solid var(--color-border-light)' }}>
                       {/* Monthly sub-rows */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
                         {q.months.map(f => {
                           const r = calculatedResults[f.id] || {};
                           return (
-                            <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'white', borderRadius: 10, border: '1px solid var(--color-border-light)' }}>
+                            <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'var(--color-surface)', borderRadius: 10, border: '1px solid var(--color-border-light)' }}>
                               <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-secondary)' }}>{f.month}</span>
                               <div style={{ display: 'flex', gap: 16, fontSize: 12 }}>
                                 <span style={{ color: 'var(--color-success)', fontWeight: 700 }}>+{(r.rev || 0).toLocaleString('fr-FR')} €</span>
@@ -590,7 +656,7 @@ const Previsions = ({ onBackToHub }) => {
                         })}
                       </div>
                       {/* Quarter totals */}
-                      <div style={{ padding: 16, background: 'white', borderRadius: 12, border: '1px solid var(--color-border-light)' }}>
+                      <div style={{ padding: 16, background: 'var(--color-surface)', borderRadius: 12, border: '1px solid var(--color-border-light)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
                           <span style={{ fontWeight: 600 }}>REVENUS</span>
                           <span style={{ fontWeight: 800, color: 'var(--color-success)' }}>+ {q.totalRev.toLocaleString('fr-FR')} €</span>
@@ -599,7 +665,7 @@ const Previsions = ({ onBackToHub }) => {
                           <span style={{ fontWeight: 600 }}>DÉPENSES</span>
                           <span style={{ fontWeight: 800, color: 'var(--color-danger)' }}>- {(q.totalFix + q.totalVar).toLocaleString('fr-FR')} €</span>
                         </div>
-                        <div style={{ height: 1, background: '#eee', margin: '10px 0' }} />
+                        <div style={{ height: 1, background: 'var(--color-bg)', margin: '10px 0' }} />
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
                           <span style={{ fontWeight: 800 }}>RÉSULTAT</span>
                           <span style={{ fontWeight: 900, color: q.net >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>{formatMonthAmount(q.net)}</span>
@@ -629,7 +695,7 @@ const Previsions = ({ onBackToHub }) => {
                     { label: 'Dépenses variables', value: totalVar, icon: 'shopping_bag', color: '#f59e0b', sign: '-' },
                     { label: 'Moyenne mensuelle', value: avgMonthly, icon: 'calendar_today', color: 'var(--color-text-secondary)', sign: '+' },
                   ].map(k => (
-                    <div key={k.label} style={{ background: 'white', borderRadius: 14, border: '1px solid var(--color-border-light)', padding: '16px 14px' }}>
+                    <div key={k.label} style={{ background: 'var(--color-surface)', borderRadius: 14, border: '1px solid var(--color-border-light)', padding: '16px 14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontWeight: 700, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', marginBottom: 8 }}>
                         <span className="material-icons-round" style={{ fontSize: 14, color: k.color }}>{k.icon}</span>
                         {k.label}
@@ -682,7 +748,7 @@ const Previsions = ({ onBackToHub }) => {
           <div 
             className="animate-slide-up"
             style={{
-              width: '100%', maxWidth: 650, background: 'white', borderRadius: 32,
+              width: '100%', maxWidth: 650, background: 'var(--color-surface)', borderRadius: 32,
               padding: 32, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflowY: 'auto', maxHeight: '90vh'
             }}
             onClick={e => e.stopPropagation()}
@@ -699,7 +765,7 @@ const Previsions = ({ onBackToHub }) => {
 
             {/* INITIAL SETUP: Starting Balance */}
             <div style={{ background: 'var(--color-primary-bg)', padding: '20px', borderRadius: 24, marginBottom: 28, border: '1px solid var(--color-primary)', display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ background: 'white', width: 48, height: 48, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(24, 82, 74, 0.2)' }}>
+              <div style={{ background: 'var(--color-surface)', width: 48, height: 48, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(53, 132, 96, 0.2)' }}>
                 <span className="material-icons-round" style={{ color: 'var(--color-primary)', fontSize: 24 }}>account_balance_wallet</span>
               </div>
               <div style={{ flex: 1 }}>
@@ -735,12 +801,12 @@ const Previsions = ({ onBackToHub }) => {
                         border: 'none', 
                         width: 28, height: 28, 
                         borderRadius: 8, 
-                        color: 'white', 
+                        color: 'var(--color-surface)', 
                         display: 'flex', 
                         alignItems: 'center', 
                         justifyContent: 'center', 
                         cursor: 'pointer',
-                        boxShadow: '0 4px 10px rgba(24, 82, 74, 0.2)'
+                        boxShadow: '0 4px 10px rgba(53, 132, 96, 0.2)'
                       }}
                     >
                       <span className="material-icons-round" style={{ fontSize: 18 }}>add</span>
@@ -753,7 +819,7 @@ const Previsions = ({ onBackToHub }) => {
                         }));
                       }}
                       style={{ 
-                        background: 'white', 
+                        background: 'var(--color-surface)', 
                         border: '1px solid #e2e8f0', 
                         width: 28, height: 28, 
                         borderRadius: 8, 
@@ -775,7 +841,7 @@ const Previsions = ({ onBackToHub }) => {
                     gap: 8, 
                     marginBottom: 12, 
                     alignItems: 'center',
-                    background: '#f8fafc',
+                    background: 'var(--color-surface-alt)',
                     padding: 8,
                     borderRadius: 16,
                     border: '1px solid #e2e8f0'
@@ -789,7 +855,14 @@ const Previsions = ({ onBackToHub }) => {
                             [sect]: prev[sect].map(item => item.id === line.id ? { ...item, icon: COMMON_ICONS[nextIdx] } : item)
                           }));
                         }}
-                        style={{ width: 40, height: 40, borderRadius: 10, border: '1px solid #e2e8f0', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--color-primary)' }}
+                        style={{ 
+                          width: 40, height: 40, borderRadius: 10, 
+                          border: '1px solid #e2e8f0', 
+                          background: 'var(--color-surface)', 
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                          cursor: 'pointer', 
+                          color: sect === 'revenus' ? 'var(--color-success)' : 'var(--color-danger)' 
+                        }}
                         title="Changer l'icône"
                       >
                         <span className="material-icons-round" style={{ fontSize: 18 }}>{line.icon || 'category'}</span>
@@ -878,7 +951,7 @@ const Previsions = ({ onBackToHub }) => {
               </div>
             ))}
 
-            <div style={{ background: '#f8fafc', padding: 20, borderRadius: 20, marginBottom: 24, border: '1px solid #e2e8f0' }}>
+            <div style={{ background: 'var(--color-surface-alt)', padding: 20, borderRadius: 20, marginBottom: 24, border: '1px solid #e2e8f0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <span className="material-icons-round" style={{ color: 'var(--color-primary)' }}>tips_and_updates</span>
                 <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', fontWeight: 500, margin: 0, lineHeight: 1.5 }}>
@@ -889,7 +962,7 @@ const Previsions = ({ onBackToHub }) => {
 
             <button 
               onClick={() => applyGlobalRecurrences(true)}
-              style={{ width: '100%', height: 64, borderRadius: 20, border: 'none', color: 'white', background: 'var(--color-primary)', fontSize: 16, fontWeight: 900, cursor: 'pointer', boxShadow: '0 12px 24px rgba(24, 82, 74, 0.3)', transition: 'transform 0.2s', active: { transform: 'scale(0.98)' } }}
+              style={{ width: '100%', height: 64, borderRadius: 20, border: 'none', color: 'var(--color-surface)', background: 'var(--color-primary)', fontSize: 16, fontWeight: 900, cursor: 'pointer', boxShadow: '0 12px 24px rgba(53, 132, 96, 0.3)', transition: 'transform 0.2s', active: { transform: 'scale(0.98)' } }}
             >
               ENREGISTRER LA CONFIGURATION ANNUELLE
             </button>

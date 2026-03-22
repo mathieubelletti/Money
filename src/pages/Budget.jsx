@@ -1,9 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PageHeader from '../components/PageHeader';
 import { useData } from '../context/DataContext';
 
 const Budget = ({ onBackToHub }) => {
-  const { forecasts, monthsState, transactions: txGroups, goal, setGoal, loading, selectedPeriod } = useData();
+  const { forecasts, monthsState, transactions: txGroups, goal, setGoal, loading, selectedPeriod, setSelectedPeriod } = useData();
+  const scrollRef = useRef(null);
+
+  // --- Auto-scroll to active month ---
+  useEffect(() => {
+    if (selectedPeriod && scrollRef.current) {
+      const timer = setTimeout(() => {
+        const activeBtn = scrollRef.current?.querySelector('[data-selected="true"]');
+        if (activeBtn) {
+          activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedPeriod, forecasts]);
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // 2. Find the forecast for the current month
@@ -59,8 +74,8 @@ const Budget = ({ onBackToHub }) => {
     return (monthData?.fixes || []).map(f => ({
       ...f,
       spent: getSpentForLabel(f.label),
-      bg: 'rgba(24, 82, 74, 0.05)',
-      color: 'var(--color-primary)',
+      bg: 'var(--color-danger-light)',
+      color: 'var(--color-danger)',
       icon: f.icon || 'payments'
     }));
   }, [monthData, getSpentForLabel]);
@@ -69,8 +84,8 @@ const Budget = ({ onBackToHub }) => {
     return (monthData?.variables || []).map(v => ({
       ...v,
       spent: getSpentForLabel(v.label),
-      bg: 'rgba(24, 82, 74, 0.05)',
-      color: 'var(--color-primary)',
+      bg: 'var(--color-danger-light)',
+      color: 'var(--color-danger)',
       icon: v.icon || 'shopping_cart'
     }));
   }, [monthData, getSpentForLabel]);
@@ -150,41 +165,81 @@ const Budget = ({ onBackToHub }) => {
     <div className="screen animate-fade">
       <PageHeader title="Budget Mensuel" onBack={onBackToHub} />
 
+      {/* Interactive Month Selector - Matching Dashboard */}
+      <section style={{ padding: '0 24px 16px' }} className="dashboard-max-width">
+        <div 
+          ref={scrollRef}
+          className="scrollbar-hide"
+          style={{
+            display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8, scrollBehavior: 'smooth'
+          }}
+        >
+          {forecasts?.map(f => {
+            const periodValue = f.id;
+            const isSelected = selectedPeriod === periodValue;
+            return (
+              <button
+                key={f.id}
+                data-selected={isSelected}
+                onClick={() => setSelectedPeriod(periodValue)}
+                style={{
+                  flexShrink: 0,
+                  padding: '8px 20px',
+                  borderRadius: 20,
+                  background: isSelected ? 'var(--color-primary)' : 'var(--color-surface)',
+                  color: isSelected ? 'white' : 'var(--color-text-primary)',
+                  border: isSelected ? 'none' : '1px solid var(--color-border-light)',
+                  backdropFilter: 'blur(10px)',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  boxShadow: isSelected ? '0 4px 12px rgba(53, 132, 96, 0.3)' : 'var(--shadow-sm)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {f.month.toUpperCase()}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
       {/* Stats Section */}
       <section style={{ padding: '24px 24px 12px' }} className="dashboard-max-width">
         <div style={{ textAlign: 'center', marginBottom: 12 }}>
-          <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-secondary)', background: 'white', padding: '4px 12px', borderRadius: 20, border: '1px solid var(--color-border-light)' }}>
+          <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-secondary)', background: 'var(--color-surface)', padding: '4px 12px', borderRadius: 20, border: '1px solid var(--color-border-light)' }}>
             {currentMonthLabel}
           </span>
         </div>
         <div style={{ 
-          background: 'var(--color-primary-bg)', 
+          background: 'var(--color-primary)', 
           padding: '20px', 
           borderRadius: 24, 
           border: '1px solid var(--color-border)',
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gap: '16px'
+          gap: '16px',
+          boxShadow: '0 8px 20px -5px rgba(53, 132, 96, 0.2)'
         }}>
           <div style={{ 
-            background: 'white', 
+            background: 'rgba(255, 255, 255, 0.1)', 
             padding: '16px', 
             borderRadius: 16, 
-            boxShadow: 'var(--shadow-sm)',
-            border: '1px solid var(--color-border-light)'
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
           }}>
-            <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Dépenses</div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--color-text-primary)' }}>{totalSpent.toLocaleString('fr-FR')} €</div>
+            <div style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.7)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Dépenses</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: 'white' }}>{totalSpent.toLocaleString('fr-FR')} €</div>
           </div>
           <div style={{ 
-            background: 'white', 
+            background: 'rgba(255, 255, 255, 0.1)', 
             padding: '16px', 
             borderRadius: 16, 
-            boxShadow: 'var(--shadow-sm)',
-            border: '1px solid var(--color-border-light)'
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
           }}>
-            <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Reste à vivre</div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--color-primary-dark)' }}>{remaining.toLocaleString('fr-FR')} €</div>
+            <div style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.7)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Reste à vivre</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: 'white' }}>{remaining.toLocaleString('fr-FR')} €</div>
           </div>
         </div>
       </section>
@@ -201,7 +256,7 @@ const Budget = ({ onBackToHub }) => {
 
       {!monthData ? (
         <div style={{ padding: '40px 24px', textAlign: 'center' }}>
-          <div style={{ background: 'white', padding: 32, borderRadius: 24, border: '2px dashed var(--color-border)' }}>
+          <div style={{ background: 'var(--color-surface)', padding: 32, borderRadius: 24, border: '2px dashed var(--color-border)' }}>
             <span className="material-icons-round" style={{ fontSize: 48, color: 'var(--color-primary)', opacity: 0.3, marginBottom: 16 }}>calendar_today</span>
             <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text-primary)', margin: '0 0 8px' }}>Aucun budget configuré</p>
             <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: 0 }}>Rendez-vous dans l'onglet <strong>Prévisions</strong> pour commencer à planifier ce mois.</p>
@@ -213,7 +268,7 @@ const Budget = ({ onBackToHub }) => {
           <section style={{ padding: '8px 24px 12px' }} className="dashboard-max-width">
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
               <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'nowrap' }}>Dépenses Fixes</h3>
-              <div style={{ flex: 1, height: 1.5, background: '#000000', opacity: 0.2 }}></div>
+              <div style={{ flex: 1, height: 1.5, background: 'var(--color-separator)' }}></div>
             </div>
             <div className="card" style={{ borderRadius: 16, marginBottom: 24 }}>
               {fixes.length === 0 ? (
@@ -230,7 +285,7 @@ const Budget = ({ onBackToHub }) => {
                       </div>
                       <div className="budget-cat-name">{cat.label}</div>
                       <div className="budget-cat-amounts">
-                        <div className="budget-cat-spent" style={{ color: isOver ? 'var(--color-danger)' : (cat.spent >= limit && limit > 0 ? 'var(--color-primary)' : 'var(--color-text-primary)') }}>
+                        <div className="budget-cat-spent" style={{ color: isOver ? 'var(--color-danger)' : (cat.spent >= limit && limit > 0 ? 'var(--color-success)' : 'var(--color-danger)') }}>
                           {cat.spent.toLocaleString('fr-FR')} €
                           {cat.spent >= limit && limit > 0 && !isOver && (
                             <span style={{ fontSize: 10, marginLeft: 6, fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase' }}>Payé</span>
@@ -250,7 +305,7 @@ const Budget = ({ onBackToHub }) => {
                               ? 'var(--color-primary)'
                               : pct > 80
                                 ? 'var(--color-warning)'
-                                : 'rgba(24, 82, 74, 0.4)',
+                                : 'rgba(53, 132, 96, 0.4)',
                         }}
                       />
                     </div>
@@ -264,7 +319,7 @@ const Budget = ({ onBackToHub }) => {
           <section style={{ padding: '8px 24px 12px' }} className="dashboard-max-width">
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
               <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'nowrap' }}>Dépenses Variables</h3>
-              <div style={{ flex: 1, height: 1.5, background: '#000000', opacity: 0.2 }}></div>
+              <div style={{ flex: 1, height: 1.5, background: 'var(--color-separator)' }}></div>
             </div>
             <div className="card" style={{ borderRadius: 16 }}>
               {variables.length === 0 ? (
@@ -281,7 +336,7 @@ const Budget = ({ onBackToHub }) => {
                       </div>
                       <div className="budget-cat-name">{cat.label}</div>
                       <div className="budget-cat-amounts">
-                        <div className="budget-cat-spent" style={{ color: isOver ? 'var(--color-danger)' : (cat.spent >= limit && limit > 0 ? 'var(--color-primary)' : 'var(--color-text-primary)') }}>
+                        <div className="budget-cat-spent" style={{ color: isOver ? 'var(--color-danger)' : (cat.spent >= limit && limit > 0 ? 'var(--color-success)' : 'var(--color-danger)') }}>
                           {cat.spent.toLocaleString('fr-FR')} €
                           {cat.spent >= limit && limit > 0 && !isOver && (
                             <span style={{ fontSize: 10, marginLeft: 6, fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase' }}>Payé</span>
@@ -301,7 +356,7 @@ const Budget = ({ onBackToHub }) => {
                               ? 'var(--color-primary)'
                               : pct > 80
                                 ? 'var(--color-warning)'
-                                : 'rgba(24, 82, 74, 0.4)',
+                                : 'rgba(53, 132, 96, 0.4)',
                         }}
                       />
                     </div>
@@ -366,7 +421,7 @@ const Budget = ({ onBackToHub }) => {
           zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
         }}>
           <div style={{
-            background: 'white', width: '100%', maxWidth: 500, borderRadius: 24, padding: 24,
+            background: 'var(--color-surface)', width: '100%', maxWidth: 500, borderRadius: 24, padding: 24,
             boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)'
           }}>
             <h3 style={{ fontSize: 20, fontWeight: 900, marginBottom: 8 }}>Paramétrer l'Objectif</h3>
@@ -395,7 +450,7 @@ const Budget = ({ onBackToHub }) => {
                 </div>
               </div>
 
-              <div style={{ background: '#f8fafc', padding: 16, borderRadius: 16 }}>
+              <div style={{ background: 'var(--color-surface-alt)', padding: 16, borderRadius: 16 }}>
                 <label style={{ fontSize: 11, fontWeight: 800, marginBottom: 12, display: 'block' }}>Mode de calcul de la progression</label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>

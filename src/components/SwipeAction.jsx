@@ -176,7 +176,7 @@ const SwipeAction = ({
         style={{
           transform: `translateX(${translateX}px)`,
           transition: isAnimating ? 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)' : 'none',
-          background: 'white',
+          background: 'var(--color-surface)',
           position: 'relative',
           zIndex: 1,
           width: '100%',

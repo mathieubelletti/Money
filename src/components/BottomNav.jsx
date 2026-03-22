@@ -25,7 +25,7 @@ const BottomNav = ({ mode, activeTab, setActiveTab }) => {
       width: '100%',
       maxWidth: 1200,
       borderTop: '1px solid var(--color-border-light)',
-      background: 'rgba(255, 255, 255, 0.8)',
+      background: 'var(--color-nav-bg)',
       backdropFilter: 'blur(12px)',
       padding: '8px 16px 24px',
       zIndex: 100,

@@ -14,8 +14,25 @@ const Transactions = ({ onBackToHub }) => {
     categories, 
     accounts,
     globalRecurrences,
-    forecasts
+    forecasts,
+    selectedPeriod,
+    setSelectedPeriod
   } = useData();
+  
+  const scrollRef = React.useRef(null);
+
+  // --- Auto-scroll to active month ---
+  useEffect(() => {
+    if (selectedPeriod && scrollRef.current) {
+      const timer = setTimeout(() => {
+        const activeBtn = scrollRef.current?.querySelector('[data-selected="true"]');
+        if (activeBtn) {
+          activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedPeriod, forecasts]);
   
   const [activeFilter, setActiveFilter] = useState('Tous');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -60,15 +77,27 @@ const Transactions = ({ onBackToHub }) => {
   }, [accounts]);
 
   const filteredGroups = React.useMemo(() => {
+    const periodParts = String(selectedPeriod || '').split('_');
+    const targetSlug = periodParts[periodParts.length - 1]; // "2026-03"
+
     return txData
       .map(group => ({
         ...group,
-        items: activeFilter === 'Tous'
-          ? group.items
-          : group.items.filter(tx => tx.category === activeFilter),
+        items: group.items.filter(tx => {
+          // 1. Filter by category
+          const categoryMatch = activeFilter === 'Tous' || tx.category === activeFilter;
+          if (!categoryMatch) return false;
+
+          // 2. Filter by month
+          const budgetAttr = tx.budget_month || tx.date;
+          if (!budgetAttr) return true; // Show if no date for some reason
+          const attrParts = String(budgetAttr || '').split('_');
+          const slug = attrParts[attrParts.length - 1].substring(0, 7);
+          return slug === targetSlug;
+        })
       }))
       .filter(group => group.items.length > 0);
-  }, [txData, activeFilter]);
+  }, [txData, activeFilter, selectedPeriod]);
 
   const handleCloseModal = () => {
     setIsAddModalOpen(false);
@@ -263,12 +292,51 @@ const Transactions = ({ onBackToHub }) => {
     <div className="screen animate-fade">
       <PageHeader title="Transactions" onBack={onBackToHub} />
 
+      {/* Interactive Month Selector - Matching Dashboard */}
+      <section style={{ padding: '0 20px 16px', background: 'var(--color-bg)' }} className="dashboard-max-width">
+        <div 
+          ref={scrollRef}
+          className="scrollbar-hide"
+          style={{
+            display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8, scrollBehavior: 'smooth'
+          }}
+        >
+          {forecasts?.map(f => {
+            const periodValue = f.id;
+            const isSelected = selectedPeriod === periodValue;
+            return (
+              <button
+                key={f.id}
+                data-selected={isSelected}
+                onClick={() => setSelectedPeriod(periodValue)}
+                style={{
+                  flexShrink: 0,
+                  padding: '8px 20px',
+                  borderRadius: 20,
+                  background: isSelected ? 'var(--color-primary)' : 'var(--color-surface)',
+                  color: isSelected ? 'white' : 'var(--color-text-primary)',
+                  border: isSelected ? 'none' : '1px solid var(--color-border-light)',
+                  backdropFilter: 'blur(10px)',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  boxShadow: isSelected ? '0 4px 12px rgba(53, 132, 96, 0.3)' : 'var(--shadow-sm)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {f.month.toUpperCase()}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
       {/* Search Bar */}
       <div style={{ padding: '0 16px 16px' }}>
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
-          background: 'white', 
+          background: 'var(--color-surface)', 
           borderRadius: 12, 
           border: '1px solid var(--color-border)', 
           height: 52, 
@@ -279,7 +347,7 @@ const Transactions = ({ onBackToHub }) => {
           <input 
             type="text" 
             placeholder="Rechercher une transaction" 
-            style={{ flex: 1, border: 'none', padding: '0 16px', fontSize: 16, outline: 'none', color: 'var(--color-text-secondary)' }}
+            style={{ flex: 1, border: 'none', background: 'transparent', padding: '0 16px', fontSize: 16, outline: 'none', color: 'var(--color-text-primary)' }}
           />
         </div>
       </div>
@@ -312,7 +380,7 @@ const Transactions = ({ onBackToHub }) => {
               height: 44, 
               padding: '0 20px', 
               borderRadius: 22, 
-              background: activeFilter === cat.name ? 'var(--color-primary)' : 'white',
+              background: activeFilter === cat.name ? 'var(--color-primary)' : 'var(--color-surface)',
               color: activeFilter === cat.name ? 'white' : 'var(--color-text-primary)',
               border: activeFilter === cat.name ? 'none' : '1px solid var(--color-border-light)',
               fontSize: 14,
@@ -350,11 +418,11 @@ const Transactions = ({ onBackToHub }) => {
               }}>
                 {group.dateLabel}
               </span>
-              <div style={{ flex: 1, height: 1, background: 'var(--color-border)', opacity: 0.3 }}></div>
+              <div style={{ flex: 1, height: 1, background: 'var(--color-separator)' }}></div>
             </div>
             
             <div style={{ 
-              background: 'white', 
+              background: 'var(--color-surface)', 
               padding: '4px 20px', 
               borderRadius: 24, 
               border: '1px solid var(--color-border-light)', 
@@ -381,7 +449,8 @@ const Transactions = ({ onBackToHub }) => {
                         domain={tx.domain} 
                         name={tx.name} 
                         size={44} 
-                        bg={tx.bg} 
+                        bg={(tx.category === 'Transferts' || tx.type === 'Virement') ? 'var(--color-info-light, rgba(54, 162, 235, 0.12))' : (tx.amount > 0 ? 'var(--color-success-light)' : 'var(--color-danger-light)')}
+                        color={(tx.category === 'Transferts' || tx.type === 'Virement') ? 'var(--color-info, #36a2eb)' : (tx.amount > 0 ? 'var(--color-success)' : 'var(--color-danger)')}
                         icon={tx.categoryIcon}
                       />
                     </div>
@@ -395,10 +464,10 @@ const Transactions = ({ onBackToHub }) => {
                       <p style={{ 
                         fontSize: 15, 
                         fontWeight: 900, 
-                        color: tx.amount > 0 ? 'var(--color-primary)' : 'var(--color-text-primary)',
+                        color: (tx.category === 'Transferts' || tx.type === 'Virement') ? 'var(--color-info)' : (tx.amount > 0 ? 'var(--color-success)' : 'var(--color-danger)'),
                         margin: 0
                       }}>
-                        {tx.amount > 0 ? '+ ' : '- '}{Math.abs(tx.amount).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €
+                        {(tx.category === 'Transferts' || tx.type === 'Virement') ? '' : (tx.amount > 0 ? '+ ' : '- ')}{Math.abs(tx.amount).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €
                       </p>
                       <p style={{ fontSize: 11, color: 'var(--color-text-tertiary)', fontWeight: 600, marginTop: 4 }}>
                         {getAccountName(tx.account_id || tx.account)}
@@ -421,7 +490,7 @@ const Transactions = ({ onBackToHub }) => {
             </p>
             <button 
               onClick={() => setIsAddModalOpen(true)}
-              style={{ marginTop: 24, padding: '12px 24px', borderRadius: 16, border: 'none', background: 'var(--color-primary)', color: 'white', fontWeight: 800, fontSize: 14, cursor: 'pointer', boxShadow: '0 8px 16px rgba(24, 82, 74, 0.2)' }}
+              style={{ marginTop: 24, padding: '12px 24px', borderRadius: 16, border: 'none', background: 'var(--color-primary)', color: 'white', fontWeight: 800, fontSize: 14, cursor: 'pointer', boxShadow: '0 8px 16px rgba(53, 132, 96, 0.2)' }}
             >
               Ajouter une opération
             </button>
@@ -450,7 +519,7 @@ const Transactions = ({ onBackToHub }) => {
           background: 'var(--color-primary)',
           color: 'white',
           border: 'none',
-          boxShadow: '0 4px 12px rgba(24, 82, 74, 0.4)',
+          boxShadow: '0 4px 12px rgba(53, 132, 96, 0.4)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -487,7 +556,7 @@ const Transactions = ({ onBackToHub }) => {
             style={{
               width: '100%',
               maxWidth: 500,
-              background: 'white',
+              background: 'var(--color-surface)',
               borderRadius: 32,
               padding: '32px',
               boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
@@ -498,7 +567,7 @@ const Transactions = ({ onBackToHub }) => {
             }}
             onClick={e => e.stopPropagation()}
           >
-            <div style={{ position: 'sticky', top: 0, background: 'white', zIndex: 10, paddingBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <div style={{ position: 'sticky', top: 0, background: 'var(--color-surface)', zIndex: 10, paddingBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <h3 style={{ fontSize: 20, fontWeight: 900, color: 'var(--color-text-primary)', margin: 0 }}>
                 {isEditing ? 'Modifier la transaction' : 'Nouvelle transaction'}
               </h3>
@@ -713,7 +782,7 @@ const Transactions = ({ onBackToHub }) => {
                   border: 'none', 
                   fontSize: 16, 
                   fontWeight: 900, 
-                  boxShadow: '0 6px 20px rgba(24, 82, 74, 0.3)',
+                  boxShadow: '0 6px 20px rgba(53, 132, 96, 0.3)',
                   cursor: 'pointer'
                 }}
               >

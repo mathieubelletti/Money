@@ -3,7 +3,7 @@ import { supabase } from '../supabase';
 import { useData } from '../context/DataContext';
 
 const PageHeader = ({ title, onBack }) => {
-  const { session } = useData();
+  const { session, isDarkMode, toggleTheme } = useData();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -59,25 +59,50 @@ const PageHeader = ({ title, onBack }) => {
         {title}
       </h2>
 
-      <div 
-        onClick={() => setIsMenuOpen(!isMenuOpen)}
-        style={{ 
-          width: 36, 
-          height: 36, 
-          borderRadius: '50%', 
-          overflow: 'hidden',
-          border: '1px solid var(--color-border)',
-          cursor: 'pointer'
-        }}
-      >
-        <img 
-          src={session?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session?.user?.email}`} 
-          alt="Avatar" 
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-        />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <button 
+          onClick={toggleTheme} 
+          style={{ 
+            background: 'transparent', 
+            border: 'none', 
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 36,
+            height: 36,
+            borderRadius: '50%',
+            transition: 'background 0.2s ease',
+            color: 'var(--color-text-secondary)'
+          }}
+          title={isDarkMode ? "Passer au thème clair" : "Passer au thème sombre"}
+        >
+          <span className="material-icons-round" style={{ fontSize: 22 }}>
+            {isDarkMode ? 'light_mode' : 'dark_mode'}
+          </span>
+        </button>
+
+        <div 
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          style={{ 
+            width: 36, 
+            height: 36, 
+            borderRadius: '50%', 
+            overflow: 'hidden',
+            border: '1px solid var(--color-border)',
+            cursor: 'pointer'
+          }}
+        >
+          <img 
+            src={session?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session?.user?.email}`} 
+            alt="Avatar" 
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        </div>
       </div>
     </header>
   );
+
 };
 
 export default PageHeader;

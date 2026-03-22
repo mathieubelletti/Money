@@ -78,14 +78,14 @@ const CompanyLogo = ({ domain, name, size = 40, bg, icon, color, style, noBorder
           {icon ? (
             <span className="material-icons-round" style={{
               fontSize: size * 0.5,
-              color: 'var(--color-text-secondary)'
+              color: color || 'var(--color-text-secondary)'
             }}>{icon}</span>
           ) : (
             <>
               <span style={{
                 fontSize: size * 0.45,
                 fontWeight: 800,
-                color: 'var(--color-text-secondary)',
+                color: color || 'var(--color-text-secondary)',
                 lineHeight: 1
               }}>
                 {fallbackInitial}
