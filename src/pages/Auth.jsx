@@ -9,6 +9,7 @@ const Auth = () => {
   const [success, setSuccess] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [showEmailAuth, setShowEmailAuth] = useState(false);
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -23,9 +24,7 @@ const Auth = () => {
       });
       if (error) setError(error.message);
       else {
-        setSuccess("Compte créé avec succès ! Vérifiez vos emails si nécessaire.");
-        // If email confirmation is off, Supabase might auto-login, 
-        // but it's safer to let the user know or handle the session change.
+        setSuccess("Compte créé avec succès ! Vérifiez vos emails.");
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({
@@ -50,115 +49,115 @@ const Auth = () => {
     setLoading(false);
   };
 
-  return (
-    <div className="auth-container">
-      <div className="auth-header">
-        <button className="auth-back-btn" onClick={() => setIsSignUp(false)} style={{ visibility: isSignUp ? 'visible' : 'hidden' }}>
-          <span className="material-icons-round">arrow_back</span>
-        </button>
+  // Main Splash Screen
+  if (!showEmailAuth && !isSignUp) {
+    return (
+      <div className="auth-v2-container">
+        <div className="auth-v2-header">
+          <h1 className="auth-v2-title">BIENVENUE<br />DANS MONEY</h1>
+        </div>
+
+        <div className="auth-v2-sparkle" style={{ position: 'absolute', top: '22%', right: '10%', opacity: 0.6 }}>
+          <span className="material-icons-round" style={{ fontSize: 24, color: 'white' }}>auto_awesome</span>
+        </div>
+        <div className="auth-v2-sparkle" style={{ position: 'absolute', bottom: '20%', left: '15%', opacity: 0.5 }}>
+          <span className="material-icons-round" style={{ fontSize: 20, color: 'white' }}>auto_awesome</span>
+        </div>
+        <div className="auth-v2-sparkle" style={{ position: 'absolute', bottom: '5%', right: '5%', opacity: 0.8 }}>
+          <span className="material-icons-round" style={{ fontSize: 32, color: 'white' }}>star</span>
+        </div>
+
+        <div className="auth-v2-content">
+          <p className="auth-v2-subtitle">
+            Gérez votre argent, investissez dans votre avenir. Tout en un seul endroit.
+          </p>
+
+          <button className="auth-v2-btn-google" onClick={handleGoogleLogin} disabled={loading}>
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" />
+            {loading ? 'Redirection...' : 'CONNECTER AVEC GOOGLE'}
+          </button>
+
+          <div className="auth-v2-links">
+            <button className="auth-v2-link" onClick={() => setShowEmailAuth(true)}>
+              Se connecter avec e-mail
+            </button>
+            <button className="auth-v2-link" onClick={() => setIsSignUp(true)}>
+              Créer un compte
+            </button>
+          </div>
+        </div>
+
+        <div className="auth-v2-footer">
+          <span>Confidentialité</span>
+          <span>•</span>
+          <span>Conditions d'Utilisation</span>
+          <span>•</span>
+          <span>Aide/Appareils</span>
+        </div>
       </div>
+    );
+  }
 
-      <h1 className="auth-title">
-        {isSignUp ? 'Créer un compte' : 'Content de vous revoir'}
-      </h1>
-      <p className="auth-subtitle">
-        {isSignUp 
-          ? 'Rejoignez Money pour prendre le contrôle de vos finances dès aujourd\'hui.' 
-          : 'Connectez-vous à votre compte Money en toute sécurité pour gérer vos finances.'}
-      </p>
+  // Email Auth / Sign Up Screen (Styled to match V2 but with form)
+  return (
+    <div className="auth-v2-container">
+      <button className="auth-back-btn" onClick={() => { setIsSignUp(false); setShowEmailAuth(false); setError(null); }} style={{ position: 'absolute', top: 32, left: 24, zIndex: 10, color: 'white' }}>
+        <span className="material-icons-round">arrow_back</span>
+      </button>
 
-      <form className="auth-form" onSubmit={handleAuth}>
-        <div className="auth-input-group">
-          <label className="auth-label">Email</label>
-          <div className="auth-input-container">
+      <div className="auth-v2-content" style={{ marginTop: -40 }}>
+        <img src="/logo_premium.png" alt="Logo" className="auth-v2-logo-img" style={{ width: 60, height: 60, marginBottom: 24 }} />
+        
+        <h2 style={{ color: 'white', marginBottom: 8, fontSize: 24, fontWeight: 800 }}>
+          {isSignUp ? 'CRÉER UN COMPTE' : 'CONNEXION E-MAIL'}
+        </h2>
+        <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: 32, fontSize: 13 }}>
+          {isSignUp ? 'Rejoignez Money aujourd\'hui.' : 'Entrez vos identifiants pour continuer.'}
+        </p>
+
+        <form onSubmit={handleAuth} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ textAlign: 'left' }}>
+            <label style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: 700, marginBottom: 8, display: 'block' }}>EMAIL</label>
             <input
               type="email"
-              className="auth-input"
               placeholder="votre@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              style={{ width: '100%', padding: '14px 16px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'white', outline: 'none' }}
             />
           </div>
-        </div>
 
-        <div className="auth-input-group">
-          <label className="auth-label">Mot de passe</label>
-          <div className="auth-input-container">
+          <div style={{ textAlign: 'left', position: 'relative' }}>
+            <label style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: 700, marginBottom: 8, display: 'block' }}>MOT DE PASSE</label>
             <input
               type={showPassword ? 'text' : 'password'}
-              className="auth-input"
               placeholder="........"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              style={{ width: '100%', padding: '14px 16px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'white', outline: 'none' }}
             />
             <span 
-              className="material-icons-round auth-eye-icon"
+              className="material-icons-round" 
               onClick={() => setShowPassword(!showPassword)}
+              style={{ position: 'absolute', right: 16, bottom: 14, color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 20 }}
             >
               {showPassword ? 'visibility_off' : 'visibility'}
             </span>
           </div>
-        </div>
 
-        {!isSignUp && <a href="#" className="auth-forgot">Mot de passe oublié ?</a>}
+          {error && <p style={{ color: '#ef4444', fontSize: 12, marginTop: 8 }}>{error}</p>}
+          {success && <p style={{ color: '#10b981', fontSize: 12, marginTop: 8 }}>{success}</p>}
 
-        {error && (
-          <p style={{ color: 'var(--color-danger)', fontSize: 'var(--font-size-xs)', fontWeight: 600, marginTop: 12 }}>
-            {error}
-          </p>
-        )}
-
-        {success && (
-          <p style={{ color: 'var(--color-primary)', fontSize: 'var(--font-size-xs)', fontWeight: 600, marginTop: 12 }}>
-            {success}
-          </p>
-        )}
-
-        <button type="submit" className="auth-btn-primary" disabled={loading} style={{ marginTop: isSignUp ? 24 : 0 }}>
-          {loading 
-            ? (isSignUp ? 'Création...' : 'Connexion...') 
-            : (isSignUp ? 'S\'inscrire' : 'Se connecter')}
-        </button>
-      </form>
-
-      <div className="auth-divider">
-        <div className="auth-divider-line"></div>
-        <span className="auth-divider-text">OU</span>
-        <div className="auth-divider-line"></div>
-      </div>
-
-      <button 
-        className="auth-btn-google" 
-        onClick={handleGoogleLogin}
-        disabled={loading}
-        type="button"
-      >
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
-        {loading ? 'Redirection...' : 'Continuer avec Google'}
-      </button>
-
-      <div className="auth-footer">
-        <p className="auth-footer-text">
-          {isSignUp ? 'Déjà un compte ?' : 'Nouveau sur Money ?'}{' '}
           <button 
-            className="auth-footer-link" 
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setError(null);
-              setSuccess(null);
-            }}
-            style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer' }}
+            type="submit" 
+            disabled={loading}
+            style={{ width: '100%', padding: 16, borderRadius: 30, border: 'none', background: 'white', color: '#102e2a', fontWeight: 800, fontSize: 14, cursor: 'pointer', marginTop: 16, textTransform: 'uppercase' }}
           >
-            {isSignUp ? 'Se connecter' : 'Créer un compte'}
+            {loading ? 'CHARGEMENT...' : (isSignUp ? 'S\'INSCRIRE' : 'SE CONNECTER')}
           </button>
-        </p>
-      </div>
-
-      <div className="auth-secure">
-        <span className="material-icons-round" style={{ fontSize: 14 }}>lock</span>
-        CONNEXION SÉCURISÉE SSL
+        </form>
       </div>
     </div>
   );
