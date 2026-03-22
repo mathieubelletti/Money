@@ -4,7 +4,7 @@ import { previsionsTabs } from '../data/mockData';
 import { formatBalance } from '../utils/helpers';
 import { useData } from '../context/DataContext';
 
-const Previsions = () => {
+const Previsions = ({ onBackToHub }) => {
   const { 
     forecasts, 
     globalRecurrences, 
@@ -216,7 +216,7 @@ const Previsions = () => {
   if (loading || fetchingPrevisions || !forecasts || forecasts.length === 0) {
     return (
       <div className="screen animate-fade">
-        <PageHeader title="Prévisions annuelles" />
+        <PageHeader title="Prévisions annuelles" onBack={onBackToHub} />
         <div style={{
           display: 'flex', 
           flexDirection: 'column',

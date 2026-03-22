@@ -32,40 +32,18 @@ const PageHeader = ({ title, onBack }) => {
       alignItems: 'center',
       justifyContent: 'space-between'
     }}>
-      <div className="header-menu-container" ref={menuRef}>
+      <div className="header-menu-container">
         <div 
           style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          onClick={() => {
+            if (onBack) onBack();
+            else if (typeof window !== 'undefined') window.location.reload();
+          }}
         >
-          <span className="material-icons-round" style={{ fontSize: 24, color: 'var(--color-text-primary)' }}>
-            menu
+          <span className="material-icons-round" style={{ fontSize: 24, color: 'var(--color-primary)' }}>
+            home
           </span>
         </div>
-
-        {isMenuOpen && (
-          <div className="header-dropdown">
-            <div style={{ padding: '12px 16px 8px', borderBottom: '1px solid var(--color-border-light)' }}>
-              <div style={{ fontSize: 10, color: 'var(--color-text-tertiary)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 2 }}>Compte Connecté</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-primary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session?.user?.email}</div>
-            </div>
-            <button className="header-dropdown-item" style={{ marginTop: 4 }} onClick={() => {
-              if (onBack) onBack();
-              else window.location.reload();
-              setIsMenuOpen(false);
-            }}>
-              <span className="material-icons-round">home</span>
-              Retour à l'accueil
-            </button>
-            <div className="header-dropdown-divider"></div>
-            <button className="header-dropdown-item danger" onClick={() => {
-              handleLogout();
-              setIsMenuOpen(false);
-            }}>
-              <span className="material-icons-round">logout</span>
-              Se déconnecter
-            </button>
-          </div>
-        )}
       </div>
 
       <h2 style={{ 

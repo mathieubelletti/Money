@@ -4,7 +4,7 @@ import PageHeader from '../components/PageHeader';
 import SwipeAction from '../components/SwipeAction';
 import { useData } from '../context/DataContext';
 
-const Transactions = () => {
+const Transactions = ({ onBackToHub }) => {
   const { 
     transactions: txData, 
     addTransaction, 
@@ -261,7 +261,7 @@ const Transactions = () => {
 
   return (
     <div className="screen animate-fade">
-      <PageHeader title="Transactions" />
+      <PageHeader title="Transactions" onBack={onBackToHub} />
 
       {/* Search Bar */}
       <div style={{ padding: '0 16px 16px' }}>

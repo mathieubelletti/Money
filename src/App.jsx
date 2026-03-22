@@ -7,6 +7,7 @@ import Auth from './pages/Auth';
 import Hub from './pages/Hub';
 import SharedExpenses from './pages/SharedExpenses';
 import Taxes from './pages/Taxes';
+import FlowTask from './pages/FlowTask';
 import BottomNav from './components/BottomNav';
 import SyncIndicator from './components/SyncIndicator';
 import { useData } from './context/DataContext';
@@ -22,7 +23,7 @@ const BUDGET_SCREENS = {
 
 function App() {
   const { session, loading } = useData();
-  const [appMode, setAppMode] = useState('hub'); // 'hub', 'budget', 'shared-expenses'
+  const [appMode, setAppMode] = useState('hub'); // 'hub', 'budget', 'shared-expenses', 'taxes', 'flowtask'
   const [activeTab, setActiveTab] = useState('dashboard');
 
   useEffect(() => {
@@ -44,6 +45,7 @@ function App() {
           onEnterBudget={() => setAppMode('budget')} 
           onEnterSharedExpenses={() => setAppMode('shared-expenses')}
           onEnterTaxes={() => setAppMode('taxes')}
+          onEnterFlowTask={() => setAppMode('flowtask')}
         />
       </div>
     );
@@ -64,6 +66,15 @@ function App() {
       <div className="app-container">
         <SyncIndicator />
         <Taxes onBack={() => setAppMode('hub')} />
+      </div>
+    );
+  }
+
+  if (appMode === 'flowtask') {
+    return (
+      <div className="app-container">
+        <SyncIndicator />
+        <FlowTask onBack={() => setAppMode('hub')} />
       </div>
     );
   }

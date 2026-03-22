@@ -1,7 +1,7 @@
 import { supabase } from '../supabase';
 import { useData } from '../context/DataContext';
 
-const Hub = ({ onEnterBudget, onEnterSharedExpenses, onEnterTaxes }) => {
+const Hub = ({ onEnterBudget, onEnterSharedExpenses, onEnterTaxes, onEnterFlowTask }) => {
   const { session } = useData();
   const user = session?.user;
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Utilisateur';
@@ -40,20 +40,13 @@ const Hub = ({ onEnterBudget, onEnterSharedExpenses, onEnterTaxes }) => {
       onClick: onEnterTaxes
     },
     {
-      id: 'tasks',
-      name: 'Tasks',
-      desc: 'Gestion de projets complexes',
-      icon: 'assignment',
-      color: 'var(--color-primary)',
-      bg: 'var(--color-primary-glass)',
-    },
-    {
-      id: 'todolist',
-      name: 'Todolist',
-      desc: 'Simple check-list quotidienne',
-      icon: 'done_all',
-      color: 'var(--color-primary)',
-      bg: 'var(--color-primary-glass)',
+      id: 'flowtask',
+      name: 'FlowTask',
+      desc: 'Maîtrisez votre journée (Eisenhower)',
+      icon: 'task_alt',
+      color: '#10b981',
+      bg: 'rgba(16, 185, 129, 0.1)',
+      onClick: onEnterFlowTask
     }
   ];
 

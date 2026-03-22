@@ -125,6 +125,10 @@ const SharedExpenses = ({ onBack }) => {
 
   const addExpense = async (formData) => {
     if (!userId) return;
+    
+    // Normalize period to slug only (e.g. "2026-03") to match the selector and filter
+    const monthSlug = (formData.accountingPeriod || selectedPeriod || '').split('_').pop();
+    
     const newTx = {
       user_id: userId,
       name: formData.name,
@@ -132,10 +136,13 @@ const SharedExpenses = ({ onBack }) => {
       paid_by: formData.paidBy,
       category: formData.category,
       date: formData.date || new Date().toISOString().split('T')[0],
-      accounting_period: formData.accountingPeriod || currentMonthSlug
+      accounting_period: monthSlug
     };
+    
     const { data, error } = await supabase.from('shared_transactions').insert([newTx]).select();
     if (!error && data) setTransactions([data[0], ...transactions]);
+    else if (error) console.error('Supabase error:', error);
+    
     setIsExpenseModalOpen(false);
   };
 
@@ -168,8 +175,8 @@ const SharedExpenses = ({ onBack }) => {
         top: 0,
         zIndex: 100
       }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, display: 'flex', color: 'var(--color-text-primary)' }}>
-          <span className="material-icons-round">arrow_back_ios</span>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, display: 'flex', color: 'var(--color-primary)' }}>
+          <span className="material-icons-round" style={{ fontSize: 24 }}>home</span>
         </button>
         <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>Dépenses Communes</h2>
         <button onClick={() => setIsManageMembersOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, display: 'flex', color: 'var(--color-primary)' }}>

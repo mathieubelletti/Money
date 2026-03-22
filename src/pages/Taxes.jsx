@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 // --- Moteur Fiscal ---
-export const calculateIncomeTax = (revenuBrut, parts, fraisReels, credits) => {
+export const calculateIncomeTax = (revenuBrut, parts, fraisReels, credits, csg, prelevementSource, autresDeductions) => {
   let abattement = 0;
   if (fraisReels !== null && fraisReels > 0) {
     abattement = fraisReels;
@@ -10,7 +10,8 @@ export const calculateIncomeTax = (revenuBrut, parts, fraisReels, credits) => {
     if (abattement > 14171) abattement = 14171; // Plafond légal pour les revenus 2024
   }
   
-  const rni = Math.max(0, revenuBrut - abattement);
+  const rniBase = Math.max(0, revenuBrut - abattement);
+  const rni = Math.max(0, rniBase - (csg || 0) - (autresDeductions || 0));
   const qf = rni / parts;
   
   let impotPourUnePart = 0;
@@ -30,7 +31,7 @@ export const calculateIncomeTax = (revenuBrut, parts, fraisReels, credits) => {
   }
   
   let impotBrut = impotPourUnePart * parts;
-  let impotNet = Math.max(0, impotBrut - (credits || 0));
+  let impotNet = Math.max(0, impotBrut - (credits || 0) - (prelevementSource || 0));
   
   return { revenuBrut, rni, impotBrut, impotNet, tauxMoyen: revenuBrut > 0 ? (impotNet / revenuBrut) * 100 : 0 };
 };
@@ -69,13 +70,18 @@ const Taxes = ({ onBack }) => {
   const [fraisReels, setFraisReels] = useState('');
   const [credits, setCredits] = useState('');
   const [csg, setCsg] = useState('');
+  const [prelevementSource, setPrelevementSource] = useState('');
+  const [autresDeductions, setAutresDeductions] = useState('');
 
   // Live calculation
   const simulation = calculateIncomeTax(
     parseFloat(revenuFiscal) || 0,
     parts,
     abattementAuto ? null : parseFloat(fraisReels),
-    parseFloat(credits)
+    parseFloat(credits),
+    parseFloat(csg),
+    parseFloat(prelevementSource),
+    parseFloat(autresDeductions)
   );
 
   const handleAbattementToggle = () => {
@@ -112,8 +118,8 @@ const Taxes = ({ onBack }) => {
         padding: '16px 20px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         borderBottom: '1.5px solid var(--color-border)', position: 'sticky', top: 0, zIndex: 100
       }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, display: 'flex', color: 'var(--color-text-primary)' }}>
-          <span className="material-icons-round">arrow_back</span>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, display: 'flex', color: 'var(--color-primary)' }}>
+          <span className="material-icons-round" style={{ fontSize: 24 }}>home</span>
         </button>
         <h2 style={{ fontSize: 16, fontWeight: 900, color: 'var(--color-text-primary)', margin: 0 }}>Paramètres Fiscaux</h2>
         <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, display: 'flex', color: 'var(--color-text-tertiary)' }}>
@@ -205,7 +211,7 @@ const Taxes = ({ onBack }) => {
               <CustomToggle checked={!abattementAuto} onChange={handleFraisReelsToggle} />
             </div>
 
-            <div style={{ padding: '0 0 16px', marginTop: 4, opacity: abattementAuto ? 0.3 : 1, pointerEvents: abattementAuto ? 'none' : 'auto', transition: 'opacity 0.3s' }}>
+            <div style={{ padding: '0 0 16px', marginTop: 4, opacity: abattementAuto ? 0.3 : 1, pointerEvents: abattementAuto ? 'none' : 'auto', transition: 'opacity 0.3s', borderBottom: '1px solid var(--color-border-light)' }}>
               <div style={{ position: 'relative' }}>
                 <input 
                   type="number" 
@@ -213,6 +219,58 @@ const Taxes = ({ onBack }) => {
                   value={fraisReels}
                   onChange={e => setFraisReels(e.target.value)}
                   disabled={abattementAuto}
+                  style={{ 
+                    width: '100%', padding: '16px 20px', borderRadius: 14, border: 'none', background: 'var(--color-bg)',
+                    outline: 'none', fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)'
+                  }}
+                />
+                <span style={{ position: 'absolute', right: 20, top: 16, fontSize: 15, fontWeight: 900, color: 'var(--color-text-secondary)' }}>€</span>
+              </div>
+            </div>
+
+            {/* Prélèvement à la source */}
+            <div style={{ padding: '16px 0', borderBottom: '1px solid var(--color-border-light)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--color-primary-bg)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="material-icons-round" style={{ fontSize: 22 }}>account_balance_wallet</span>
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 900, color: 'var(--color-text-primary)' }}>Prélèvement à la source déjà payé</h4>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, fontWeight: 600, color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>Déjà réglé sur vos revenus</p>
+                </div>
+              </div>
+              <div style={{ position: 'relative' }}>
+                <input 
+                  type="number" 
+                  placeholder="0"
+                  value={prelevementSource}
+                  onChange={e => setPrelevementSource(e.target.value)}
+                  style={{ 
+                    width: '100%', padding: '16px 20px', borderRadius: 14, border: 'none', background: 'var(--color-bg)',
+                    outline: 'none', fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)'
+                  }}
+                />
+                <span style={{ position: 'absolute', right: 20, top: 16, fontSize: 15, fontWeight: 900, color: 'var(--color-text-secondary)' }}>€</span>
+              </div>
+            </div>
+
+            {/* Autres déductions */}
+            <div style={{ padding: '16px 0 8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--color-primary-bg)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="material-icons-round" style={{ fontSize: 22 }}>payments</span>
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 900, color: 'var(--color-text-primary)' }}>Autres déductions</h4>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, fontWeight: 600, color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>Pensions, épargne retraite...</p>
+                </div>
+              </div>
+              <div style={{ position: 'relative' }}>
+                <input 
+                  type="number" 
+                  placeholder="0"
+                  value={autresDeductions}
+                  onChange={e => setAutresDeductions(e.target.value)}
                   style={{ 
                     width: '100%', padding: '16px 20px', borderRadius: 14, border: 'none', background: 'var(--color-bg)',
                     outline: 'none', fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)'

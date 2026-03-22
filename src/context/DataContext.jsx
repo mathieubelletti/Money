@@ -400,24 +400,28 @@ export const DataProvider = ({ children }) => {
   }, [session?.user?.id, usingSupabase, refreshData]);
  
   // --- Date Watcher: Handle automatic month transition (on 1st of the month) ---
+  const lastActiveMonthRef = useRef(new Date().toISOString().substring(0, 7));
+
   useEffect(() => {
     const checkDate = () => {
       const now = new Date();
       const currentSlug = now.toISOString().substring(0, 7);
-      const expectedPeriod = session?.user?.id ? `${session.user.id}_${currentSlug}` : currentSlug;
       
-      // If the app is open and it's now a different month than selected, 
-      // we auto-switch to the new month as requested.
-      if (selectedPeriod && !selectedPeriod.includes(currentSlug)) {
-        setSelectedPeriod(expectedPeriod);
+      // ONLY trigger if the actual system date has changed to a new month
+      // while the app is running. Don't override manual user selection.
+      if (currentSlug !== lastActiveMonthRef.current) {
+        lastActiveMonthRef.current = currentSlug;
+        const userId = session?.user?.id;
+        const newPeriod = userId ? `${userId}_${currentSlug}` : currentSlug;
+        setSelectedPeriod(newPeriod);
+        console.log('🔄 Automatic month transition triggered:', currentSlug);
       }
     };
 
-    // Check once on mount and then every hour
-    checkDate();
+    // Check every hour (3,600,000 ms)
     const interval = setInterval(checkDate, 3600000);
     return () => clearInterval(interval);
-  }, [selectedPeriod, session?.user?.id]);
+  }, [session?.user?.id]);
 
   useEffect(() => { if (session) fetchAllData(); }, [session]);
 

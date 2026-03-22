@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import PageHeader from '../components/PageHeader';
 import { useData } from '../context/DataContext';
 
-const Budget = () => {
+const Budget = ({ onBackToHub }) => {
   const { forecasts, monthsState, transactions: txGroups, goal, setGoal, loading, selectedPeriod } = useData();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
@@ -148,7 +148,7 @@ const Budget = () => {
 
   return (
     <div className="screen animate-fade">
-      <PageHeader title="Budget Mensuel" />
+      <PageHeader title="Budget Mensuel" onBack={onBackToHub} />
 
       {/* Stats Section */}
       <section style={{ padding: '24px 24px 12px' }} className="dashboard-max-width">

@@ -4,7 +4,7 @@ import PageHeader from '../components/PageHeader';
 import { patrimonyChart, insights } from '../data/mockData';
 import { useData } from '../context/DataContext';
 
-const Dashboard = () => {
+const Dashboard = ({ onBackToHub }) => {
   const { 
     accounts,
     setAccounts,
@@ -264,7 +264,7 @@ const Dashboard = () => {
 
   return (
     <div className="screen">
-      <PageHeader title="Tableau de bord" />
+      <PageHeader title="Tableau de bord" onBack={onBackToHub} />
 
       {/* Interactive Month Selector */}
       <section style={{ padding: '0 24px 16px' }} className="dashboard-max-width">
