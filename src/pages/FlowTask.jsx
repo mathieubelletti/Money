@@ -345,23 +345,25 @@ const FlowTask = ({ onBack }) => {
           background: rgba(0,0,0,0.4);
           z-index: 200;
           display: flex;
-          align-items: flex-end;
+          align-items: center;
           justify-content: center;
           backdrop-filter: blur(4px);
+          padding: 20px;
         }
 
         .ft-modal-content {
           width: 100%;
           max-width: 500px;
           background: var(--color-surface);
-          border-radius: 32px 32px 0 0;
+          border-radius: 32px;
           padding: 32px 24px;
           animation: slide-up 0.3s ease-out;
+          color: var(--color-text-primary);
         }
 
         @keyframes slide-up {
-          from { transform: translateY(100%); }
-          to { transform: translateY(0); }
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         .ft-modal-title {
@@ -394,6 +396,11 @@ const FlowTask = ({ onBack }) => {
           font-size: 15px;
           font-weight: 700;
           outline: none;
+          color: var(--color-text-primary);
+        }
+
+        .ft-input::placeholder {
+          color: var(--color-text-tertiary);
         }
 
         .ft-input:focus {
@@ -514,18 +521,21 @@ const FlowTask = ({ onBack }) => {
             {/* 1. URGENT */}
             <Quadrant title="À faire en priorité" icon="priority_high" label="URGENT" type="urgent">
               {tasks.filter(t => t.type === 'urgent').map(t => (
-                <div key={t.id} className="ft-task-item">
-                  <div 
-                    className={`ft-checkbox ${t.done ? 'checked' : ''}`}
-                    style={{ borderColor: 'var(--color-danger)', backgroundColor: t.done ? 'var(--color-danger)' : 'white' }}
-                    onClick={() => toggleTask(t.id)}
-                  >
-                    {t.done && <span className="material-icons-round" style={{ fontSize: 16 }}>done</span>}
+                <div key={t.id} className="ft-task-item" style={{ justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <div 
+                      className={`ft-checkbox ${t.done ? 'checked' : ''}`}
+                      style={{ borderColor: 'var(--color-danger)', backgroundColor: t.done ? 'var(--color-danger)' : 'white' }}
+                      onClick={() => toggleTask(t.id)}
+                    >
+                      {t.done && <span className="material-icons-round" style={{ fontSize: 16 }}>done</span>}
+                    </div>
+                    <div className="ft-task-info">
+                      <h4 style={{ textDecoration: t.done ? 'line-through' : 'none', color: t.done ? 'var(--color-text-tertiary)' : 'inherit' }}>{t.title}</h4>
+                      <p>{t.sub}</p>
+                    </div>
                   </div>
-                  <div className="ft-task-info">
-                    <h4 style={{ textDecoration: t.done ? 'line-through' : 'none', color: t.done ? 'var(--color-text-tertiary)' : 'inherit' }}>{t.title}</h4>
-                    <p>{t.sub}</p>
-                  </div>
+                  <span className="material-icons-round" style={{ color: 'var(--color-text-tertiary)', cursor: 'pointer', opacity: 0.6 }} onClick={() => deleteTask(t.id)}>delete_outline</span>
                 </div>
               ))}
             </Quadrant>
@@ -547,7 +557,7 @@ const FlowTask = ({ onBack }) => {
                       <p>{t.sub}</p>
                     </div>
                   </div>
-                  <span className="material-icons-round" style={{ color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>more_vert</span>
+                  <span className="material-icons-round" style={{ color: 'var(--color-text-tertiary)', cursor: 'pointer', opacity: 0.6 }} onClick={() => deleteTask(t.id)}>delete_outline</span>
                 </div>
               ))}
             </Quadrant>
@@ -565,7 +575,10 @@ const FlowTask = ({ onBack }) => {
                       <p style={{ color: 'var(--color-info)', fontStyle: 'normal' }}>ASSIGNE À : {t.sub?.toUpperCase() || 'EQUIPE'}</p>
                     </div>
                   </div>
-                  <p className="ft-collab-status">{t.statusText || 'En cours'}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <p className="ft-collab-status" style={{ margin: 0 }}>{t.statusText || 'En cours'}</p>
+                    <span className="material-icons-round" style={{ color: 'var(--color-text-tertiary)', cursor: 'pointer', opacity: 0.6 }} onClick={() => deleteTask(t.id)}>delete_outline</span>
+                  </div>
                 </div>
               ))}
             </Quadrant>
@@ -574,8 +587,8 @@ const FlowTask = ({ onBack }) => {
             <Quadrant title="Éliminer" icon="delete_sweep" label="PRIORITÉ BASSE" type="eliminate">
               {tasks.filter(t => t.type === 'eliminate').map(t => (
                 <div key={t.id} className="ft-eliminate-item">
-                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-tertiary)', textDecoration: 'line-through', fontStyle: 'italic' }}>{t.title}</span>
-                  <span className="material-icons-round" style={{ fontSize: 18, color: 'var(--color-text-tertiary)', cursor: 'pointer' }} onClick={() => deleteTask(t.id)}>close</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-tertiary)', textDecoration: 'line-through', fontStyle: 'italic', flex: 1 }}>{t.title}</span>
+                  <span className="material-icons-round" style={{ fontSize: 20, color: 'var(--color-text-tertiary)', cursor: 'pointer', opacity: 0.6 }} onClick={() => deleteTask(t.id)}>delete_outline</span>
                 </div>
               ))}
             </Quadrant>
