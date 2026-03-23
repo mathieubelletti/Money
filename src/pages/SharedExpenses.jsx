@@ -366,7 +366,7 @@ const SharedExpenses = ({ onBack }) => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 900, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 6 }}>DATE D'ACHAT</label>
-                  <input name="date" type="date" defaultValue={new Date().toISOString().split('T')[0]} required style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--color-border)', outline: 'none', fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }} />
+                  <input name="date" type="date" defaultValue={new Date().toISOString().split('T')[0]} required style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--color-border)', background: 'var(--color-bg)', outline: 'none', fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 900, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 6 }}>MOIS COMPTABILITÉ</label>
@@ -377,12 +377,12 @@ const SharedExpenses = ({ onBack }) => {
               </div>
               <div style={{ marginBottom: 16 }}>
                 <label style={{ fontSize: 11, fontWeight: 900, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 6 }}>INTITULÉ</label>
-                <input name="name" type="text" placeholder="Ex: Restaurant" required style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--color-border)', outline: 'none', fontSize: 14, fontWeight: 600 }} />
+                <input name="name" type="text" placeholder="Ex: Restaurant" required style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--color-border)', background: 'var(--color-bg)', outline: 'none', fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 900, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 6 }}>MONTANT (€)</label>
-                  <input name="amount" type="number" step="0.01" placeholder="0.00" required style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--color-border)', outline: 'none', fontSize: 14, fontWeight: 800 }} />
+                  <input name="amount" type="number" step="0.01" placeholder="0.00" required style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--color-border)', background: 'var(--color-bg)', outline: 'none', fontSize: 14, fontWeight: 800, color: 'var(--color-text-primary)' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 900, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 6 }}>PAYEUR</label>

@@ -525,7 +525,7 @@ const FlowTask = ({ onBack }) => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                     <div 
                       className={`ft-checkbox ${t.done ? 'checked' : ''}`}
-                      style={{ borderColor: 'var(--color-danger)', backgroundColor: t.done ? 'var(--color-danger)' : 'white' }}
+                      style={{ borderColor: 'var(--color-danger)', backgroundColor: t.done ? 'var(--color-danger)' : 'var(--color-surface)' }}
                       onClick={() => toggleTask(t.id)}
                     >
                       {t.done && <span className="material-icons-round" style={{ fontSize: 16 }}>done</span>}
@@ -547,7 +547,7 @@ const FlowTask = ({ onBack }) => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                     <div 
                       className={`ft-checkbox ${t.done ? 'checked' : ''}`}
-                      style={{ borderColor: 'var(--color-primary)', backgroundColor: t.done ? 'var(--color-primary)' : 'white' }}
+                      style={{ borderColor: 'var(--color-primary)', backgroundColor: t.done ? 'var(--color-primary)' : 'var(--color-surface)' }}
                       onClick={() => toggleTask(t.id)}
                     >
                       {t.done && <span className="material-icons-round" style={{ fontSize: 16 }}>done</span>}
