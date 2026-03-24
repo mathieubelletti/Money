@@ -144,6 +144,13 @@ export const DataProvider = ({ children }) => {
     }
   });
 
+  const [toast, setToast] = useState({ message: '', type: 'success', visible: false });
+
+  const showToast = React.useCallback((message, type = 'success') => {
+    setToast({ message, type, visible: true });
+    setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 4000);
+  }, []);
+
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -161,7 +168,38 @@ export const DataProvider = ({ children }) => {
     setIsDarkMode(prev => !prev);
   }, []);
   
-  // Dynamic balance calculation
+  // Custom Toast Component
+  const Toast = () => {
+    if (!toast.visible) return null;
+    const isSuccess = toast.type === 'success';
+    return (
+      <div style={{
+        position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
+        zIndex: 9999, display: 'flex', alignItems: 'center', gap: 12,
+        background: isDarkMode ? '#1e293b' : '#ffffff',
+        padding: '12px 20px', borderRadius: 16, border: `1px solid ${isSuccess ? 'var(--color-primary)' : 'var(--color-danger)'}`,
+        boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+        animation: 'toast-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'
+      }}>
+        <div style={{
+          width: 32, height: 32, borderRadius: 10, 
+          background: isSuccess ? 'var(--color-primary-glass)' : 'var(--color-danger-light)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <span className="material-icons-round" style={{ fontSize: 18, color: isSuccess ? 'var(--color-primary)' : 'var(--color-danger)' }}>
+            {isSuccess ? 'check_circle' : 'error'}
+          </span>
+        </div>
+        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>{toast.message}</span>
+        <style>{`
+          @keyframes toast-in {
+            from { opacity: 0; transform: translate(-50%, 20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+          }
+        `}</style>
+      </div>
+    );
+  };
   const accountsWithBalances = React.useMemo(() => {
     // 1. Transactions are now already flat in the state
     const flatTxs = Array.isArray(transactions) ? transactions : [];
@@ -977,12 +1015,14 @@ export const DataProvider = ({ children }) => {
       refreshData,
       syncStatus,
       isDarkMode,
-      toggleTheme
+      toggleTheme,
+      showToast
     ]);
 
   return (
     <DataContext.Provider value={value}>
       <ErrorBoundary>{children}</ErrorBoundary>
+      {toast.visible && <Toast message={toast.message} type={toast.type} />}
     </DataContext.Provider>
   );
 };

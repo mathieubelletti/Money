@@ -85,10 +85,10 @@ const Hub = ({ onEnterBudget, onEnterSharedExpenses, onEnterTaxes, onEnterFlowTa
             className="hub-notif" 
             style={{ background: 'var(--color-primary-glass)', color: 'var(--color-primary)', border: 'none', cursor: 'pointer' }}
             onClick={async () => {
-              const res = await subscribeUserToPush();
-              if (res.success) alert("Notifications Push activées avec succès !");
-              else alert("Erreur d'activation : " + res.error);
-            }}
+              const res = await activatePushNotifications(session.user.id);
+            if (res.success) showToast("Notifications Push activées !");
+            else showToast("Erreur d'activation", "error");
+          }} 
           >
             <span className="material-icons-round">notifications</span>
           </button>

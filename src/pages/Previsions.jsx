@@ -59,7 +59,9 @@ const Previsions = ({ onBackToHub }) => {
       return () => clearTimeout(timer);
     }
   }, [selectedPeriod, forecasts, activeTab]);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [isGlobalModalOpen, setIsGlobalModalOpen] = useState(false);
+  const [activeModalTab, setActiveModalTab] = useState('revenus');
 
   const now = new Date();
   const currentYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -800,198 +802,194 @@ const Previsions = ({ onBackToHub }) => {
             </div>
 
             {/* INITIAL SETUP: Starting Balance */}
-            <div style={{ background: 'var(--color-primary-bg)', padding: '20px', borderRadius: 24, marginBottom: 28, border: '1px solid var(--color-primary)', display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ background: 'var(--color-surface)', width: 48, height: 48, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(53, 132, 96, 0.2)' }}>
-                <span className="material-icons-round" style={{ color: 'var(--color-primary)', fontSize: 24 }}>account_balance_wallet</span>
+            <div style={{ background: 'var(--color-primary-bg)', padding: '16px 20px', borderRadius: 24, marginBottom: 24, border: '1px solid var(--color-primary)', display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ background: 'var(--color-surface)', width: 44, height: 44, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(53, 132, 96, 0.2)' }}>
+                <span className="material-icons-round" style={{ color: 'var(--color-primary)', fontSize: 20 }}>account_balance_wallet</span>
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--color-primary-dark)', textTransform: 'uppercase', marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--color-primary-dark)', textTransform: 'uppercase', marginBottom: 2, display: 'flex', justifyContent: 'space-between', opacity: 0.8 }}>
                   <span>Solde au 1er Janvier</span>
-                  <span style={{ fontSize: 9, opacity: 0.7, fontStyle: 'italic' }}>Saisie manuelle possible</span>
+                  <span style={{ fontSize: 9, opacity: 0.7, fontStyle: 'italic' }}>Optionnel</span>
                 </div>
                 <input 
                   type="number"
-                  placeholder="Ex: 1540.50"
+                  placeholder="0.00 €"
                   value={getMonthData(forecasts[0].id).manualReport || ''}
                   onChange={(e) => setMonthsState(prev => ({ 
                     ...prev, 
                     [forecasts[0].id]: { ...(prev[forecasts[0].id] || { manualReport: 0, revenus: [], fixes: [], variables: [] }), manualReport: e.target.value } 
                   }))}
-                  style={{ width: '100%', background: 'transparent', border: 'none', fontSize: 24, fontWeight: 900, color: 'var(--color-text-primary)', outline: 'none' }}
+                  style={{ width: '100%', background: 'transparent', border: 'none', fontSize: 20, fontWeight: 900, color: 'var(--color-text-primary)', outline: 'none' }}
                 />
               </div>
             </div>
 
-            {/* Sections in Modal */}
-            {['revenus', 'fixes', 'variables'].map(sect => (
-              <div key={sect} style={{ marginBottom: 28 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {sect === 'revenus' ? 'Revenus' : sect === 'fixes' ? 'Dépenses Fixes' : 'Dépenses Variables'}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <button 
-                      onClick={() => addGlobalRecurrence(sect)}
-                      style={{ 
-                        background: 'var(--color-primary)', 
-                        border: 'none', 
-                        width: 28, height: 28, 
-                        borderRadius: 8, 
-                        color: 'var(--color-surface)', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        cursor: 'pointer',
-                        boxShadow: '0 4px 10px rgba(53, 132, 96, 0.2)'
-                      }}
-                    >
-                      <span className="material-icons-round" style={{ fontSize: 18 }}>add</span>
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setGlobalRecurrences(prev => ({
-                          ...prev,
-                          [sect]: [...prev[sect]].sort((a, b) => (parseInt(a.day, 10) || 0) - (parseInt(b.day, 10) || 0))
-                        }));
-                      }}
-                      style={{ 
-                        background: 'var(--color-surface)', 
-                        border: '1px solid var(--color-border-light)', 
-                        width: 28, height: 28, 
-                        borderRadius: 8, 
-                        color: 'var(--color-text-secondary)', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        cursor: 'pointer',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                      }}
-                      title="Trier par jour"
-                    >
-                      <span className="material-icons-round" style={{ fontSize: 18 }}>sort</span>
-                    </button>
-                  </div>
+            {/* Modal Tabs Navigation */}
+            <div style={{ display: 'flex', background: 'var(--color-surface-alt)', padding: 6, borderRadius: 16, marginBottom: 24, gap: 4 }}>
+              {[
+                { id: 'revenus', label: 'Revenus', icon: 'payments' },
+                { id: 'fixes', label: 'Fixes', icon: 'event_repeat' },
+                { id: 'variables', label: 'Variables', icon: 'shopping_bag' }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveModalTab(tab.id)}
+                  style={{
+                    flex: 1, height: 36, borderRadius: 12, border: 'none',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    background: activeModalTab === tab.id ? 'var(--color-surface)' : 'transparent',
+                    color: activeModalTab === tab.id ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                    boxShadow: activeModalTab === tab.id ? '0 4px 8px rgba(0,0,0,0.05)' : 'none'
+                  }}
+                >
+                  <span className="material-icons-round" style={{ fontSize: 16 }}>{tab.icon}</span>
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Active Section Content (Tab-based) */}
+            <div style={{ minHeight: 300 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  {activeModalTab === 'revenus' ? 'Revenus Récurrents' : activeModalTab === 'fixes' ? 'Dépenses Fixes' : 'Estimations Variables'}
                 </div>
-                {globalRecurrences[sect].length > 0 ? globalRecurrences[sect].map((line, idx) => (
-                  <div key={line.id} className="recurrence-grid-item" style={{ 
-                    gap: 8, 
-                    marginBottom: 12, 
-                    alignItems: 'center',
-                    background: 'var(--color-surface)',
-                    padding: 8,
-                    borderRadius: 16,
-                    border: '1px solid var(--color-border-light)'
-                  }}>
-                    <div className="rg-icon">
-                      <button 
-                        onClick={() => {
-                          const nextIdx = (COMMON_ICONS.indexOf(line.icon || COMMON_ICONS[0]) + 1) % COMMON_ICONS.length;
+                <button 
+                  onClick={() => addGlobalRecurrence(activeModalTab)}
+                  style={{ 
+                    background: 'var(--color-primary-glass)', 
+                    border: 'none', 
+                    padding: '6px 14px',
+                    borderRadius: 10, 
+                    color: 'var(--color-primary)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 6,
+                    fontSize: 12, fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <span className="material-icons-round" style={{ fontSize: 16 }}>add</span>
+                  Ajouter
+                </button>
+              </div>
+
+              {globalRecurrences[activeModalTab].length > 0 ? (
+                <div style={{ display: 'grid', gap: 12 }}>
+                  {globalRecurrences[activeModalTab].map((line, idx) => (
+                    <div key={line.id} className="recurrence-grid-item" style={{ 
+                      background: 'var(--color-surface)',
+                      padding: 12,
+                      borderRadius: 18,
+                      border: '1px solid var(--color-border-light)',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                    }}>
+                      <div className="rg-icon">
+                        <button 
+                          onClick={() => {
+                            const nextIdx = (COMMON_ICONS.indexOf(line.icon || COMMON_ICONS[0]) + 1) % COMMON_ICONS.length;
+                            setGlobalRecurrences(prev => ({
+                              ...prev,
+                              [activeModalTab]: prev[activeModalTab].map(item => item.id === line.id ? { ...item, icon: COMMON_ICONS[nextIdx] } : item)
+                            }));
+                          }}
+                          style={{ 
+                            width: 38, height: 38, borderRadius: 12, 
+                            border: '1px solid var(--color-border-light)', 
+                            background: 'var(--color-bg)', 
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                            cursor: 'pointer', 
+                            color: activeModalTab === 'revenus' ? 'var(--color-success)' : (activeModalTab === 'fixes' ? 'var(--color-danger)' : 'var(--color-warning)')
+                          }}
+                        >
+                          <span className="material-icons-round" style={{ fontSize: 18 }}>{line.icon || 'category'}</span>
+                        </button>
+                      </div>
+                      <input 
+                        value={line.label}
+                        onChange={(e) => {
+                          const newLabel = e.target.value;
+                          const lower = newLabel.toLowerCase();
+                          let detectedIcon = null;
+                          for (const [key, icon] of Object.entries(ICON_LIBRARY)) {
+                            if (lower.includes(key)) { detectedIcon = icon; break; }
+                          }
                           setGlobalRecurrences(prev => ({
                             ...prev,
-                            [sect]: prev[sect].map(item => item.id === line.id ? { ...item, icon: COMMON_ICONS[nextIdx] } : item)
+                            [activeModalTab]: prev[activeModalTab].map(item => {
+                              if (item.id === line.id) {
+                                const shouldAutoUpdate = !item.icon || item.icon === 'category';
+                                return { ...item, label: newLabel, icon: (detectedIcon && shouldAutoUpdate) ? detectedIcon : item.icon };
+                              }
+                              return item;
+                            })
                           }));
                         }}
-                        style={{ 
-                          width: 40, height: 40, borderRadius: 10, 
-                          border: '1px solid var(--color-border-light)', 
-                          background: 'var(--color-bg)', 
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                          cursor: 'pointer', 
-                          color: sect === 'revenus' ? 'var(--color-success)' : 'var(--color-danger)' 
+                        placeholder="Désignation..."
+                        style={{ height: 38, borderRadius: 10, border: '1px solid var(--color-border-light)', padding: '0 12px', fontSize: 13, fontWeight: 600, width: '100%', background: 'var(--color-bg)', color: 'var(--color-text-primary)', outline: 'none' }}
+                      />
+                      <input 
+                        type="number"
+                        min="1" max="31"
+                        value={line.day || ''}
+                        onChange={(e) => {
+                          setGlobalRecurrences(prev => ({
+                            ...prev,
+                            [activeModalTab]: prev[activeModalTab].map(item => item.id === line.id ? { ...item, day: e.target.value } : item)
+                          }));
                         }}
-                        title="Changer l'icône"
+                        placeholder="Jour"
+                        style={{ height: 38, borderRadius: 10, border: '1px solid var(--color-border-light)', padding: '0 4px', fontSize: 13, fontWeight: 700, textAlign: 'center', width: '100%', background: 'var(--color-bg)', color: 'var(--color-text-primary)' }}
+                      />
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <input 
+                          type="number"
+                          value={line.amount}
+                          onChange={(e) => {
+                            setGlobalRecurrences(prev => ({
+                              ...prev,
+                              [activeModalTab]: prev[activeModalTab].map(item => item.id === line.id ? { ...item, amount: e.target.value } : item)
+                            }));
+                          }}
+                          placeholder="0"
+                          style={{ height: 38, borderRadius: 10, border: '1px solid var(--color-border-light)', padding: '0 28px 0 8px', fontSize: 13, fontWeight: 800, textAlign: 'right', width: '100%', background: 'var(--color-bg)', color: 'var(--color-text-primary)' }}
+                        />
+                        <span style={{ position: 'absolute', right: 10, fontSize: 12, fontWeight: 800, color: 'var(--color-text-secondary)', opacity: 0.5 }}>€</span>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          setGlobalRecurrences(prev => ({
+                            ...prev,
+                            [activeModalTab]: prev[activeModalTab].filter(item => item.id !== line.id)
+                          }));
+                        }}
+                        style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', padding: 4 }}
                       >
-                        <span className="material-icons-round" style={{ fontSize: 18 }}>{line.icon || 'category'}</span>
+                        <span className="material-icons-round" style={{ fontSize: 20 }}>delete</span>
                       </button>
                     </div>
-                    <input 
-                      value={line.label}
-                      onChange={(e) => {
-                        const newLabel = e.target.value;
-                        const lower = newLabel.toLowerCase();
-                        let detectedIcon = null;
-                        
-                        // Search for keywords in the library
-                        for (const [key, icon] of Object.entries(ICON_LIBRARY)) {
-                          if (lower.includes(key)) {
-                            detectedIcon = icon;
-                            break;
-                          }
-                        }
+                  ))}
+                </div>
+              ) : (
+                <div 
+                  onClick={() => addGlobalRecurrence(activeModalTab)}
+                  style={{ border: '2px dashed var(--color-border-light)', borderRadius: 20, padding: '40px 20px', textAlign: 'center', cursor: 'pointer', background: 'var(--color-bg)', opacity: 0.6 }}
+                >
+                  <span className="material-icons-round" style={{ fontSize: 32, color: 'var(--color-text-tertiary)', marginBottom: 8 }}>post_add</span>
+                  <p style={{ color: 'var(--color-text-tertiary)', fontSize: 13, fontWeight: 600, margin: 0 }}>
+                    Cliquez pour ajouter {activeModalTab === 'revenus' ? 'un revenu' : 'une dépense'} récurrent(e)
+                  </p>
+                </div>
+              )}
+            </div>
 
-                        setGlobalRecurrences(prev => ({
-                          ...prev,
-                          [sect]: prev[sect].map(item => {
-                            if (item.id === line.id) {
-                              // Only auto-update icon if it's currently default 'category' or empty
-                              const shouldAutoUpdate = !item.icon || item.icon === 'category';
-                              return { 
-                                ...item, 
-                                label: newLabel,
-                                icon: (detectedIcon && shouldAutoUpdate) ? detectedIcon : item.icon
-                              };
-                            }
-                            return item;
-                          })
-                        }));
-                      }}
-                      placeholder={sect === 'revenus' ? "Libellé..." : "Loyer, Netflix..."}
-                      style={{ height: 40, borderRadius: 10, border: '1px solid var(--color-border-light)', padding: '0 12px', fontSize: 13, fontWeight: 600, width: '100%', minWidth: 0, background: 'var(--color-bg)', color: 'var(--color-text-primary)', outline: 'none' }}
-                    />
-                    <input 
-                      type="number"
-                      min="1"
-                      max="31"
-                      value={line.day || ''}
-                      onChange={(e) => {
-                        setGlobalRecurrences(prev => ({
-                          ...prev,
-                          [sect]: prev[sect].map(item => item.id === line.id ? { ...item, day: e.target.value } : item)
-                        }));
-                      }}
-                      placeholder="Jour"
-                      style={{ height: 40, borderRadius: 10, border: '1px solid var(--color-border-light)', padding: '0 4px', fontSize: 13, fontWeight: 700, textAlign: 'center', width: '100%', background: 'var(--color-bg)', color: 'var(--color-text-primary)' }}
-                    />
-                    <input 
-                      type="number"
-                      value={line.amount}
-                      onChange={(e) => {
-                        setGlobalRecurrences(prev => ({
-                          ...prev,
-                          [sect]: prev[sect].map(item => item.id === line.id ? { ...item, amount: e.target.value } : item)
-                        }));
-                      }}
-                      placeholder="0.00"
-                      style={{ height: 40, borderRadius: 10, border: '1px solid var(--color-border-light)', padding: '0 8px', fontSize: 13, fontWeight: 800, textAlign: 'right', width: '100%', background: 'var(--color-bg)', color: 'var(--color-text-primary)' }}
-                    />
-                    <button 
-                      onClick={() => {
-                        setGlobalRecurrences(prev => ({
-                          ...prev,
-                          [sect]: prev[sect].filter(item => item.id !== line.id)
-                        }));
-                      }}
-                      style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', padding: 4 }}
-                    >
-                      <span className="material-icons-round" style={{ fontSize: 20 }}>delete</span>
-                    </button>
-                  </div>
-                )) : (
-                  <div 
-                    onClick={() => addGlobalRecurrence(sect)}
-                    style={{ border: '2px dashed var(--color-border-light)', borderRadius: 16, padding: '16px', textAlign: 'center', cursor: 'pointer', color: 'var(--color-text-tertiary)', fontSize: 13, fontWeight: 600 }}
-                  >
-                    Cliquez sur + pour ajouter {sect === 'revenus' ? 'un revenu' : 'une dépense'}
-                  </div>
-                )}
-              </div>
-            ))}
-
-            <div style={{ background: 'var(--color-surface)', padding: 20, borderRadius: 20, marginBottom: 24, border: '1px solid var(--color-border-light)' }}>
+            <div style={{ background: 'var(--color-primary-glass)', padding: 16, borderRadius: 16, marginTop: 24, marginBottom: 24 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span className="material-icons-round" style={{ color: 'var(--color-primary)' }}>tips_and_updates</span>
-                <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', fontWeight: 500, margin: 0, lineHeight: 1.5 }}>
-                  Les catégories saisies ici seront dupliquées sur les 12 mois de l'année pour créer votre budget de référence.
+                <span className="material-icons-round" style={{ color: 'var(--color-primary)', fontSize: 20 }}>info</span>
+                <p style={{ fontSize: 11, color: 'var(--color-primary-dark)', fontWeight: 600, margin: 0, lineHeight: 1.5 }}>
+                  Ces réglages servent de modèle pour générer automatiquement votre prévisionnel annuel.
                 </p>
               </div>
             </div>

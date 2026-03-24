@@ -62,10 +62,10 @@ const PageHeader = ({ title, onBack }) => {
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <button 
           onClick={async () => {
-            const res = await subscribeUserToPush();
-            if (res.success) alert("Notifications Push activées avec succès !");
-            else alert("Erreur d'activation : " + res.error);
-          }}
+            const res = await activatePushNotifications(session.user.id);
+          if (res.success) showToast("Notifications Push activées !");
+          else showToast("Erreur d'activation", "error");
+        }}
           style={{ 
             background: 'transparent', 
             border: 'none', 
