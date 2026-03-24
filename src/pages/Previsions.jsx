@@ -569,14 +569,15 @@ const Previsions = ({ onBackToHub }) => {
                                 value={line.amount !== undefined ? line.amount : ''}
                                 onChange={(e) => updateField(f.id, sect.key, line.id, 'amount', e.target.value)}
                                 style={{ 
-                                  width: 110, height: 36, borderRadius: 8, 
+                                  width: 100, height: 36, borderRadius: 8, 
                                   border: '1px solid var(--color-border-light)', 
-                                  padding: '0 28px 0 8px', fontSize: 13, textAlign: 'right', fontWeight: 700,
+                                  padding: '0 32px 0 8px', fontSize: 13, textAlign: 'right', fontWeight: 800,
                                   background: line.isLinked ? 'var(--color-surface)' : 'var(--color-warning-light)',
                                   borderColor: line.isLinked ? 'var(--color-border-light)' : '#f59e0b',
-                                  outline: 'none'
+                                  outline: 'none', color: 'var(--color-text-primary)'
                                 }} 
                               />
+                              <span style={{ position: 'absolute', right: 26, fontSize: 13, fontWeight: 800, color: 'var(--color-text-tertiary)', pointerEvents: 'none' }}>€</span>
                               <span 
                                 onClick={() => toggleLink(f.id, sect.key, line.id)}
                                 className="material-icons-round" 
@@ -793,8 +794,8 @@ const Previsions = ({ onBackToHub }) => {
                 <h3 style={{ fontSize: 22, fontWeight: 900, color: 'var(--color-text-primary)', margin: 0 }}>Récurrences Globales</h3>
                 <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', fontWeight: 500, marginTop: 4 }}>Configurez votre base annuelle</p>
               </div>
-              <button onClick={() => setIsGlobalModalOpen(false)} style={{ background: '#f1f5f9', border: 'none', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <span className="material-icons-round" style={{ color: '#64748b' }}>close</span>
+              <button onClick={() => setIsGlobalModalOpen(false)} style={{ background: 'var(--color-surface-alt)', border: 'none', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <span className="material-icons-round" style={{ color: 'var(--color-text-secondary)' }}>close</span>
               </button>
             </div>
 
@@ -855,10 +856,10 @@ const Previsions = ({ onBackToHub }) => {
                       }}
                       style={{ 
                         background: 'var(--color-surface)', 
-                        border: '1px solid #e2e8f0', 
+                        border: '1px solid var(--color-border-light)', 
                         width: 28, height: 28, 
                         borderRadius: 8, 
-                        color: '#64748b', 
+                        color: 'var(--color-text-secondary)', 
                         display: 'flex', 
                         alignItems: 'center', 
                         justifyContent: 'center', 
@@ -876,10 +877,10 @@ const Previsions = ({ onBackToHub }) => {
                     gap: 8, 
                     marginBottom: 12, 
                     alignItems: 'center',
-                    background: 'var(--color-surface-alt)',
+                    background: 'var(--color-surface)',
                     padding: 8,
                     borderRadius: 16,
-                    border: '1px solid #e2e8f0'
+                    border: '1px solid var(--color-border-light)'
                   }}>
                     <div className="rg-icon">
                       <button 
@@ -892,8 +893,8 @@ const Previsions = ({ onBackToHub }) => {
                         }}
                         style={{ 
                           width: 40, height: 40, borderRadius: 10, 
-                          border: '1px solid #e2e8f0', 
-                          background: 'var(--color-surface)', 
+                          border: '1px solid var(--color-border-light)', 
+                          background: 'var(--color-bg)', 
                           display: 'flex', alignItems: 'center', justifyContent: 'center', 
                           cursor: 'pointer', 
                           color: sect === 'revenus' ? 'var(--color-success)' : 'var(--color-danger)' 
@@ -935,7 +936,7 @@ const Previsions = ({ onBackToHub }) => {
                         }));
                       }}
                       placeholder={sect === 'revenus' ? "Libellé..." : "Loyer, Netflix..."}
-                      style={{ height: 40, borderRadius: 10, border: '1px solid #e2e8f0', padding: '0 12px', fontSize: 13, fontWeight: 600, width: '100%', minWidth: 0 }}
+                      style={{ height: 40, borderRadius: 10, border: '1px solid var(--color-border-light)', padding: '0 12px', fontSize: 13, fontWeight: 600, width: '100%', minWidth: 0, background: 'var(--color-bg)', color: 'var(--color-text-primary)', outline: 'none' }}
                     />
                     <input 
                       type="number"
@@ -949,7 +950,7 @@ const Previsions = ({ onBackToHub }) => {
                         }));
                       }}
                       placeholder="Jour"
-                      style={{ height: 40, borderRadius: 10, border: '1px solid #e2e8f0', padding: '0 4px', fontSize: 13, fontWeight: 700, textAlign: 'center', width: '100%' }}
+                      style={{ height: 40, borderRadius: 10, border: '1px solid var(--color-border-light)', padding: '0 4px', fontSize: 13, fontWeight: 700, textAlign: 'center', width: '100%', background: 'var(--color-bg)', color: 'var(--color-text-primary)' }}
                     />
                     <input 
                       type="number"
@@ -961,7 +962,7 @@ const Previsions = ({ onBackToHub }) => {
                         }));
                       }}
                       placeholder="0.00"
-                      style={{ height: 40, borderRadius: 10, border: '1px solid #e2e8f0', padding: '0 8px', fontSize: 13, fontWeight: 800, textAlign: 'right', width: '100%' }}
+                      style={{ height: 40, borderRadius: 10, border: '1px solid var(--color-border-light)', padding: '0 8px', fontSize: 13, fontWeight: 800, textAlign: 'right', width: '100%', background: 'var(--color-bg)', color: 'var(--color-text-primary)' }}
                     />
                     <button 
                       onClick={() => {
@@ -978,7 +979,7 @@ const Previsions = ({ onBackToHub }) => {
                 )) : (
                   <div 
                     onClick={() => addGlobalRecurrence(sect)}
-                    style={{ border: '2px dashed #e2e8f0', borderRadius: 16, padding: '16px', textAlign: 'center', cursor: 'pointer', color: 'var(--color-text-tertiary)', fontSize: 13, fontWeight: 600 }}
+                    style={{ border: '2px dashed var(--color-border-light)', borderRadius: 16, padding: '16px', textAlign: 'center', cursor: 'pointer', color: 'var(--color-text-tertiary)', fontSize: 13, fontWeight: 600 }}
                   >
                     Cliquez sur + pour ajouter {sect === 'revenus' ? 'un revenu' : 'une dépense'}
                   </div>
@@ -986,7 +987,7 @@ const Previsions = ({ onBackToHub }) => {
               </div>
             ))}
 
-            <div style={{ background: 'var(--color-surface-alt)', padding: 20, borderRadius: 20, marginBottom: 24, border: '1px solid #e2e8f0' }}>
+            <div style={{ background: 'var(--color-surface)', padding: 20, borderRadius: 20, marginBottom: 24, border: '1px solid var(--color-border-light)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <span className="material-icons-round" style={{ color: 'var(--color-primary)' }}>tips_and_updates</span>
                 <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', fontWeight: 500, margin: 0, lineHeight: 1.5 }}>

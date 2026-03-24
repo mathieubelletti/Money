@@ -1581,6 +1581,24 @@ body {
   }
 }
 
+/* === DARK MODE OVERRIDES FOR RECURRENCES === */
+.dark .recurrence-grid-item {
+  background: var(--color-surface) !important;
+  border-color: var(--color-border-light) !important;
+}
+
+.dark .recurrence-grid-item input {
+  background: var(--color-bg) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border-light) !important;
+}
+
+.dark .recurrence-grid-item .rg-icon button {
+  background: var(--color-bg) !important;
+  border-color: var(--color-border-light) !important;
+}
+
+
 /* Hide bottom nav on mobile when form is open to avoid overlapping buttons */
 body.form-open .bottom-nav {
   display: none !important;
