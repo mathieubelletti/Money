@@ -1,13 +1,12 @@
-const CACHE_NAME = 'money-v1';
+const CACHE_NAME = 'money-v2';
 const ASSETS = [
   '/',
   '/index.html',
-  '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png'
+  '/manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS);
@@ -15,7 +14,31 @@ self.addEventListener('install', (event) => {
   );
 });
 
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+  return self.clients.claim();
+});
+
 self.addEventListener('fetch', (event) => {
+  // Stratégie Network-First pour index.html et root
+  if (event.request.mode === 'navigate' || ASSETS.includes(new URL(event.request.url).pathname)) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Cache-First pour les autres ressources (images, polices...)
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request);
