@@ -23,7 +23,7 @@ function urlBase64ToUint8Array(base64String) {
  * Tente d'abonner l'utilisateur aux notifications Web Push
  * et enregistre l'abonnement dans Supabase.
  */
-export async function subscribeUserToPush() {
+export async function activatePushNotifications() {
   if (!('serviceWorker' in navigator)) {
     console.error('Service Worker non supporté par ce navigateur.');
     return { success: false, error: 'Service workers non supportés' };
