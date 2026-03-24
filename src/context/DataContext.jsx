@@ -759,11 +759,12 @@ export const DataProvider = ({ children }) => {
             const income = revLines.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
             const expenses = [...fixLines, ...varLines].reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
             
+            const hasRealOverride = data.realReport !== undefined && data.realReport !== '';
             const hasManualOverride = data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0;
             const autoReport = index === 0 ? 0 : runningBalance;
             const reportBalance = isRolloverEnabled 
-              ? (hasManualOverride ? parseFloat(data.manualReport) : autoReport)
-              : (parseFloat(data.manualReport) || 0);
+              ? (hasRealOverride ? parseFloat(data.realReport) : hasManualOverride ? parseFloat(data.manualReport) : autoReport)
+              : (hasRealOverride ? parseFloat(data.realReport) : parseFloat(data.manualReport) || 0);
             
             const final = income - expenses + (reportBalance || 0);
             runningBalance = final; // Carry over for next month

@@ -92,12 +92,12 @@ const Previsions = ({ onBackToHub }) => {
       const fix = data.fixes.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
       const varTotal = data.variables.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
       
-      // Strict check: ignore integer 0 (legacy default initialization), but allow string "0"
+      const hasRealOverride = data.realReport !== undefined && data.realReport !== '';
       const hasManualOverride = data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0;
       const autoReport = index === 0 ? 0 : (results[forecasts[index-1].id]?.final || 0);
       const reportBalance = isRolloverEnabled 
-        ? (hasManualOverride ? parseFloat(data.manualReport) : autoReport)
-        : (parseFloat(data.manualReport) || 0);
+        ? (hasRealOverride ? parseFloat(data.realReport) : hasManualOverride ? parseFloat(data.manualReport) : autoReport)
+        : (hasRealOverride ? parseFloat(data.realReport) : parseFloat(data.manualReport) || 0);
 
       const final = rev - fix - varTotal + (reportBalance || 0);
       results[f.id] = { rev, fix, varTotal, reportBalance, final };
@@ -475,36 +475,71 @@ const Previsions = ({ onBackToHub }) => {
                 }}>
                   <div style={{ padding: '20px 24px', borderTop: '1px solid var(--color-border-light)' }}>
                     {/* Solde Report */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-secondary)' }}>Solde de report :</div>
-                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                        <input 
-                          type="number"
-                          placeholder={isRolloverEnabled && index > 0 ? (calculatedResults[forecasts[index-1].id]?.final || 0).toFixed(0) : "0"}
-                          value={data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0 ? data.manualReport : ''}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setMonthsState(prev => ({ 
-                              ...prev, 
-                              [f.id]: { ...(prev[f.id] || { manualReport: '', revenus: [], fixes: [], variables: [] }), manualReport: val } 
-                            }));
-                            setTimeout(() => {
-                              const { final } = calculatedResults[f.id];
-                              updatePrevision(f.id, final);
-                            }, 0);
-                          }}
-                          style={{ 
-                            background: (data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0) ? 'var(--color-surface)' : 'var(--color-bg)',
-                            border: '1px solid',
-                            borderColor: (data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0) ? 'var(--color-primary)' : 'var(--color-border)',
-                            borderRadius: 8, padding: '4px 28px 4px 12px', width: 130, fontWeight: 800, fontSize: 14,
-                            outline: 'none', color: 'var(--color-text-primary)'
-                          }} 
-                        />
-                        <span style={{ position: 'absolute', right: 12, fontSize: 14, fontWeight: 800, color: 'var(--color-text-tertiary)', pointerEvents: 'none' }}>€</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginBottom: 20 }}>
+                      
+                      {/* Solde Auto/Manuel */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-secondary)' }}>Solde de report :</div>
+                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                          <input 
+                            type="number"
+                            placeholder={isRolloverEnabled && index > 0 ? (calculatedResults[forecasts[index-1].id]?.final || 0).toFixed(0) : "0"}
+                            value={data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0 ? data.manualReport : ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setMonthsState(prev => ({ 
+                                ...prev, 
+                                [f.id]: { ...(prev[f.id] || { manualReport: '', revenus: [], fixes: [], variables: [] }), manualReport: val } 
+                              }));
+                              setTimeout(() => {
+                                const { final } = calculatedResults[f.id];
+                                updatePrevision(f.id, final);
+                              }, 0);
+                            }}
+                            style={{ 
+                              background: (data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0) ? 'var(--color-surface)' : 'var(--color-bg)',
+                              border: '1px solid',
+                              borderColor: (data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0) ? 'var(--color-primary)' : 'var(--color-border)',
+                              borderRadius: 8, padding: '4px 28px 4px 12px', width: 110, fontWeight: 800, fontSize: 13,
+                              outline: 'none', color: 'var(--color-text-primary)'
+                            }} 
+                          />
+                          <span style={{ position: 'absolute', right: 10, fontSize: 13, fontWeight: 800, color: 'var(--color-text-tertiary)', pointerEvents: 'none' }}>€</span>
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--color-text-tertiary)', fontStyle: 'italic', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
+                          {data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0 ? '(Manuel)' : '(Auto)'}
+                        </div>
                       </div>
-                      <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        {data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0 ? '(Modifié manuellement)' : '(Calcul automatique - Modifiable)'}
+
+                      {/* Solde Réel */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-secondary)', paddingLeft: 12, borderLeft: '1px solid var(--color-border)' }}>Solde report Réel :</div>
+                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                          <input 
+                            type="number"
+                            placeholder="0"
+                            value={data.realReport !== undefined && data.realReport !== '' ? data.realReport : ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setMonthsState(prev => ({ 
+                                ...prev, 
+                                [f.id]: { ...(prev[f.id] || { manualReport: '', realReport: '', revenus: [], fixes: [], variables: [] }), realReport: val } 
+                              }));
+                              setTimeout(() => {
+                                const { final } = calculatedResults[f.id];
+                                updatePrevision(f.id, final);
+                              }, 0);
+                            }}
+                            style={{ 
+                              background: (data.realReport !== undefined && data.realReport !== '') ? 'var(--color-surface)' : 'var(--color-bg)',
+                              border: '1px solid',
+                              borderColor: (data.realReport !== undefined && data.realReport !== '') ? '#3b82f6' : 'var(--color-border)',
+                              borderRadius: 8, padding: '4px 28px 4px 12px', width: 110, fontWeight: 800, fontSize: 13,
+                              outline: 'none', color: 'var(--color-text-primary)'
+                            }} 
+                          />
+                          <span style={{ position: 'absolute', right: 10, fontSize: 13, fontWeight: 800, color: 'var(--color-text-tertiary)', pointerEvents: 'none' }}>€</span>
+                        </div>
                       </div>
                     </div>
 
