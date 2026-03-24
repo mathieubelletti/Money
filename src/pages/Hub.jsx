@@ -1,5 +1,6 @@
 import { supabase } from '../supabase';
 import { useData } from '../context/DataContext';
+import { subscribeUserToPush } from '../utils/pushNotifications';
 
 const Hub = ({ onEnterBudget, onEnterSharedExpenses, onEnterTaxes, onEnterFlowTask }) => {
   const { session, isDarkMode, toggleTheme } = useData();
@@ -80,7 +81,15 @@ const Hub = ({ onEnterBudget, onEnterSharedExpenses, onEnterTaxes, onEnterFlowTa
           >
             <span className="material-icons-round">{isDarkMode ? 'light_mode' : 'dark_mode'}</span>
           </button>
-          <button className="hub-notif" style={{ background: 'var(--color-primary-glass)', color: 'var(--color-primary)' }}>
+          <button 
+            className="hub-notif" 
+            style={{ background: 'var(--color-primary-glass)', color: 'var(--color-primary)', border: 'none', cursor: 'pointer' }}
+            onClick={async () => {
+              const res = await subscribeUserToPush();
+              if (res.success) alert("Notifications Push activées avec succès !");
+              else alert("Erreur d'activation : " + res.error);
+            }}
+          >
             <span className="material-icons-round">notifications</span>
           </button>
           <button 
