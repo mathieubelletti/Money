@@ -1006,6 +1006,7 @@ export const DataProvider = ({ children }) => {
     refreshData,
     isDarkMode,
     toggleTheme,
+    showToast
   }), [
     categories, transactions, accountsWithBalances, savingsItems, forecasts, updateMonthForecast, monthsState, 
     globalRecurrences, addTransaction, addTransactions, deleteTransaction, updateTransaction,
