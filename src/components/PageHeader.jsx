@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 import { useData } from '../context/DataContext';
-import { subscribeUserToPush } from '../utils/pushNotifications';
+import { activatePushNotifications } from '../utils/pushNotifications';
 const PageHeader = ({ title, onBack }) => {
-  const { session, isDarkMode, toggleTheme } = useData();
+  const { session, isDarkMode, toggleTheme, showToast } = useData();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
 

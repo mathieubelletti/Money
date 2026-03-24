@@ -1,9 +1,9 @@
 import { supabase } from '../supabase';
 import { useData } from '../context/DataContext';
-import { subscribeUserToPush } from '../utils/pushNotifications';
+import { activatePushNotifications } from '../utils/pushNotifications';
 
 const Hub = ({ onEnterBudget, onEnterSharedExpenses, onEnterTaxes, onEnterFlowTask }) => {
-  const { session, isDarkMode, toggleTheme } = useData();
+  const { session, isDarkMode, toggleTheme, showToast } = useData();
   const user = session?.user;
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Utilisateur';
   const avatarUrl = user?.user_metadata?.avatar_url;
