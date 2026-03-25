@@ -477,7 +477,7 @@ const Previsions = ({ onBackToHub }) => {
                 }}>
                   <div style={{ padding: '20px 24px', borderTop: '1px solid var(--color-border-light)' }}>
                     {/* Solde Report */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginBottom: 20 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 20 }}>
                       
                       {/* Solde Auto/Manuel */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -515,7 +515,7 @@ const Previsions = ({ onBackToHub }) => {
 
                       {/* Solde Réel */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-secondary)', paddingLeft: 12, borderLeft: '1px solid var(--color-border)' }}>Solde report Réel :</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-secondary)' }}>Solde report Réel :</div>
                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                           <input 
                             type="number"
