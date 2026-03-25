@@ -3,6 +3,16 @@ import PageHeader from '../components/PageHeader';
 import { previsionsTabs } from '../data/mockData';
 import { formatBalance } from '../utils/helpers';
 import { useData } from '../context/DataContext';
+const formatBalance = (amount) => {
+  const abs = Math.abs(amount);
+  const formatted = abs.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const [int, dec] = formatted.split(',');
+  return (
+    <span style={{ color: 'white' }}>
+      {amount < 0 ? '-' : ''}{int}<span style={{ fontSize: '0.7em', opacity: 0.8, verticalAlign: 'super', marginLeft: '1px' }}>,{dec}</span> €
+    </span>
+  );
+};
 
 const Previsions = ({ onBackToHub }) => {
   const [activeTab, setActiveTab] = useState('Mois'); // 'Mois', 'Trimestre', 'Annee'
@@ -111,8 +121,15 @@ const Previsions = ({ onBackToHub }) => {
   const getMonthData = (id) => monthsState[id] || { manualReport: 0, revenus: [], fixes: [], variables: [] };
 
   const formatMonthAmount = (amount) => {
-    const sign = amount >= 0 ? '+' : '';
-    return `${sign}${amount.toLocaleString('fr-FR')} €`;
+    const sign = amount >= 0 ? '+' : '-';
+    const abs = Math.abs(amount);
+    const formatted = abs.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const [int, dec] = formatted.split(',');
+    return (
+      <span style={{ whiteSpace: 'nowrap' }}>
+        {sign}{int}<span style={{ fontSize: '0.85em', opacity: 0.8 }}>,{dec}</span> €
+      </span>
+    );
   };
 
   const handleToggleMonth = (id) => {
