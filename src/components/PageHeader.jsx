@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 import { useData } from '../context/DataContext';
 const PageHeader = ({ title, onBack }) => {
-  const { isDarkMode, toggleTheme } = useData();
+  const { session, isDarkMode, toggleTheme } = useData();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
