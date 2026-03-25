@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 import { useData } from '../context/DataContext';
-import { activatePushNotifications } from '../utils/pushNotifications';
 const PageHeader = ({ title, onBack }) => {
-  const { session, isDarkMode, toggleTheme, showToast } = useData();
+  const { isDarkMode, toggleTheme } = useData();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -60,31 +59,6 @@ const PageHeader = ({ title, onBack }) => {
       </h2>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <button 
-          onClick={async () => {
-            const res = await activatePushNotifications(session.user.id);
-          if (res.success) showToast("Notifications Push activées !");
-          else showToast("Erreur d'activation", "error");
-        }}
-          style={{ 
-            background: 'transparent', 
-            border: 'none', 
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 36,
-            height: 36,
-            borderRadius: '50%',
-            transition: 'background 0.2s ease',
-            color: 'var(--color-primary)'
-          }}
-          title="Activer les notifications Push"
-        >
-          <span className="material-icons-round" style={{ fontSize: 22 }}>
-            notifications_active
-          </span>
-        </button>
         <button 
           onClick={toggleTheme} 
           style={{ 
