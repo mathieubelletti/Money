@@ -8,8 +8,8 @@ const formatBalance = (amount) => {
   const formatted = abs.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const [int, dec] = formatted.split(',');
   return (
-    <span style={{ color: 'white' }}>
-      {amount < 0 ? '-' : ''}{int}<span style={{ fontSize: '0.7em', opacity: 0.8, verticalAlign: 'super', marginLeft: '1px' }}>,{dec}</span> €
+    <span style={{ color: 'white', fontWeight: 800 }}>
+      {amount < 0 ? '-' : ''}{int}<span style={{ fontSize: '0.75em', opacity: 0.7, verticalAlign: 'super', marginLeft: '1px' }}>,{dec}</span> €
     </span>
   );
 };
@@ -126,8 +126,8 @@ const Previsions = ({ onBackToHub }) => {
     const formatted = abs.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const [int, dec] = formatted.split(',');
     return (
-      <span style={{ whiteSpace: 'nowrap' }}>
-        {sign}{int}<span style={{ fontSize: '0.85em', opacity: 0.8 }}>,{dec}</span> €
+      <span style={{ whiteSpace: 'nowrap', fontWeight: 700 }}>
+        {sign}{int}<span style={{ fontSize: '0.8em', opacity: 0.7 }}>,{dec}</span> €
       </span>
     );
   };
@@ -519,11 +519,12 @@ const Previsions = ({ onBackToHub }) => {
                               background: (data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0) ? 'var(--color-surface)' : 'var(--color-bg)',
                               border: '1px solid',
                               borderColor: (data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0) ? 'var(--color-primary)' : 'var(--color-border)',
-                              borderRadius: 8, padding: '4px 28px 4px 12px', width: 110, fontWeight: 800, fontSize: 13,
+                              borderRadius: 8, padding: '4px 28px 4px 12px', width: 110, fontWeight: 700, fontSize: 13,
+                              fontFamily: 'monospace', letterSpacing: '0.02em',
                               outline: 'none', color: 'var(--color-text-primary)'
                             }} 
                           />
-                          <span style={{ position: 'absolute', right: 10, fontSize: 13, fontWeight: 800, color: 'var(--color-text-tertiary)', pointerEvents: 'none' }}>€</span>
+                          <span style={{ position: 'absolute', right: 10, fontSize: 13, fontWeight: 700, color: 'var(--color-text-tertiary)', pointerEvents: 'none' }}>€</span>
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--color-text-tertiary)', fontStyle: 'italic', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
                           {data.manualReport !== undefined && data.manualReport !== '' && data.manualReport !== 0 ? '(Manuel)' : '(Auto)'}
@@ -553,11 +554,12 @@ const Previsions = ({ onBackToHub }) => {
                               background: (data.realReport !== undefined && data.realReport !== '') ? 'var(--color-surface)' : 'var(--color-bg)',
                               border: '1px solid',
                               borderColor: (data.realReport !== undefined && data.realReport !== '') ? '#3b82f6' : 'var(--color-border)',
-                              borderRadius: 8, padding: '4px 28px 4px 12px', width: 110, fontWeight: 800, fontSize: 13,
+                              borderRadius: 8, padding: '4px 28px 4px 12px', width: 110, fontWeight: 700, fontSize: 13,
+                              fontFamily: 'monospace', letterSpacing: '0.02em',
                               outline: 'none', color: 'var(--color-text-primary)'
                             }} 
                           />
-                          <span style={{ position: 'absolute', right: 10, fontSize: 13, fontWeight: 800, color: 'var(--color-text-tertiary)', pointerEvents: 'none' }}>€</span>
+                          <span style={{ position: 'absolute', right: 10, fontSize: 13, fontWeight: 700, color: 'var(--color-text-tertiary)', pointerEvents: 'none' }}>€</span>
                         </div>
                       </div>
                     </div>
@@ -590,7 +592,8 @@ const Previsions = ({ onBackToHub }) => {
                                 style={{ 
                                   width: 100, height: 36, borderRadius: 8, 
                                   border: '1px solid var(--color-border-light)', 
-                                  padding: '0 32px 0 8px', fontSize: 13, textAlign: 'right', fontWeight: 800,
+                                  padding: '0 32px 0 8px', fontSize: 13, textAlign: 'right', fontWeight: 700,
+                                  fontFamily: 'monospace', letterSpacing: '0.02em',
                                   background: line.isLinked ? 'var(--color-surface)' : 'var(--color-warning-light)',
                                   borderColor: line.isLinked ? 'var(--color-border-light)' : '#f59e0b',
                                   outline: 'none', color: 'var(--color-text-primary)'
@@ -836,7 +839,7 @@ const Previsions = ({ onBackToHub }) => {
                     ...prev, 
                     [forecasts[0].id]: { ...(prev[forecasts[0].id] || { manualReport: 0, revenus: [], fixes: [], variables: [] }), manualReport: e.target.value } 
                   }))}
-                  style={{ width: '100%', background: 'transparent', border: 'none', fontSize: 20, fontWeight: 900, color: 'var(--color-text-primary)', outline: 'none' }}
+                  style={{ width: '100%', background: 'transparent', border: 'none', fontSize: 20, fontWeight: 700, fontFamily: 'monospace', letterSpacing: '0.02em', color: 'var(--color-text-primary)', outline: 'none' }}
                 />
               </div>
             </div>
@@ -971,7 +974,7 @@ const Previsions = ({ onBackToHub }) => {
                             }));
                           }}
                           placeholder="0"
-                          style={{ height: 38, borderRadius: 10, border: '1px solid var(--color-border-light)', padding: '0 28px 0 8px', fontSize: 13, fontWeight: 800, textAlign: 'right', width: '100%', background: 'var(--color-bg)', color: 'var(--color-text-primary)' }}
+                          style={{ height: 38, borderRadius: 10, border: '1px solid var(--color-border-light)', padding: '0 28px 0 8px', fontSize: 13, fontWeight: 700, fontFamily: 'monospace', letterSpacing: '0.02em', textAlign: 'right', width: '100%', background: 'var(--color-bg)', color: 'var(--color-text-primary)' }}
                         />
                         <span style={{ position: 'absolute', right: 10, fontSize: 12, fontWeight: 800, color: 'var(--color-text-secondary)', opacity: 0.5 }}>€</span>
                       </div>
