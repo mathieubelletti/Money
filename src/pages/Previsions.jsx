@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PageHeader from '../components/PageHeader';
 import { previsionsTabs } from '../data/mockData';
-import { formatBalance } from '../utils/helpers';
+import { formatAmount } from '../utils/helpers';
 import { useData } from '../context/DataContext';
 const formatBalance = (amount) => {
   const abs = Math.abs(amount);
