@@ -93,21 +93,34 @@ const SharedExpenses = ({ onBack }) => {
   ];
 
   // --- Calculations ---
-  // 1. Using filteredTransactions instead of all transactions
-  const computedMemberStats = members.map(m => {
-    const paid = filteredTransactions
-      .filter(tx => tx.paid_by?.trim() === m.name?.trim())
-      .reduce((sum, tx) => sum + Math.abs(tx.amount || 0), 0);
-    return { ...m, paid };
-  });
+  const memberStats = useMemo(() => {
+    const stats = members.map(m => ({ ...m, paid: 0, cost: 0 }));
+    
+    filteredTransactions.forEach(tx => {
+      const amount = Math.abs(tx.amount || 0);
+      
+      // 1. Add to paid amount for the payer
+      const payer = stats.find(s => s.name?.trim() === tx.paid_by?.trim());
+      if (payer) payer.paid += amount;
+      
+      // 2. Calculate share for each involved member
+      // If split_with is empty or null, assume it's split with everyone (legacy/default)
+      const splitWith = (tx.split_with && tx.split_with.length > 0) 
+        ? tx.split_with 
+        : members.map(m => m.name);
+      
+      const share = amount / splitWith.length;
+      splitWith.forEach(name => {
+        const member = stats.find(s => s.name?.trim() === name?.trim());
+        if (member) member.cost += share;
+      });
+    });
 
-  const groupTotal = computedMemberStats.reduce((sum, ms) => sum + ms.paid, 0);
-  const individualShare = members.length > 0 ? groupTotal / members.length : 0;
-
-  const memberStats = computedMemberStats.map(ms => ({
-    ...ms,
-    balance: ms.paid - individualShare
-  }));
+    return stats.map(s => ({
+      ...s,
+      balance: s.paid - s.cost
+    }));
+  }, [members, filteredTransactions]);
 
   // --- Handlers ---
   const addMember = async (name) => {
@@ -135,6 +148,7 @@ const SharedExpenses = ({ onBack }) => {
       name: formData.name,
       amount: -Math.abs(formData.amount),
       paid_by: formData.paidBy,
+      split_with: formData.splitWith || [], // Array of names
       category: formData.category,
       date: formData.date || new Date().toISOString().split('T')[0],
       accounting_period: monthSlug
@@ -221,7 +235,7 @@ const SharedExpenses = ({ onBack }) => {
         }}>
           <p style={{ fontSize: 11, fontWeight: 900, color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>RÉCAPITULATIF GROUPE</p>
           <h1 style={{ fontSize: 42, fontWeight: 900, margin: '8px 0', color: '#ffffff' }}>
-            {groupTotal.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} <span style={{ fontSize: 20, opacity: 0.6 }}>€</span>
+            {memberStats.reduce((sum, ms) => sum + ms.paid, 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} <span style={{ fontSize: 20, opacity: 0.6 }}>€</span>
           </h1>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.1)', padding: '6px 14px', borderRadius: 100, fontSize: 12, fontWeight: 800, marginTop: 8, color: '#ffffff' }}>
             <span className="material-icons-round" style={{ fontSize: 16 }}>account_balance</span>
@@ -362,7 +376,29 @@ const SharedExpenses = ({ onBack }) => {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div style={{ background: 'var(--color-surface)', borderRadius: 24, width: '100%', maxWidth: 440, padding: 24, boxShadow: 'var(--shadow-lg)' }}>
             <h3 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 900 }}>Dépense Commune</h3>
-            <form onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.target); addExpense({ name: fd.get('name'), amount: parseFloat(fd.get('amount')), paidBy: fd.get('paidBy'), category: fd.get('category'), date: fd.get('date'), accountingPeriod: fd.get('accountingPeriod') }); }}>
+            <form onSubmit={(e) => { 
+              e.preventDefault(); 
+              const fd = new FormData(e.target); 
+              // Collect splitWith from checkboxes
+              const splitWith = members
+                .filter(m => e.target.elements[`split_${m.name}`]?.checked)
+                .map(m => m.name);
+
+              if (splitWith.length === 0) {
+                alert("Veuillez sélectionner au moins une personne pour diviser la dépense.");
+                return;
+              }
+
+              addExpense({ 
+                name: fd.get('name'), 
+                amount: parseFloat(fd.get('amount')), 
+                paidBy: fd.get('paidBy'), 
+                splitWith: splitWith,
+                category: fd.get('category'), 
+                date: fd.get('date'), 
+                accountingPeriod: fd.get('accountingPeriod') 
+              }); 
+            }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 900, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 6 }}>DATE D'ACHAT</label>
@@ -391,6 +427,29 @@ const SharedExpenses = ({ onBack }) => {
                   </select>
                 </div>
               </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 11, fontWeight: 900, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 10 }}>DIVISÉ AVEC</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: '12px', background: 'var(--color-bg)', borderRadius: 14, border: '1.5px solid var(--color-border)' }}>
+                  {members.map(m => (
+                    <label key={m.id} style={{ 
+                      display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20, cursor: 'pointer',
+                      background: 'var(--color-surface)', border: '1px solid var(--color-border-light)',
+                      fontSize: 12, fontWeight: 700, color: 'var(--color-text-primary)',
+                      transition: 'all 0.2s'
+                    }}>
+                      <input 
+                        type="checkbox" 
+                        name={`split_${m.name}`} 
+                        defaultChecked={true}
+                        style={{ width: 16, height: 16, accentColor: 'var(--color-primary)' }} 
+                      />
+                      {m.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               <div style={{ marginBottom: 24 }}>
                 <label style={{ fontSize: 11, fontWeight: 900, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 10 }}>CATÉGORIE</label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
